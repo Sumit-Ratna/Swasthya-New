@@ -1,0 +1,13 @@
+node_modules/
+dist/
+build/
+.gradle/
+*.log
+.env.local
+.DS_Store
+*.apk
+venv/
+.venv/
+ai_service/venv/
+frontend_react/android/app/build/
+frontend_react/android/.gradle/
