@@ -29,41 +29,78 @@ const swaggerSpec = require('./config/swaggerDoc');
 const app = express();
 const PORT = config.port;
 
-// Attach Unique X-Request-ID header
+// 1. Attach Unique X-Request-ID Header to every request
 app.use(requestId);
 
-// CORS configuration supporting mobile Capacitor, Web, Localhost, and LAN IPs
+// 2. Strict / Explicit CORS Allow-list
+const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'http://localhost:8080',
+    'http://localhost:8000',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:8000',
+    'capacitor://localhost',
+    'http://localhost',
+    'ionic://localhost'
+];
+
+const lanIpRegex = /^(http:\/\/|https:\/\/)(192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3})(:\d+)?$/;
+
 app.use(cors({
     origin: (origin, callback) => {
-        // Allow requests with no origin (like mobile apps, curl, Postman)
+        // Direct mobile native requests, Postman, curl have no Origin header
         if (!origin) return callback(null, true);
+
+        // Check configured origins wildcard or specific match
         if (config.corsOrigins.includes('*') || config.corsOrigins.includes(origin)) {
             return callback(null, true);
         }
-        // Allow localhost and capacitor
-        if (origin.startsWith('http://localhost') || origin.startsWith('capacitor://') || origin.startsWith('http://192.168.')) {
+
+        // Check local development allow-list
+        if (allowedOrigins.includes(origin)) {
             return callback(null, true);
         }
-        return callback(null, true); // Permissive for hackathon/multi-device
+
+        // Check LAN IP patterns (Wi-Fi testing) or Vercel preview URLs
+        if (lanIpRegex.test(origin) || origin.endsWith('.vercel.app')) {
+            return callback(null, true);
+        }
+
+        console.warn(`[CORS] Rejected Origin: ${origin}`);
+        return callback(new Error(`CORS policy does not allow access from origin: ${origin}`));
     },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Bypass-Tunnel-Reminder', 'ngrok-skip-browser-warning', 'X-Requested-With', 'x-user-id', 'x-user-role'],
+    allowedHeaders: [
+        'Content-Type',
+        'Authorization',
+        'Bypass-Tunnel-Reminder',
+        'ngrok-skip-browser-warning',
+        'X-Requested-With',
+        'X-Request-ID',
+        'x-user-id',
+        'x-user-role',
+        'x-facility-id'
+    ],
     credentials: true
 }));
 
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+// 3. Disciplined Body Limits for Standard Endpoints (Uploads use Multer)
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 
-// Diagnostic Request Logger for Mobile & Web requests
+// 4. Sanitized Diagnostic Request Logger (no passwords / tokens / medical payloads dumped)
 app.use((req, res, next) => {
     const origin = req.headers.origin || 'mobile/direct';
-    console.log(`[HTTP ${req.method}] ${req.originalUrl} | From: ${origin} | IP: ${req.ip}`);
+    console.log(`[HTTP ${req.method}] ${req.originalUrl} | ReqID: ${req.id} | From: ${origin}`);
     next();
 });
 
+// Static uploads directory
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// Root & Health check
+// 5. Root & Health check with Real Lightweight Supabase Probe
 app.get('/', (req, res) => {
     res.json({
         name: 'SwasthyaSetu Unified Healthcare API',
@@ -71,6 +108,7 @@ app.get('/', (req, res) => {
         message: 'API is running with Supabase PostgreSQL and Canonical Closed-Loop Referral State Engine',
         swagger_docs: '/api-docs',
         status: 'healthy',
+        requestId: req.id,
         timestamp: new Date().toISOString()
     });
 });
@@ -101,6 +139,7 @@ app.get('/api/health', async (req, res) => {
             engine: 'Supabase PostgreSQL'
         },
         uptimeSeconds: Math.floor(process.uptime()),
+        requestId: req.id,
         timestamp: new Date().toISOString()
     });
 });
@@ -131,17 +170,20 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
 }));
 app.use('/swagger', (req, res) => res.redirect('/api-docs'));
 
-// Centralized 404 Handler for unknown API routes
+// 6. Centralized 404 Handler for Unknown Routes
 app.use('/api/*', (req, res) => {
     res.status(404).json({
         success: false,
-        error: `Endpoint not found: ${req.method} ${req.originalUrl}`,
         code: 'NOT_FOUND',
+        message: `Endpoint not found: ${req.method} ${req.originalUrl}`,
+        error: `Endpoint not found: ${req.method} ${req.originalUrl}`,
+        requestId: req.id,
+        path: req.originalUrl,
         timestamp: new Date().toISOString()
     });
 });
 
-// Centralized Error Handling Middleware
+// 7. Centralized Error Handling Middleware
 app.use(errorHandler);
 
 // Start Server listening on 0.0.0.0
