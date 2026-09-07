@@ -1,4 +1,5 @@
 import React from 'react';
+import logoImg from '../assets/logo.png';
 
 export const SwasthyaEmblem = ({ size = 48, className = '' }) => (
     <div style={{
@@ -13,11 +14,16 @@ export const SwasthyaEmblem = ({ size = 48, className = '' }) => (
         boxShadow: '0 6px 16px -3px rgba(2, 132, 199, 0.25)',
         border: '1.5px solid #e2e8f0',
         flexShrink: 0,
-        padding: '2px'
+        padding: '2px',
+        boxSizing: 'border-box'
     }} className={className}>
         <img 
-            src="/logo.png" 
+            src={logoImg} 
             alt="Swasthya Logo" 
+            onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = '/logo.png';
+            }}
             style={{ width: '100%', height: '100%', objectFit: 'contain' }}
         />
     </div>
@@ -28,7 +34,7 @@ export const SwasthyaLogo = ({
     showTagline = true, 
     theme = 'light' // 'light', 'dark'
 }) => {
-    const emblemSize = size === 'small' ? 36 : size === 'large' ? 68 : 48;
+    const emblemSize = size === 'small' ? 38 : size === 'large' ? 68 : 48;
     const titleSize = size === 'small' ? '18px' : size === 'large' ? '26px' : '22px';
     const subSize = size === 'small' ? '11px' : size === 'large' ? '13px' : '12px';
 
