@@ -699,40 +699,26 @@ const TriageAssessment = () => {
                         </div>
 
                         {/* Action Buttons */}
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-                            <button 
-                                onClick={() => navigate('/records')}
-                                style={{
-                                    padding: '7px 12px',
-                                    fontSize: '11.5px',
-                                    fontWeight: 700,
-                                    borderRadius: '8px',
-                                    border: '1px solid var(--border-color, #cbd5e1)',
-                                    background: 'var(--card-bg, #ffffff)',
-                                    color: 'var(--text-primary)',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                View in EHR
-                            </button>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                             <button 
                                 onClick={() => navigate('/facilities')}
                                 style={{
-                                    padding: '7px 14px',
-                                    fontSize: '11.5px',
+                                    padding: '8px 16px',
+                                    fontSize: '12px',
                                     fontWeight: 800,
-                                    borderRadius: '8px',
+                                    borderRadius: '10px',
                                     border: 'none',
                                     background: 'linear-gradient(135deg, #0d9488, #059669)',
                                     color: 'white',
                                     cursor: 'pointer',
                                     display: 'inline-flex',
                                     alignItems: 'center',
-                                    gap: '5px',
-                                    boxShadow: '0 2px 8px rgba(13, 148, 136, 0.3)'
+                                    gap: '6px',
+                                    boxShadow: '0 3px 10px rgba(13, 148, 136, 0.35)',
+                                    transition: 'all 0.2s ease'
                                 }}
                             >
-                                Find Capable Facility <ArrowRight size={13} />
+                                Find Capable Facility <ArrowRight size={14} />
                             </button>
                         </div>
                     </motion.div>
