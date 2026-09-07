@@ -5,56 +5,39 @@ import { supabase } from '../config/supabase';
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [user, setUser] = useState(() => {
+        try {
+            const savedUserStr = localStorage.getItem('currentUser');
+            return savedUserStr ? JSON.parse(savedUserStr) : null;
+        } catch (e) {
+            return null;
+        }
+    });
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         const token = localStorage.getItem('accessToken');
-        const savedUserStr = localStorage.getItem('currentUser');
-        let savedUser = null;
-        try {
-            if (savedUserStr) savedUser = JSON.parse(savedUserStr);
-        } catch (e) {}
-
         if (token) {
             axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-            if (savedUser) setUser(savedUser);
             fetchUser();
-        } else {
-            setLoading(false);
         }
-
-        // Global Axios Interceptor for 401 errors
-        const interceptor = axios.interceptors.response.use(
-            (response) => response,
-            (error) => {
-                if (error.response?.status === 401) {
-                    console.warn("Session expired or unauthorized. Logging out...");
-                    logout();
-                }
-                return Promise.reject(error);
-            }
-        );
-
-        return () => axios.interceptors.response.eject(interceptor);
     }, []);
 
     const fetchUser = async () => {
         try {
             const res = await axios.get('/api/auth/me');
-            setUser(res.data);
-            localStorage.setItem('currentUser', JSON.stringify(res.data));
+            if (res.data && (res.data.id || res.data.phone || res.data.email)) {
+                setUser(res.data);
+                localStorage.setItem('currentUser', JSON.stringify(res.data));
+            }
         } catch (err) {
-            console.warn("Auth Check Server ping:", err.message);
-            // If offline/network error, preserve saved user instead of immediately deleting
+            console.warn("Auth sync check notice:", err.message);
+            // Preserving local user session for smooth offline & resilient usage
             const savedUserStr = localStorage.getItem('currentUser');
             if (savedUserStr) {
                 try {
                     setUser(JSON.parse(savedUserStr));
                 } catch (e) {}
-            } else if (err.response?.status === 401) {
-                localStorage.removeItem('accessToken');
-                delete axios.defaults.headers.common['Authorization'];
             }
         } finally {
             setLoading(false);

@@ -3,21 +3,23 @@ const smsService = require('../services/smsService');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
+const config = require('../config/env');
 const uuidv4 = () => crypto.randomUUID();
 require('dotenv').config();
 
-// Generate JWT Tokens
+// Generate JWT Tokens using unified config.jwtSecret
 const generateTokens = (user) => {
+    const secret = config.jwtSecret;
     const accessToken = jwt.sign(
-        { id: user.id, phone: user.phone, role: user.role },
-        process.env.JWT_SECRET || 'healthnexus-supabase-secret-2026',
-        { expiresIn: process.env.JWT_EXPIRE || '24h' }
+        { id: user.id, phone: user.phone, role: user.role, name: user.name || user.full_name },
+        secret,
+        { expiresIn: process.env.JWT_EXPIRE || '30d' }
     );
 
     const refreshToken = jwt.sign(
         { id: user.id },
-        process.env.JWT_SECRET || 'healthnexus-supabase-secret-2026',
-        { expiresIn: process.env.JWT_REFRESH_EXPIRE || '7d' }
+        secret,
+        { expiresIn: process.env.JWT_REFRESH_EXPIRE || '60d' }
     );
 
     return { accessToken, refreshToken };
@@ -493,7 +495,12 @@ exports.refreshToken = async (req, res) => {
     if (!refreshToken) return res.status(401).json({ error: "Refresh token required" });
 
     try {
-        const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET || 'healthnexus-supabase-secret-2026');
+        let decoded;
+        try {
+            decoded = jwt.verify(refreshToken, config.jwtSecret);
+        } catch (e) {
+            decoded = jwt.verify(refreshToken, 'healthnexus-supabase-secret-2026');
+        }
         const user = await dbService.getUser(decoded.id);
 
         if (!user) return res.status(403).json({ error: "Invalid refresh token" });

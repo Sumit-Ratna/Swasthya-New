@@ -10,6 +10,7 @@ import Home from './pages/Home';
 import CareTeam from './pages/CareTeam';
 import ScanQR from './pages/ScanQR';
 import Records from './pages/Records';
+import MedicalHistory from './pages/MedicalHistory';
 import Profile from './pages/Profile';
 import ProfileSetup from './pages/ProfileSetup';
 import Services from './pages/Services';
@@ -101,7 +102,7 @@ const MainApp = () => {
     '/', '/home', '/login', '/login/patient', '/login/doctor', '/signup', 
     '/admin', '/referrals', '/facilities', '/triage',
     '/asha', '/caregiver', '/facility-dashboard', '/roles',
-    '/services', '/records', '/status', '/care-team', '/family', '/learn-medicine', '/learn-medicines'
+    '/services', '/records', '/medical-history', '/history', '/status', '/care-team', '/family', '/learn-medicine', '/learn-medicines'
   ];
   if (!user && !publicRoutes.includes(location.pathname)) {
     console.log("Redirecting to / from", location.pathname);
@@ -144,6 +145,8 @@ const MainApp = () => {
           <Route path="/triage" element={<TriageAssessment />} />
           <Route path="/services" element={<Services />} />
           <Route path="/records" element={<Records />} />
+          <Route path="/medical-history" element={<MedicalHistory />} />
+          <Route path="/history" element={<MedicalHistory />} />
           <Route path="/status" element={<Status />} />
           <Route path="/care-team" element={<CareTeam />} />
           <Route path="/family" element={<FamilyHealth />} />

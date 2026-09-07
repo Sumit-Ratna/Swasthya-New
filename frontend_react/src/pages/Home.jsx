@@ -6,7 +6,7 @@ import {
     AlertTriangle, Clock, Compass, PhoneCall, Layers, FileCheck, 
     MessageSquareHeart, Phone, Pill, PlusCircle, ShieldAlert, Heart,
     MapPin, Navigation, Navigation2, ExternalLink, Route, Car, Calendar, UserCheck,
-    ChevronDown, ChevronUp
+    ChevronDown, ChevronUp, History
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -189,12 +189,12 @@ const Home = () => {
         },
         {
             title: 'Medical History',
-            tag: 'SHA-256',
-            desc: 'Tamper-evident logs & health KPIs',
-            icon: <Lock size={22} color="#475569" />,
-            bgColor: '#f1f5f9',
-            badgeColor: '#334155',
-            link: '/admin'
+            tag: 'EHR Records',
+            desc: 'Past records, confirmed appointments & health archives',
+            icon: <History size={22} color="#0284c7" />,
+            bgColor: '#e0f2fe',
+            badgeColor: '#0369a1',
+            link: '/medical-history'
         }
     ];
 
