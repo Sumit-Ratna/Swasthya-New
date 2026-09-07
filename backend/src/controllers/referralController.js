@@ -6,6 +6,7 @@ const {
 } = require('../services/referralStateMachine');
 const { normalizeRole } = require('../middleware/auth');
 const doctorAssignmentService = require('../services/doctorAssignmentService');
+const clinicalCareService = require('../services/clinicalCareService');
 
 /**
  * Get all referrals (filtered by role / query parameters)
@@ -481,49 +482,169 @@ exports.bookAppointmentSlot = async (req, res, next) => {
 };
 
 /**
- * Complete doctor consultation & attach clinical diagnosis
+ * Complete doctor consultation & attach clinical diagnosis & prescriptions
  */
 exports.completeConsultation = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { clinical_summary, diagnosis, requires_diagnostics = false, prescription_items } = req.body;
+        const {
+            clinical_summary,
+            diagnosis,
+            requires_diagnostics = false,
+            diagnostic_tests = [],
+            prescription_items = [],
+            instructions = '',
+            follow_up_days = null
+        } = req.body;
 
-        const actorUserId = req.user?.id || null;
-        const actorRole = req.user?.role || 'DOCTOR';
-
-        // 1. Move to CONSULTATION_COMPLETED
-        await transitionReferral({
+        const result = await clinicalCareService.recordConsultation({
             referralId: id,
-            toStatus: REFERRAL_STATES.CONSULTATION_COMPLETED,
-            actorUserId,
-            actorRole,
-            reason: diagnosis ? `Diagnosis: ${diagnosis}` : 'Doctor consultation completed',
-            payload: {
-                clinical_summary: clinical_summary || diagnosis || 'Consultation completed'
-            }
-        });
-
-        // 2. If diagnostics required, move to DIAGNOSTICS_PENDING, otherwise TREATMENT_COMPLETED -> FOLLOW_UP_PENDING
-        let nextStatus = requires_diagnostics ? REFERRAL_STATES.DIAGNOSTICS_PENDING : REFERRAL_STATES.TREATMENT_COMPLETED;
-
-        const finalResult = await transitionReferral({
-            referralId: id,
-            toStatus: nextStatus,
-            actorUserId,
-            actorRole,
-            reason: requires_diagnostics ? 'Diagnostic lab tests ordered' : 'Treatment plan prescribed'
+            doctorUser: req.user,
+            clinicalSummary: clinical_summary,
+            diagnosis: diagnosis || 'General Consultation',
+            requiresDiagnostics: !!requires_diagnostics,
+            diagnosticTests: diagnostic_tests,
+            prescriptionItems: prescription_items,
+            instructions,
+            followUpDays: follow_up_days
         });
 
         return res.json({
             success: true,
-            message: `Consultation completed and status moved to ${nextStatus}`,
-            data: finalResult.referral
+            message: result.message,
+            status: result.status,
+            prescription: result.prescription,
+            digital_signature: result.digitalSignature,
+            pdf_url: result.pdfUrl,
+            data: result.referral
         });
     } catch (err) {
-        return res.status(400).json({
+        const statusCode = err.status || (err.code === 'INVALID_STATE' ? 409 : (err.code === 'DOCTOR_UNAUTHORIZED' ? 403 : 400));
+        return res.status(statusCode).json({
             success: false,
             error: err.message,
-            code: 'CONSULTATION_ERROR'
+            code: err.code || 'CONSULTATION_ERROR'
+        });
+    }
+};
+
+/**
+ * Complete diagnostic lab results
+ */
+exports.completeDiagnostics = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { lab_results, report_url, notes } = req.body;
+
+        const result = await clinicalCareService.completeDiagnostics({
+            referralId: id,
+            actorUser: req.user,
+            labResults: lab_results,
+            reportUrl: report_url,
+            notes
+        });
+
+        return res.json({
+            success: true,
+            message: result.message,
+            status: result.status,
+            data: result.referral
+        });
+    } catch (err) {
+        const statusCode = err.status || (err.code === 'INVALID_STATE' ? 409 : 400);
+        return res.status(statusCode).json({
+            success: false,
+            error: err.message,
+            code: err.code || 'DIAGNOSTICS_ERROR'
+        });
+    }
+};
+
+/**
+ * Schedule follow-up task
+ */
+exports.scheduleFollowUp = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { follow_up_days, instructions, assigned_asha_id } = req.body;
+
+        const result = await clinicalCareService.scheduleFollowUp({
+            referralId: id,
+            doctorUser: req.user,
+            followUpDays: follow_up_days,
+            instructions,
+            assignedAshaId: assigned_asha_id
+        });
+
+        return res.json({
+            success: true,
+            message: result.message,
+            status: result.status,
+            data: result.referral
+        });
+    } catch (err) {
+        const statusCode = err.status || (err.code === 'INVALID_STATE' ? 409 : 400);
+        return res.status(statusCode).json({
+            success: false,
+            error: err.message,
+            code: err.code || 'FOLLOW_UP_SCHEDULE_ERROR'
+        });
+    }
+};
+
+/**
+ * Complete community follow-up visit (Closed Loop completion)
+ */
+exports.completeFollowUp = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { notes, vitals, patient_status } = req.body;
+
+        const result = await clinicalCareService.completeFollowUp({
+            referralId: id,
+            healthWorkerUser: req.user,
+            notes,
+            vitals,
+            patientStatus: patient_status
+        });
+
+        return res.json({
+            success: true,
+            message: result.message,
+            status: result.status,
+            data: result.referral
+        });
+    } catch (err) {
+        const statusCode = err.status || (err.code === 'INVALID_STATE' ? 409 : 400);
+        return res.status(statusCode).json({
+            success: false,
+            error: err.message,
+            code: err.code || 'FOLLOW_UP_COMPLETE_ERROR'
+        });
+    }
+};
+
+/**
+ * Get prescription with authorization check
+ */
+exports.getPrescription = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const prescription = await clinicalCareService.getPrescription({
+            prescriptionId: id,
+            requestingUser: req.user
+        });
+
+        return res.json({
+            success: true,
+            data: prescription
+        });
+    } catch (err) {
+        const statusCode = err.status || (err.code === 'FORBIDDEN' ? 403 : 404);
+        return res.status(statusCode).json({
+            success: false,
+            error: err.message,
+            code: err.code || 'PRESCRIPTION_FETCH_ERROR'
         });
     }
 };

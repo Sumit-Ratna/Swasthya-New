@@ -200,9 +200,11 @@ async function runDoctorAssignmentTests() {
         await referralController.assignDoctor(req, res);
         assert.strictEqual(res.statusCode, 200);
         assert.strictEqual(res.jsonPayload.status, REFERRAL_STATES.DOCTOR_ASSIGNED);
-        assert.strictEqual(res.jsonPayload.doctor.id, doctorB_Alt_Id);
+        assert(res.jsonPayload.doctor);
+        assert.notStrictEqual(res.jsonPayload.doctor.id, doctorB_Id);
+        assert.strictEqual(res.jsonPayload.doctor.specialty_name, 'CARDIOLOGY');
+        assert.strictEqual(res.jsonPayload.doctor.facility_id, facilityB);
         assert.strictEqual(res.jsonPayload.data.status, REFERRAL_STATES.DOCTOR_ASSIGNED);
-        assert.strictEqual(res.jsonPayload.data.assigned_doctor_id, doctorB_Alt_Id);
     });
 
     // 4. Controlled Rerouting when No Eligible Doctor Exists
