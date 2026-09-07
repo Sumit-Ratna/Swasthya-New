@@ -10,6 +10,7 @@ import {
     User, Calendar, MapPin, Heart, Shield, ShieldCheck, Activity, FileText,
     UserPlus, LogIn, HelpCircle
 } from 'lucide-react';
+import SwasthyaLogo from '../components/SwasthyaLogo';
 
 const INDIAN_STATES = [
     "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", 
@@ -435,28 +436,9 @@ const Login = () => {
             <motion.div
                 initial={{ opacity: 0, y: -15 }}
                 animate={{ opacity: 1, y: 0 }}
-                style={{ textAlign: 'center', marginBottom: '20px', maxWidth: '440px' }}
+                style={{ textAlign: 'center', marginBottom: '22px', maxWidth: '440px' }}
             >
-                <div style={{
-                    width: '74px',
-                    height: '74px',
-                    background: 'white',
-                    borderRadius: '20px',
-                    margin: '0 auto 10px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 10px 22px -4px rgba(13, 148, 136, 0.18)',
-                    border: '1px solid #e2e8f0',
-                    overflow: 'hidden',
-                    padding: '4px'
-                }}>
-                    <img 
-                        src="/logo.png" 
-                        alt="Swasthya Logo" 
-                        style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
-                    />
-                </div>
+                <SwasthyaLogo size="large" showTagline={true} />
             </motion.div>
 
             {/* Main Interactive Card */}
