@@ -37,7 +37,10 @@ const RoleSelection = () => {
             icon: <User size={28} color="#2563eb" />,
             gradient: 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)',
             actionText: 'Enter Patient',
-            onClick: () => navigate('/login')
+            onClick: () => {
+                guestLogin('patient');
+                navigate('/home');
+            }
         },
         {
             role: 'caregiver',
@@ -63,8 +66,11 @@ const RoleSelection = () => {
             desc: 'EHR records, e-prescriptions & consults',
             icon: <Stethoscope size={28} color="#0284c7" />,
             gradient: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
-            actionText: 'Doctor Login',
-            onClick: () => navigate('/login/doctor')
+            actionText: 'Doctor OPD',
+            onClick: () => {
+                guestLogin('doctor');
+                navigate('/doctor/dashboard');
+            }
         },
         {
             role: 'facility_staff',
@@ -91,7 +97,10 @@ const RoleSelection = () => {
             icon: <Lock size={28} color="#475569" />,
             gradient: 'linear-gradient(135deg, #334155 0%, #0f172a 100%)',
             actionText: 'Admin Dashboard',
-            onClick: () => navigate('/admin')
+            onClick: () => {
+                guestLogin('admin');
+                navigate('/admin');
+            }
         }
     ];
 

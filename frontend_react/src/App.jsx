@@ -86,6 +86,16 @@ const MainApp = () => {
     );
   }
 
+  const getRoleHome = (role) => {
+    const r = (role || 'patient').toLowerCase();
+    if (r === 'doctor') return '/doctor/dashboard';
+    if (r === 'health_worker' || r === 'asha') return '/asha';
+    if (r === 'facility_staff' || r === 'facility_coordinator' || r === 'facility') return '/facility-dashboard';
+    if (r === 'caregiver') return '/caregiver';
+    if (r === 'admin') return '/admin';
+    return '/home';
+  };
+
   const publicRoutes = [
     '/', '/home', '/login', '/login/patient', '/login/doctor', '/signup', 
     '/admin', '/referrals', '/facilities', '/triage',
@@ -101,23 +111,26 @@ const MainApp = () => {
     <>
       <div style={{ paddingBottom: hideNavRoutes.includes(location.pathname) ? '0' : '80px' }}>
         <Routes>
-          {/* Landing / Auth Routes */}
-          <Route path="/" element={!user ? <Login /> : (user.role === 'doctor' ? <Navigate to="/doctor/dashboard" /> : <Home />)} />
+          {/* Landing / Auth Routes with Role-Specific Default Redirects */}
+          <Route path="/" element={!user ? <Login /> : <Navigate to={getRoleHome(user.role)} replace />} />
           <Route path="/home" element={<Home />} />
           <Route path="/roles" element={<RoleSelection />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/login" element={!user ? <Login /> : <Navigate to="/home" />} />
-          <Route path="/login/patient" element={!user ? <Login /> : <Navigate to="/home" />} />
-          <Route path="/login/doctor" element={!user ? <DoctorLogin /> : <Navigate to="/doctor/dashboard" />} />
+          <Route path="/login" element={!user ? <Login /> : <Navigate to={getRoleHome(user.role)} replace />} />
+          <Route path="/login/patient" element={!user ? <Login /> : <Navigate to="/home" replace />} />
+          <Route path="/login/doctor" element={!user ? <DoctorLogin /> : <Navigate to="/doctor/dashboard" replace />} />
 
-          {/* Shared Healthcare & Swasthya Routes */}
+          {/* Dedicated Healthcare Dashboards */}
+          <Route path="/asha" element={<AshaDashboard />} />
+          <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
+          <Route path="/facility-dashboard" element={<FacilityDashboard />} />
+          <Route path="/caregiver" element={<CaregiverDashboard />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+
+          {/* Shared Healthcare & Swasthya Core Modules */}
           <Route path="/referrals" element={<ReferralTracker />} />
           <Route path="/facilities" element={<FacilityFinder />} />
           <Route path="/triage" element={<TriageAssessment />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/asha" element={<AshaDashboard />} />
-          <Route path="/caregiver" element={<CaregiverDashboard />} />
-          <Route path="/facility-dashboard" element={<FacilityDashboard />} />
           <Route path="/services" element={<Services />} />
           <Route path="/records" element={<Records />} />
           <Route path="/status" element={<Status />} />
@@ -132,24 +145,23 @@ const MainApp = () => {
           <Route path="/consultation/:date/:doctorId" element={<ConsultationDetails />} />
           <Route path="/notifications" element={<Notifications />} />
 
-          {/* Shared Profile */}
+          {/* Profile Route */}
           <Route path="/profile" element={<Profile />} />
 
-          {/* Doctor Routes */}
-          <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
+          {/* Doctor Sub-Routes */}
           <Route path="/doctor/patients" element={<DoctorPatients />} />
           <Route path="/doctor/patient/:patient_id" element={<PatientHistory />} />
           <Route path="/doctor/prescribe" element={<PrescribeMedicine />} />
           <Route path="/doctor/diagnosis" element={<AddDiagnosis />} />
 
           {/* Catch all */}
-          <Route path="*" element={<Navigate to={user ? (user.role === 'doctor' ? '/doctor/dashboard' : '/home') : '/home'} />} />
+          <Route path="*" element={<Navigate to={user ? getRoleHome(user.role) : '/login'} replace />} />
         </Routes>
       </div>
 
-      {/* Show Navbar on all main pages */}
+      {/* Show Role-Aware Navbar on all main pages */}
       {!hideNavRoutes.includes(location.pathname) && (
-        user?.role === 'doctor' ? <DoctorNavbar /> : <Navbar />
+        <Navbar />
       )}
     </>
   );

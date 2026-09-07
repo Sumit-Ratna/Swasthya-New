@@ -102,7 +102,7 @@ const Login = () => {
             icon: <HeartPulse size={20} color="#0d9488" />,
             badgeBg: '#ccfbf1',
             badgeColor: '#0f766e',
-            targetRoute: '/triage',
+            targetRoute: '/asha',
             demoPhone: '+919876543210'
         },
         {
@@ -132,7 +132,7 @@ const Login = () => {
             icon: <Users size={20} color="#db2777" />,
             badgeBg: '#fce7f3',
             badgeColor: '#be185d',
-            targetRoute: '/family',
+            targetRoute: '/caregiver',
             demoPhone: '+919000000001'
         },
         {
@@ -142,7 +142,7 @@ const Login = () => {
             icon: <Building2 size={20} color="#d97706" />,
             badgeBg: '#fef3c7',
             badgeColor: '#b45309',
-            targetRoute: '/facilities',
+            targetRoute: '/facility-dashboard',
             demoPhone: '+919800000001'
         },
         {

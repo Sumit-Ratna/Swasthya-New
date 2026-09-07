@@ -189,33 +189,6 @@ const Home = () => {
         }
     ];
 
-    const stakeholderHubs = [
-        {
-            title: 'ASHA Worker Hub',
-            desc: 'RCH tracking & field triage',
-            icon: <HeartPulse size={20} color="#0d9488" />,
-            bgColor: '#f0fdfa',
-            borderColor: '#99f6e4',
-            link: '/asha'
-        },
-        {
-            title: 'Caregiver Hub',
-            desc: 'Vitals radar & SOS panic',
-            icon: <Users size={20} color="#db2777" />,
-            bgColor: '#fdf2f8',
-            borderColor: '#fbcfe8',
-            link: '/caregiver'
-        },
-        {
-            title: 'Facility Ops Desk',
-            desc: 'Bed grid & doctor roster',
-            icon: <Building2 size={20} color="#0284c7" />,
-            bgColor: '#f0f9ff',
-            borderColor: '#bae6fd',
-            link: '/facility-dashboard'
-        }
-    ];
-
     return (
         <div style={{
             padding: '20px 16px 120px 16px',
@@ -363,71 +336,6 @@ const Home = () => {
                 onClose={() => setIsFeedbackOpen(false)} 
             />
 
-            {/* Quick Multi-Role Dashboard Switcher Bar */}
-            <div style={{
-                marginBottom: '22px',
-                background: 'var(--card-bg)',
-                borderRadius: '18px',
-                padding: '14px',
-                border: '1px solid var(--border-color)',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.03)'
-            }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <Sparkles size={16} color="#0d9488" />
-                        <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-primary)' }}>
-                            Healthcare Role Portals
-                        </span>
-                    </div>
-                    <span 
-                        onClick={() => navigate('/roles')}
-                        style={{ fontSize: '12px', fontWeight: 700, color: '#0d9488', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px' }}
-                    >
-                        All Roles <ArrowRight size={14} />
-                    </span>
-                </div>
-
-                <div style={{
-                    display: 'flex',
-                    gap: '10px',
-                    overflowX: 'auto',
-                    paddingBottom: '4px'
-                }}>
-                    {[
-                        { title: 'ASHA / ANM', icon: '👩‍⚕️', bg: '#ccfbf1', color: '#0f766e', link: '/asha' },
-                        { title: 'Caregiver Hub', icon: '👨‍👩‍👧', bg: '#fce7f3', color: '#be185d', link: '/caregiver' },
-                        { title: 'Facility Ops', icon: '🏥', bg: '#e0f2fe', color: '#0369a1', link: '/facility-dashboard' },
-                        { title: 'Admin Command', icon: '🛡️', bg: '#f1f5f9', color: '#334155', link: '/admin' },
-                        { title: 'Doctor OPD', icon: '🩺', bg: '#fef3c7', color: '#b45309', link: '/doctor/dashboard' }
-                    ].map((p, idx) => (
-                        <motion.button
-                            key={idx}
-                            whileHover={{ scale: 1.04 }}
-                            whileTap={{ scale: 0.96 }}
-                            onClick={() => navigate(p.link)}
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                background: p.bg,
-                                color: p.color,
-                                border: 'none',
-                                padding: '8px 14px',
-                                borderRadius: '12px',
-                                cursor: 'pointer',
-                                fontWeight: 700,
-                                fontSize: '12px',
-                                whiteSpace: 'nowrap',
-                                boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
-                            }}
-                        >
-                            <span>{p.icon}</span>
-                            <span>{p.title}</span>
-                        </motion.button>
-                    ))}
-                </div>
-            </div>
-
             {/* Active Referral Live Journey Widget */}
             <motion.div
                 initial={{ opacity: 0, y: 15 }}
@@ -497,66 +405,6 @@ const Home = () => {
                     </div>
                 </div>
             </motion.div>
-
-            {/* Stakeholder Role Command Portals */}
-            <div style={{ marginBottom: '24px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                    <h2 className="section-title" style={{ margin: 0, color: 'var(--text-primary)', fontSize: '16px', fontWeight: 800 }}>
-                        Stakeholder Command Hubs
-                    </h2>
-                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 600 }}>
-                        3 Specialized Portals
-                    </span>
-                </div>
-
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
-                    gap: '10px'
-                }}>
-                    {stakeholderHubs.map((hub, idx) => (
-                        <motion.div
-                            key={idx}
-                            whileHover={{ y: -2, scale: 1.01 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={() => navigate(hub.link)}
-                            style={{
-                                background: hub.bgColor,
-                                border: `1.5px solid ${hub.borderColor}`,
-                                borderRadius: '14px',
-                                padding: '12px 10px',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                justifyContent: 'space-between',
-                                minHeight: '86px'
-                            }}
-                        >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                                <div style={{
-                                    width: '32px',
-                                    height: '32px',
-                                    borderRadius: '8px',
-                                    background: 'white',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-                                }}>
-                                    {hub.icon}
-                                </div>
-                                <h4 style={{ margin: 0, fontSize: '12px', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.2 }}>
-                                    {hub.title}
-                                </h4>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '2px', fontSize: '10.5px', fontWeight: 700, color: 'var(--primary-color)', marginTop: '4px' }}>
-                                <span>Enter Portal</span>
-                                <ChevronRight size={12} />
-                            </div>
-                        </motion.div>
-                    ))}
-                </div>
-            </div>
 
             {/* Swasthya Platform Capabilities Grid Layout */}
             <div style={{ marginBottom: '32px' }}>
