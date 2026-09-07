@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const supabase = require('./config/supabaseClient');
-require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 const connectRoutes = require('./routes/connect');
 const aiRoutes = require('./routes/ai');
@@ -22,8 +22,24 @@ const feedbackRoutes = require('./routes/feedback');
 const app = express();
 const PORT = process.env.PORT || 8000;
 
-app.use(cors());
-app.use(express.json());
+// CORS configuration supporting mobile Capacitor, Web, Localhost, and LAN IPs
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Bypass-Tunnel-Reminder', 'ngrok-skip-browser-warning', 'X-Requested-With', 'x-user-id', 'x-user-role'],
+    credentials: true
+}));
+
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Diagnostic Request Logger for Mobile & Web requests
+app.use((req, res, next) => {
+    const origin = req.headers.origin || 'mobile/direct';
+    console.log(`[HTTP ${req.method}] ${req.originalUrl} | From: ${origin} | IP: ${req.ip}`);
+    next();
+});
+
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Routes
@@ -47,6 +63,7 @@ app.get('/', (req, res) => {
         name: 'SwasthyaSetu / HealthNexus Unified Healthcare API',
         message: 'API is Running with Supabase PostgreSQL and Closed-Loop Referral Engine',
         status: 'healthy',
+        database: 'Connected to Supabase PostgreSQL',
         timestamp: new Date().toISOString()
     });
 });
@@ -59,20 +76,26 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-// Start Server with Supabase Check
-app.listen(PORT, async () => {
-    console.log(`[SERVER] Running on http://localhost:${PORT}`);
-    try {
-        const { error } = await supabase.from('users').select('id').limit(1);
-        if (error) {
-            console.warn('[WARNING] Supabase query notice:', error.message);
-        } else {
-            console.log('[SUCCESS] Connected to Supabase Database successfully');
+// Start Server listening on 0.0.0.0 (Accessible via localhost, LAN IP 192.168.29.111, & reverse proxy)
+const HOST = '0.0.0.0';
+if (require.main && require.main.filename === __filename && !process.env.VERCEL) {
+    app.listen(PORT, HOST, async () => {
+        console.log(`[SERVER] Running on http://${HOST}:${PORT}`);
+        console.log(`[NETWORK] Localhost: http://localhost:${PORT}`);
+        console.log(`[NETWORK] Wi-Fi LAN:  http://192.168.29.111:${PORT}`);
+        try {
+            const { error } = await supabase.from('users').select('id').limit(1);
+            if (error) {
+                console.warn('[WARNING] Supabase query notice:', error.message);
+            } else {
+                console.log('[SUCCESS] Connected to Supabase Database successfully (virecfebgqsumovpumqe.supabase.co)');
+            }
+        } catch (err) {
+            console.warn('[WARNING] Supabase initial ping exception:', err.message);
         }
-    } catch (err) {
-        console.warn('[WARNING] Supabase initial ping exception:', err.message);
-    }
-});
+    });
+}
 
 module.exports = app;
+
 

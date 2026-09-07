@@ -6,14 +6,47 @@ const isNative = Capacitor.isNativePlatform();
 const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
 const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
 
-// Primary API endpoint (works for web and Android via adb reverse tcp:8000 tcp:8000)
-export const LOCAL_API_URL = 'http://localhost:8000';
+// Developer Machine LAN IP for physical device over local Wi-Fi
+export const DEV_LAN_IP = '192.168.29.111';
+export const LOCAL_API_URL = isNative ? `http://${DEV_LAN_IP}:8000` : 'http://localhost:8000';
+
+// Configurable API Base URL via environment or fallback
 export const API_BASE_URL = import.meta.env.VITE_API_URL || LOCAL_API_URL;
 
 // Configure Axios defaults
 axios.defaults.baseURL = API_BASE_URL;
 axios.defaults.headers.common['Bypass-Tunnel-Reminder'] = 'true';
 axios.defaults.headers.common['ngrok-skip-browser-warning'] = 'true';
+
+// Request Interceptor: Attach diagnostic logging & token
+axios.interceptors.request.use(
+    (config) => {
+        const token = localStorage.getItem('accessToken');
+        if (token && !config.headers['Authorization']) {
+            config.headers['Authorization'] = `Bearer ${token}`;
+        }
+        console.log(`[API CALL -> BACKEND] ${config.method?.toUpperCase()} ${config.baseURL || ''}${config.url}`);
+        return config;
+    },
+    (error) => {
+        console.error('[API REQUEST ERROR]', error);
+        return Promise.reject(error);
+    }
+);
+
+// Response Interceptor: Log errors with clear diagnostic info
+axios.interceptors.response.use(
+    (response) => {
+        return response;
+    },
+    (error) => {
+        const method = error.config?.method?.toUpperCase() || 'REQUEST';
+        const url = `${error.config?.baseURL || ''}${error.config?.url || ''}`;
+        const status = error.response?.status || 'NETWORK_FAILED';
+        console.warn(`[API ERROR ${status}] ${method} ${url}:`, error.response?.data?.error || error.message);
+        return Promise.reject(error);
+    }
+);
 
 // Helper to build full asset/media URL
 export const getMediaUrl = (path) => {

@@ -11,68 +11,15 @@ exports.updateProfile = async (req, res) => {
     try {
         const userId = req.user.id;
         const { section, data } = req.body;
-
-        console.log(`[UPDATE] Updating ${section || 'full'} profile for user ${userId}`);
-
-        let updates = {};
         const inputData = data || req.body;
 
-        if (section === 'medical') {
-            updates = { medical_history: inputData };
-        } else if (section === 'lifestyle') {
-            updates = { lifestyle: inputData };
-        } else {
-            // Personal / Full profile update
-            const directFields = {};
-            const extraMeta = {};
+        console.log(`[UPDATE] Updating profile for user ${userId} in Supabase`);
 
-            Object.entries(inputData).forEach(([key, val]) => {
-                if (key === 'id' || key === 'phone' || key === 'role' || key === 'section' || key === 'refresh_token') {
-                    return; // Skip protected/internal fields
-                }
-                
-                let cleanVal = val;
-                if (cleanVal === '') cleanVal = null;
-
-                if (VALID_USER_COLUMNS.has(key)) {
-                    directFields[key] = cleanVal;
-                } else if (key === 'medical_history' || key === 'lifestyle') {
-                    directFields[key] = cleanVal;
-                } else {
-                    extraMeta[key] = cleanVal;
-                }
-            });
-
-            // If allergies/chronic_conditions/medications are arrays or strings
-            if (Array.isArray(directFields.allergies)) directFields.allergies = directFields.allergies.join(', ');
-            if (Array.isArray(directFields.chronic_conditions)) directFields.chronic_conditions = directFields.chronic_conditions.join(', ');
-            if (Array.isArray(directFields.medications)) directFields.medications = directFields.medications.join(', ');
-
-            // Merge extra Indian Citizen metadata into medical_history jsonb
-            const existingUser = await dbService.getUser(userId) || {};
-            const currentMedHist = existingUser.medical_history || {};
-            
-            directFields.medical_history = {
-                ...currentMedHist,
-                ...extraMeta,
-                ...(inputData.medical_history || {})
-            };
-
-            updates = directFields;
-        }
-
-        const updated = await dbService.updateUser(userId, updates);
-        const fullUser = await dbService.getUser(userId);
-
-        // Flatten metadata for seamless frontend consumption
-        const responseUser = {
-            ...fullUser,
-            ...(fullUser?.medical_history || {})
-        };
+        const updatedUser = await dbService.updateUser(userId, inputData);
 
         res.json({
             message: "Profile updated successfully",
-            user: responseUser
+            user: updatedUser
         });
 
     } catch (err) {

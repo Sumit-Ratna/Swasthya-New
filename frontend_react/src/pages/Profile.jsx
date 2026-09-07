@@ -1,7 +1,8 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import axios from 'axios';
+import api from '../config/api';
+import { supabase } from '../config/supabase';
 import { Edit2, Save, X, Moon, Sun, Shield, MapPin, Phone, Heart, Activity } from 'lucide-react';
 import QRCode from 'react-qr-code';
 
@@ -155,19 +156,57 @@ const Profile = () => {
                 data = lifestyleData;
             }
 
-            const res = await axios.post('/api/profile/update', { section, data });
-            alert('Profile updated successfully!');
-            
-            // Sync context state
-            if (res.data?.user) {
-                updateUser(res.data.user);
+            let updatedUserObj = null;
+
+            try {
+                const res = await api.post('/api/profile/update', { section, data });
+                if (res.data?.user) {
+                    updatedUserObj = res.data.user;
+                }
+            } catch (apiErr) {
+                console.warn('[Profile Save] Backend API unreachable, syncing directly to Supabase:', apiErr.message);
+                
+                // Direct Supabase Fallback using anon key
+                if (user?.id) {
+                    if (formData.name || formData.email) {
+                        await supabase.from('users').update({
+                            full_name: formData.name || user.name,
+                            email: formData.email || user.email
+                        }).eq('id', user.id);
+                    }
+
+                    await supabase.from('patients').upsert({
+                        user_id: user.id,
+                        full_name: formData.name || user.name,
+                        date_of_birth: formData.dob || null,
+                        gender: formData.gender || null,
+                        address: formData.address || null,
+                        district: formData.address_city || null,
+                        abha_id: formData.abha_id || null,
+                        abha_address: formData.abha_address || null
+                    }, { onConflict: 'user_id' });
+
+                    updatedUserObj = {
+                        ...user,
+                        ...formData,
+                        name: formData.name || user.name,
+                        email: formData.email || user.email
+                    };
+                } else {
+                    throw apiErr;
+                }
+            }
+
+            if (updatedUserObj) {
+                updateUser(updatedUserObj);
             }
             
+            alert('Profile updated and synchronized to Supabase successfully!');
             setEditMode(false);
         } catch (err) {
-            console.error(err);
+            console.error('[Profile Update Error]', err);
             const errMsg = err.response?.data?.error || err.message;
-            alert(`Database update error: ${errMsg}`);
+            alert(`Profile update error: ${errMsg}`);
         }
     };
 

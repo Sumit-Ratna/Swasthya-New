@@ -3,11 +3,13 @@ dist/
 build/
 .gradle/
 *.log
+.env
 .env.local
-.DS_Store
+.env.*.local
 *.apk
 venv/
 .venv/
 ai_service/venv/
 frontend_react/android/app/build/
 frontend_react/android/.gradle/
+.DS_Store

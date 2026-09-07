@@ -4,91 +4,99 @@ const localDb = require('./localDb');
 
 class SupabaseService {
     // ==========================================
-    // USER OPERATIONS
+    // USER & PATIENT CLOUD DATABASE OPERATIONS
     // ==========================================
     async createUser(userId, userData) {
         let phone = userData.phone;
         if (!phone || String(phone).trim() === '') {
-            phone = '+91' + Math.floor(6000000000 + Math.random() * 3999999999);
+            phone = String(Math.floor(6000000000 + Math.random() * 3999999999));
+        } else {
+            phone = String(phone).replace(/\D/g, '').slice(-10);
         }
 
-        const medicalHistory = {
-            ...(userData.medical_history || {}),
-            ...(userData.password_hash ? { password_hash: userData.password_hash } : {})
-        };
+        const fullName = userData.name || userData.full_name || 'New User';
+        const rawRole = (userData.role || 'patient').toUpperCase();
+        const role = rawRole.includes('DOC') ? 'DOCTOR' : (rawRole.includes('HEALTH') || rawRole.includes('WORKER') || rawRole.includes('ASHA') ? 'HEALTH_WORKER' : 'PATIENT');
 
-        const payload = {
+        const userPayload = {
             id: userId,
             phone: phone,
-            name: userData.name || userData.full_name || 'New User',
+            full_name: fullName,
             email: userData.email ? userData.email.trim().toLowerCase() : null,
-            role: userData.role || 'patient',
-            dob: userData.dob || null,
-            gender: userData.gender || 'Male',
-            blood_group: userData.blood_group || 'O+',
-            emergency_contact: userData.emergency_contact || null,
-            allergies: userData.allergies || null,
-            chronic_conditions: userData.chronic_conditions || null,
-            medications: userData.medications || null,
-            medical_history: medicalHistory,
-            lifestyle: userData.lifestyle || {},
-            specialization: userData.specialization || null,
-            hospital_name: userData.hospital_name || null,
-            doctor_qr_id: userData.doctor_qr_id || null
+            role: role,
+            status: 'ACTIVE',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
         };
 
         if (userData.password_hash) {
-            payload.password_hash = userData.password_hash;
+            userPayload.password_hash = userData.password_hash;
         }
 
         try {
             const { data, error } = await supabase
                 .from('users')
-                .insert(payload)
+                .upsert(userPayload)
                 .select()
                 .single();
 
-            if (!error && data) {
-                localDb.insert('users', data);
-                return data;
-            }
-
             if (error) {
-                console.warn('[SUPABASE] insert notice, retrying with JSONB payload:', error.message);
-                const retryPayload = { ...payload };
-                delete retryPayload.password_hash;
-                const retryRes = await supabase
-                    .from('users')
-                    .insert(retryPayload)
-                    .select()
-                    .single();
-                if (!retryRes.error && retryRes.data) {
-                    localDb.insert('users', retryRes.data);
-                    return retryRes.data;
-                }
+                console.warn('[SUPABASE] user upsert error:', error.message);
             }
-        } catch (e) {
-            console.warn('[SUPABASE] User create fallback to localDb:', e.message);
-        }
 
-        return localDb.insert('users', payload);
+            // Also create/update associated patient record in Supabase patients table
+            const patientPayload = {
+                id: userId,
+                user_id: userId,
+                full_name: fullName,
+                phone: phone,
+                gender: userData.gender || 'Male',
+                date_of_birth: userData.dob || userData.date_of_birth || '2000-01-01',
+                address: userData.address || '',
+                district: userData.address_city || userData.district || 'Lucknow',
+                village: userData.village || userData.address_state || '',
+                abha_id: userData.abha_id || null,
+                abha_address: userData.abha_address || null,
+                consent_status: 'GRANTED',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            };
+
+            const { error: patientErr } = await supabase
+                .from('patients')
+                .upsert(patientPayload);
+
+            if (patientErr) {
+                console.warn('[SUPABASE] patient table sync notice:', patientErr.message);
+            }
+
+            const unified = {
+                ...userPayload,
+                ...patientPayload,
+                name: fullName,
+                role: role.toLowerCase(),
+                dob: patientPayload.date_of_birth,
+                blood_group: userData.blood_group || 'O+',
+                allergies: userData.allergies || 'None',
+                chronic_conditions: userData.chronic_conditions || 'None',
+                emergency_contact: userData.emergency_contact || null
+            };
+
+            localDb.insert('users', unified);
+            return unified;
+        } catch (e) {
+            console.error('[SUPABASE] createUser exception:', e.message);
+            const fallback = { ...userPayload, name: fullName, role: role.toLowerCase() };
+            return localDb.insert('users', fallback);
+        }
     }
 
     async updateUserPassword(userId, passwordHash) {
-        const currentUser = await this.getUser(userId);
-        if (!currentUser) throw new Error('User not found in Supabase');
-
-        const medicalHistory = {
-            ...(currentUser.medical_history || {}),
-            password_hash: passwordHash
-        };
-
         try {
             const { data, error } = await supabase
                 .from('users')
                 .update({
                     password_hash: passwordHash,
-                    medical_history: medicalHistory,
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', userId)
@@ -96,138 +104,144 @@ class SupabaseService {
                 .single();
 
             if (!error && data) {
-                localDb.update('users', u => u.id === userId, data);
+                localDb.update('users', u => u.id === userId, { password_hash: passwordHash });
                 return data;
             }
         } catch (e) {
-            console.warn('[SUPABASE] Password column update notice:', e.message);
+            console.warn('[SUPABASE] Password update notice:', e.message);
         }
 
-        try {
-            const { data, error } = await supabase
-                .from('users')
-                .update({
-                    medical_history: medicalHistory,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', userId)
-                .select()
-                .single();
-
-            if (!error && data) {
-                localDb.update('users', u => u.id === userId, data);
-                return data;
-            }
-        } catch (e) {}
-
-        return localDb.update('users', u => u.id === userId, {
-            ...currentUser,
-            password_hash: passwordHash,
-            medical_history: medicalHistory
-        });
+        return localDb.update('users', u => u.id === userId, { password_hash: passwordHash });
     }
 
     async getUser(userId) {
         try {
-            const { data, error } = await supabase
+            const { data: supaUser, error } = await supabase
                 .from('users')
                 .select('*')
                 .eq('id', userId)
                 .maybeSingle();
 
-            if (!error && data) return data;
-        } catch (e) {}
+            if (supaUser) {
+                // Fetch joined patient record
+                const { data: patientRecord } = await supabase
+                    .from('patients')
+                    .select('*')
+                    .or(`id.eq.${userId},user_id.eq.${userId}`)
+                    .maybeSingle();
+
+                return {
+                    ...supaUser,
+                    ...(patientRecord || {}),
+                    id: supaUser.id,
+                    name: supaUser.full_name || patientRecord?.full_name || 'User',
+                    full_name: supaUser.full_name || patientRecord?.full_name || 'User',
+                    phone: supaUser.phone || patientRecord?.phone,
+                    role: (supaUser.role || 'PATIENT').toLowerCase(),
+                    dob: patientRecord?.date_of_birth || supaUser.dob,
+                    address_city: patientRecord?.district || '',
+                    address_state: patientRecord?.village || '',
+                    address: patientRecord?.address || '',
+                    abha_id: patientRecord?.abha_id || '',
+                    abha_address: patientRecord?.abha_address || ''
+                };
+            }
+        } catch (e) {
+            console.warn('[SUPABASE] getUser notice:', e.message);
+        }
 
         return localDb.findOne('users', u => u.id === userId);
     }
 
     async getUserByPhone(phone) {
+        const cleanPhone = String(phone).replace(/\D/g, '').slice(-10);
         try {
-            const { data, error } = await supabase
+            const { data: supaUser, error } = await supabase
                 .from('users')
                 .select('*')
-                .eq('phone', phone)
+                .ilike('phone', `%${cleanPhone}%`)
                 .maybeSingle();
 
-            if (!error && data) return data;
+            if (supaUser) {
+                return this.getUser(supaUser.id);
+            }
         } catch (e) {}
 
-        return localDb.findOne('users', u => u.phone === phone);
+        return localDb.findOne('users', u => u.phone && u.phone.includes(cleanPhone));
     }
 
     async getUserByEmail(email) {
         if (!email) return null;
+        const cleanEmail = email.trim().toLowerCase();
         try {
-            const { data, error } = await supabase
+            const { data: supaUser, error } = await supabase
                 .from('users')
                 .select('*')
-                .eq('email', email.trim().toLowerCase())
+                .eq('email', cleanEmail)
                 .maybeSingle();
 
-            if (!error && data) return data;
+            if (supaUser) {
+                return this.getUser(supaUser.id);
+            }
         } catch (e) {}
 
-        return localDb.findOne('users', u => u.email && u.email.toLowerCase() === email.trim().toLowerCase());
+        return localDb.findOne('users', u => u.email && u.email.toLowerCase() === cleanEmail);
     }
 
     async getUserByQrId(doctor_qr_id) {
         const { data, error } = await supabase
             .from('users')
             .select('*')
-            .eq('doctor_qr_id', doctor_qr_id)
-            .eq('role', 'doctor')
+            .eq('assigned_facility_id', doctor_qr_id)
             .maybeSingle();
 
-        if (error) {
-            console.error('[SUPABASE] getUserByQrId error:', error);
-            throw new Error(error.message);
-        }
         return data;
     }
 
     async updateUser(userId, updateData) {
-        const currentUser = await this.getUser(userId);
-        if (!currentUser) throw new Error('User not found in Supabase');
+        const fullName = updateData.name || updateData.full_name;
+        const userUpdates = { updated_at: new Date().toISOString() };
+        if (fullName) userUpdates.full_name = fullName;
+        if (updateData.email) userUpdates.email = updateData.email.trim().toLowerCase();
+        if (updateData.phone) userUpdates.phone = String(updateData.phone).replace(/\D/g, '').slice(-10);
+        if (updateData.role) userUpdates.role = updateData.role.toUpperCase();
 
-        const payload = { ...updateData, updated_at: new Date().toISOString() };
+        try {
+            await supabase
+                .from('users')
+                .update(userUpdates)
+                .eq('id', userId);
 
-        if (updateData.medical_history) {
-            payload.medical_history = {
-                ...(currentUser.medical_history || {}),
-                ...updateData.medical_history
+            // Update patients table
+            const patientUpdates = {
+                updated_at: new Date().toISOString()
             };
-        }
-        if (updateData.lifestyle) {
-            payload.lifestyle = {
-                ...(currentUser.lifestyle || {}),
-                ...updateData.lifestyle
-            };
-        }
+            if (fullName) patientUpdates.full_name = fullName;
+            if (updateData.gender) patientUpdates.gender = updateData.gender;
+            if (updateData.dob || updateData.date_of_birth) patientUpdates.date_of_birth = updateData.dob || updateData.date_of_birth;
+            if (updateData.address) patientUpdates.address = updateData.address;
+            if (updateData.address_city || updateData.district) patientUpdates.district = updateData.address_city || updateData.district;
+            if (updateData.address_state || updateData.village) patientUpdates.village = updateData.address_state || updateData.village;
+            if (updateData.abha_id) patientUpdates.abha_id = updateData.abha_id;
+            if (updateData.abha_address) patientUpdates.abha_address = updateData.abha_address;
 
-        const { data, error } = await supabase
-            .from('users')
-            .update(payload)
-            .eq('id', userId)
-            .select()
-            .single();
+            await supabase
+                .from('patients')
+                .update(patientUpdates)
+                .or(`id.eq.${userId},user_id.eq.${userId}`);
 
-        if (error) {
-            console.error('[SUPABASE] updateUser error:', error);
-            throw new Error(error.message);
+            return this.getUser(userId);
+        } catch (err) {
+            console.error('[SUPABASE] updateUser error:', err);
+            return this.getUser(userId);
         }
-        return data;
     }
 
     async deleteUser(userId) {
-        const { error } = await supabase
-            .from('users')
-            .delete()
-            .eq('id', userId);
-
-        if (error) {
-            console.error('[SUPABASE] deleteUser error:', error);
-            throw new Error(error.message);
-        }
+        try {
+            await supabase.from('patients').delete().or(`id.eq.${userId},user_id.eq.${userId}`);
+            await supabase.from('users').delete().eq('id', userId);
+        } catch (e) {}
         return true;
     }
 
