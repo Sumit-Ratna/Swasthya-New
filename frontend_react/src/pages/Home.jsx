@@ -5,7 +5,8 @@ import {
     HeartPulse, QrCode, Lock, TrendingUp, ArrowRight, CheckCircle2, 
     AlertTriangle, Clock, Compass, PhoneCall, Layers, FileCheck, 
     MessageSquareHeart, Phone, Pill, PlusCircle, ShieldAlert, Heart,
-    MapPin, Navigation, Navigation2, ExternalLink, Route, Car, Calendar, UserCheck
+    MapPin, Navigation, Navigation2, ExternalLink, Route, Car, Calendar, UserCheck,
+    ChevronDown, ChevronUp
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -24,6 +25,7 @@ const Home = () => {
     const [facilities, setFacilities] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+    const [isReferralExpanded, setIsReferralExpanded] = useState(false);
 
     useEffect(() => {
         fetchInitialData();
@@ -336,314 +338,390 @@ const Home = () => {
                 onClose={() => setIsFeedbackOpen(false)} 
             />
 
-            {/* Active Referral Live Journey Widget with Direction, Distance & Details */}
+            {/* Active Referral Live Journey Widget (Collapsible Compact Tile) */}
             <motion.div
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 style={{
-                    background: 'linear-gradient(135deg, #042f2e 0%, #0f766e 55%, #115e59 100%)',
+                    background: 'linear-gradient(135deg, #042f2e 0%, #0f766e 60%, #115e59 100%)',
                     color: 'white',
-                    borderRadius: '22px',
-                    padding: '22px',
-                    marginBottom: '26px',
-                    boxShadow: '0 14px 32px rgba(15, 118, 110, 0.35)',
+                    borderRadius: '18px',
+                    padding: '16px 18px',
+                    marginBottom: '22px',
+                    boxShadow: '0 10px 24px rgba(15, 118, 110, 0.28)',
                     position: 'relative',
                     overflow: 'hidden',
-                    border: '1px solid rgba(45, 212, 191, 0.25)'
+                    border: '1px solid rgba(45, 212, 191, 0.25)',
+                    transition: 'all 0.3s ease'
                 }}
             >
                 {/* Decorative background glow */}
                 <div style={{
                     position: 'absolute',
-                    top: '-40px',
-                    right: '-40px',
-                    width: '160px',
-                    height: '160px',
-                    background: 'radial-gradient(circle, rgba(45,212,191,0.2) 0%, rgba(45,212,191,0) 70%)',
+                    top: '-30px',
+                    right: '-30px',
+                    width: '130px',
+                    height: '130px',
+                    background: 'radial-gradient(circle, rgba(45,212,191,0.18) 0%, rgba(45,212,191,0) 70%)',
                     borderRadius: '50%',
                     pointerEvents: 'none'
                 }} />
 
                 <div style={{ position: 'relative', zIndex: 1 }}>
-                    {/* Header Chips & Status */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                            <span style={{ 
-                                background: '#059669', 
-                                color: '#ecfdf5', 
-                                fontSize: '10px', 
-                                fontWeight: 800, 
-                                padding: '4px 10px', 
-                                borderRadius: '20px', 
-                                textTransform: 'uppercase',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '5px',
-                                boxShadow: '0 2px 8px rgba(5, 150, 105, 0.4)'
-                            }}>
-                                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#a7f3d0', display: 'inline-block' }}></span>
-                                Referral Tracker In Progress
-                            </span>
-                            <span style={{ background: 'rgba(255,255,255,0.16)', fontSize: '11px', fontWeight: 700, padding: '4px 10px', borderRadius: '20px', letterSpacing: '0.5px' }}>
-                                Token: {activeReferral?.slot_token || '#TK-042'}
-                            </span>
-                        </div>
-                        <span style={{ 
-                            background: 'rgba(250, 204, 21, 0.2)', 
-                            color: '#fef08a', 
-                            fontSize: '10px', 
-                            fontWeight: 800, 
-                            padding: '3px 8px', 
-                            borderRadius: '12px',
-                            border: '1px solid rgba(250, 204, 21, 0.4)'
-                        }}>
-                            ⚡ Priority Assigned
-                        </span>
-                    </div>
-
-                    {/* Facility Title & Specialty */}
-                    <div style={{ marginBottom: '14px' }}>
-                        <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.3px' }}>
-                            {activeReferral?.facilities?.name || 'District Civil Hospital Nashik'}
-                        </h2>
-                        <p style={{ margin: '4px 0 0', fontSize: '12.5px', color: '#99f6e4', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                            <span>Specialty: <strong style={{ color: '#ffffff' }}>{activeReferral?.specialty_required || 'Cardiology Consult'}</strong></span>
-                            <span>•</span>
-                            <span>Status: <strong style={{ color: '#fed7aa' }}>{activeReferral?.status || 'APPOINTMENT_BOOKED'}</strong></span>
-                        </p>
-                    </div>
-
-                    {/* Prominent Direction (Distance) & Routing Section */}
-                    <div style={{
-                        background: 'rgba(4, 47, 46, 0.65)',
-                        backdropFilter: 'blur(10px)',
-                        border: '1px solid rgba(45, 212, 191, 0.35)',
-                        borderRadius: '16px',
-                        padding: '14px',
-                        marginBottom: '14px'
-                    }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-                                <div style={{
-                                    width: '38px',
-                                    height: '38px',
-                                    borderRadius: '12px',
-                                    background: 'linear-gradient(135deg, #14b8a6, #0d9488)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    color: 'white',
-                                    flexShrink: 0,
-                                    boxShadow: '0 4px 10px rgba(20, 184, 166, 0.4)'
-                                }}>
-                                    <Navigation size={18} />
-                                </div>
-                                <div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                                        <span style={{ fontSize: '15px', fontWeight: 800, color: '#ffffff' }}>
-                                            Direction & Distance: {activeReferral?.distance_km || '4.2 km'}
-                                        </span>
-                                        <span style={{
-                                            background: 'rgba(20, 184, 166, 0.25)',
-                                            color: '#5eead4',
-                                            fontSize: '10.5px',
-                                            fontWeight: 700,
-                                            padding: '2px 8px',
-                                            borderRadius: '8px',
-                                            border: '1px solid rgba(94, 234, 212, 0.3)'
-                                        }}>
-                                            ⏱️ {activeReferral?.estimated_time || '~12 mins'}
-                                        </span>
-                                        <span style={{
-                                            background: 'rgba(16, 185, 129, 0.25)',
-                                            color: '#6ee7b7',
-                                            fontSize: '10px',
-                                            fontWeight: 700,
-                                            padding: '2px 8px',
-                                            borderRadius: '8px'
-                                        }}>
-                                            🟢 {activeReferral?.traffic_status || 'Normal Flow'}
-                                        </span>
-                                    </div>
-                                    <p style={{ margin: '4px 0 0', fontSize: '11.5px', color: '#ccfbf1' }}>
-                                        🛣️ <strong>Route:</strong> {activeReferral?.route_summary || 'via Shalimar Rd & NH-848'} ({activeReferral?.distance_source || 'OSRM Road Routing'})
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* Direct Get Directions Trigger */}
-                            <a
-                                href={`https://www.google.com/maps/dir/?api=1&destination=${activeReferral?.facilities?.lat || 19.9975},${activeReferral?.facilities?.lng || 73.7898}&destination_place_id=${encodeURIComponent(activeReferral?.facilities?.name || 'District Civil Hospital Nashik')}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{
-                                    background: 'linear-gradient(135deg, #2dd4bf, #059669)',
-                                    color: '#022c22',
-                                    textDecoration: 'none',
-                                    padding: '8px 14px',
-                                    borderRadius: '12px',
-                                    fontWeight: 800,
-                                    fontSize: '12px',
+                    {/* Compact Clickable Header Section */}
+                    <div 
+                        onClick={() => setIsReferralExpanded(!isReferralExpanded)}
+                        style={{ cursor: 'pointer', userSelect: 'none' }}
+                    >
+                        {/* Top Badges Row */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '6px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                                <span style={{ 
+                                    background: '#059669', 
+                                    color: '#ecfdf5', 
+                                    fontSize: '9.5px', 
+                                    fontWeight: 800, 
+                                    padding: '3px 8px', 
+                                    borderRadius: '16px', 
+                                    textTransform: 'uppercase',
                                     display: 'inline-flex',
                                     alignItems: 'center',
-                                    gap: '6px',
-                                    boxShadow: '0 4px 14px rgba(45, 212, 191, 0.4)',
-                                    transition: 'all 0.2s ease'
-                                }}
-                            >
-                                <Navigation2 size={13} fill="#022c22" /> Get Directions
-                            </a>
-                        </div>
-                    </div>
+                                    gap: '4px',
+                                    boxShadow: '0 2px 6px rgba(5, 150, 105, 0.35)'
+                                }}>
+                                    <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#a7f3d0', display: 'inline-block' }}></span>
+                                    Referral In Progress
+                                </span>
+                                <span style={{ background: 'rgba(255,255,255,0.16)', fontSize: '10px', fontWeight: 700, padding: '3px 8px', borderRadius: '16px' }}>
+                                    Token: {activeReferral?.slot_token || '#TK-042'}
+                                </span>
+                            </div>
 
-                    {/* Detailed Facility & Appointment Info Matrix */}
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-                        gap: '10px',
-                        marginBottom: '14px'
-                    }}>
-                        {/* Address & Landmark */}
-                        <div style={{
-                            background: 'rgba(255,255,255,0.08)',
-                            borderRadius: '12px',
-                            padding: '10px 12px',
-                            border: '1px solid rgba(255,255,255,0.1)'
-                        }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#99f6e4', fontSize: '11px', fontWeight: 700, marginBottom: '3px' }}>
-                                <MapPin size={13} color="#2dd4bf" /> Facility Location
-                            </div>
-                            <div style={{ fontSize: '11.5px', color: '#f0fdfa', lineHeight: '1.3' }}>
-                                {activeReferral?.facilities?.address || 'Old Agra Rd, Shalimar Chowk, Nashik - 422001'}
-                            </div>
-                        </div>
-
-                        {/* Doctor & Room */}
-                        <div style={{
-                            background: 'rgba(255,255,255,0.08)',
-                            borderRadius: '12px',
-                            padding: '10px 12px',
-                            border: '1px solid rgba(255,255,255,0.1)'
-                        }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#99f6e4', fontSize: '11px', fontWeight: 700, marginBottom: '3px' }}>
-                                <UserCheck size={13} color="#2dd4bf" /> Assigned Consultant
-                            </div>
-                            <div style={{ fontSize: '11.5px', color: '#f0fdfa', fontWeight: 600 }}>
-                                {activeReferral?.doctor_name || 'Dr. Anand Deshmukh (Cardiology)'}
-                            </div>
-                            <div style={{ fontSize: '10.5px', color: '#fed7aa', marginTop: '2px' }}>
-                                📍 {activeReferral?.room_no || 'OPD Room #104 (1st Floor)'}
-                            </div>
-                        </div>
-
-                        {/* Schedule & Reporting Time */}
-                        <div style={{
-                            background: 'rgba(255,255,255,0.08)',
-                            borderRadius: '12px',
-                            padding: '10px 12px',
-                            border: '1px solid rgba(255,255,255,0.1)'
-                        }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#99f6e4', fontSize: '11px', fontWeight: 700, marginBottom: '3px' }}>
-                                <Calendar size={13} color="#2dd4bf" /> Appointment Schedule
-                            </div>
-                            <div style={{ fontSize: '11.5px', color: '#fef08a', fontWeight: 700 }}>
-                                {activeReferral?.appointment_time || 'Today • 02:30 PM - 03:00 PM'}
-                            </div>
-                            <div style={{ fontSize: '10px', color: '#99f6e4', marginTop: '2px' }}>
-                                Fast-Track OPD Entry Token Active
-                            </div>
-                        </div>
-
-                        {/* Facility Contact & Helpdesk */}
-                        <div style={{
-                            background: 'rgba(255,255,255,0.08)',
-                            borderRadius: '12px',
-                            padding: '10px 12px',
-                            border: '1px solid rgba(255,255,255,0.1)',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            justifyContent: 'space-between'
-                        }}>
-                            <div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#99f6e4', fontSize: '11px', fontWeight: 700, marginBottom: '3px' }}>
-                                    <Phone size={13} color="#2dd4bf" /> Facility Helpdesk
-                                </div>
-                                <div style={{ fontSize: '11.5px', color: '#f0fdfa' }}>
-                                    {activeReferral?.facilities?.phone || '+91 253 257 2038'}
-                                </div>
-                            </div>
-                            <a
-                                href={`tel:${activeReferral?.facilities?.phone || '+912532572038'}`}
-                                style={{
+                            {/* Distance & ETA Chip in Header */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span style={{
+                                    background: 'rgba(20, 184, 166, 0.28)',
+                                    color: '#5eead4',
                                     fontSize: '10.5px',
-                                    color: '#6ee7b7',
-                                    textDecoration: 'none',
-                                    fontWeight: 700,
-                                    marginTop: '4px',
+                                    fontWeight: 800,
+                                    padding: '3px 9px',
+                                    borderRadius: '12px',
+                                    border: '1px solid rgba(94, 234, 212, 0.35)',
                                     display: 'inline-flex',
                                     alignItems: 'center',
                                     gap: '4px'
+                                }}>
+                                    <Navigation size={11} /> {activeReferral?.distance_km || '4.2 km'} • {activeReferral?.estimated_time || '~12 mins'}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Title & Quick Toggle Row */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
+                            <div>
+                                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.2px' }}>
+                                    {activeReferral?.facilities?.name || 'District Civil Hospital Nashik'}
+                                </h3>
+                                <p style={{ margin: '2px 0 0', fontSize: '11.5px', color: '#99f6e4', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                                    <span>{activeReferral?.specialty_required || 'Cardiology Consult'}</span>
+                                    <span>•</span>
+                                    <span style={{ color: '#fed7aa', fontWeight: 700 }}>{activeReferral?.status || 'APPOINTMENT_BOOKED'}</span>
+                                </p>
+                            </div>
+
+                            {/* Expand / Collapse Pill */}
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setIsReferralExpanded(!isReferralExpanded);
+                                }}
+                                style={{
+                                    background: isReferralExpanded ? 'rgba(255,255,255,0.2)' : '#14b8a6',
+                                    color: 'white',
+                                    border: 'none',
+                                    padding: '6px 12px',
+                                    borderRadius: '10px',
+                                    fontWeight: 700,
+                                    fontSize: '11px',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    flexShrink: 0,
+                                    boxShadow: isReferralExpanded ? 'none' : '0 3px 10px rgba(20, 184, 166, 0.4)',
+                                    transition: 'all 0.2s ease'
                                 }}
                             >
-                                Call Helpdesk <ArrowRight size={10} />
-                            </a>
+                                <span>{isReferralExpanded ? 'Less' : 'Details'}</span>
+                                {isReferralExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                            </button>
                         </div>
+
+                        {/* Mini Progress Indicator (Collapsed View) */}
+                        {!isReferralExpanded && (
+                            <div style={{ marginTop: '10px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9.5px', color: '#ccfbf1', marginBottom: '4px', fontWeight: 600 }}>
+                                    <span>Stage: <strong style={{ color: '#fef08a' }}>3. Booked (Active)</strong></span>
+                                    <span>Click to view route & details ▾</span>
+                                </div>
+                                <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.2)', borderRadius: '2px', overflow: 'hidden' }}>
+                                    <div style={{ width: '60%', height: '100%', background: 'linear-gradient(90deg, #2dd4bf, #facc15)', borderRadius: '2px' }}></div>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
-                    {/* Primary Action Buttons */}
-                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '14px' }}>
-                        <button
-                            onClick={() => navigate('/referrals')}
-                            style={{
-                                flex: 1,
-                                minWidth: '160px',
-                                background: 'linear-gradient(135deg, #14b8a6, #0d9488)',
-                                color: 'white',
-                                border: 'none',
-                                padding: '10px 18px',
-                                borderRadius: '12px',
-                                fontWeight: 700,
-                                fontSize: '12.5px',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '8px',
-                                boxShadow: '0 4px 14px rgba(20, 184, 166, 0.45)'
-                            }}
-                        >
-                            Track Journey Timeline <ArrowRight size={14} />
-                        </button>
-                    </div>
+                    {/* Smooth Expandable Body on Click */}
+                    <AnimatePresence>
+                        {isReferralExpanded && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                transition={{ duration: 0.25, ease: 'easeInOut' }}
+                                style={{ overflow: 'hidden' }}
+                            >
+                                <div style={{ 
+                                    paddingTop: '14px', 
+                                    marginTop: '12px', 
+                                    borderTop: '1px solid rgba(255,255,255,0.15)' 
+                                }}>
+                                    {/* Prominent Direction (Distance) & Live Routing Section */}
+                                    <div style={{
+                                        background: 'rgba(4, 47, 46, 0.65)',
+                                        backdropFilter: 'blur(10px)',
+                                        border: '1px solid rgba(45, 212, 191, 0.35)',
+                                        borderRadius: '14px',
+                                        padding: '12px',
+                                        marginBottom: '12px'
+                                    }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                                                <div style={{
+                                                    width: '34px',
+                                                    height: '34px',
+                                                    borderRadius: '10px',
+                                                    background: 'linear-gradient(135deg, #14b8a6, #0d9488)',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    color: 'white',
+                                                    flexShrink: 0,
+                                                    boxShadow: '0 3px 8px rgba(20, 184, 166, 0.4)'
+                                                }}>
+                                                    <Navigation size={16} />
+                                                </div>
+                                                <div>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                                                        <span style={{ fontSize: '13.5px', fontWeight: 800, color: '#ffffff' }}>
+                                                            Direction & Distance: {activeReferral?.distance_km || '4.2 km'}
+                                                        </span>
+                                                        <span style={{
+                                                            background: 'rgba(20, 184, 166, 0.25)',
+                                                            color: '#5eead4',
+                                                            fontSize: '10px',
+                                                            fontWeight: 700,
+                                                            padding: '2px 6px',
+                                                            borderRadius: '6px',
+                                                            border: '1px solid rgba(94, 234, 212, 0.3)'
+                                                        }}>
+                                                            ⏱️ {activeReferral?.estimated_time || '~12 mins'}
+                                                        </span>
+                                                        <span style={{
+                                                            background: 'rgba(16, 185, 129, 0.25)',
+                                                            color: '#6ee7b7',
+                                                            fontSize: '9.5px',
+                                                            fontWeight: 700,
+                                                            padding: '2px 6px',
+                                                            borderRadius: '6px'
+                                                        }}>
+                                                            🟢 {activeReferral?.traffic_status || 'Normal Flow'}
+                                                        </span>
+                                                    </div>
+                                                    <p style={{ margin: '3px 0 0', fontSize: '11px', color: '#ccfbf1' }}>
+                                                        🛣️ <strong>Route:</strong> {activeReferral?.route_summary || 'via Shalimar Rd & NH-848'} ({activeReferral?.distance_source || 'OSRM Road Routing'})
+                                                    </p>
+                                                </div>
+                                            </div>
 
-                    {/* 5-Stage Live Progress Track */}
-                    <div style={{ background: 'rgba(0,0,0,0.25)', borderRadius: '14px', padding: '12px 14px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', fontWeight: 700, color: '#ccfbf1', marginBottom: '8px', flexWrap: 'wrap', gap: '4px' }}>
-                            <span style={{ color: '#5eead4' }}>✓ 1. Triaged</span>
-                            <span style={{ color: '#5eead4' }}>✓ 2. Facility Assigned</span>
-                            <span style={{ 
-                                color: '#fef08a', 
-                                fontWeight: 900, 
-                                background: 'rgba(250, 204, 21, 0.2)', 
-                                padding: '2px 6px', 
-                                borderRadius: '6px',
-                                border: '1px solid rgba(250, 204, 21, 0.4)'
-                            }}>
-                                ● 3. Booked (Active)
-                            </span>
-                            <span style={{ opacity: 0.75 }}>4. Transit</span>
-                            <span style={{ opacity: 0.75 }}>5. Care Done</span>
-                        </div>
-                        <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.18)', borderRadius: '4px', overflow: 'hidden' }}>
-                            <div style={{ 
-                                width: '60%', 
-                                height: '100%', 
-                                background: 'linear-gradient(90deg, #2dd4bf 0%, #10b981 50%, #facc15 100%)', 
-                                borderRadius: '4px',
-                                boxShadow: '0 0 10px rgba(250, 204, 21, 0.6)'
-                            }}></div>
-                        </div>
-                    </div>
+                                            {/* Direct Get Directions Trigger */}
+                                            <a
+                                                href={`https://www.google.com/maps/dir/?api=1&destination=${activeReferral?.facilities?.lat || 19.9975},${activeReferral?.facilities?.lng || 73.7898}&destination_place_id=${encodeURIComponent(activeReferral?.facilities?.name || 'District Civil Hospital Nashik')}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                style={{
+                                                    background: 'linear-gradient(135deg, #2dd4bf, #059669)',
+                                                    color: '#022c22',
+                                                    textDecoration: 'none',
+                                                    padding: '7px 12px',
+                                                    borderRadius: '10px',
+                                                    fontWeight: 800,
+                                                    fontSize: '11px',
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '5px',
+                                                    boxShadow: '0 3px 10px rgba(45, 212, 191, 0.4)',
+                                                    transition: 'all 0.2s ease'
+                                                }}
+                                            >
+                                                <Navigation2 size={12} fill="#022c22" /> Get Directions
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                    {/* Detailed Facility & Appointment Info Matrix */}
+                                    <div style={{
+                                        display: 'grid',
+                                        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                                        gap: '8px',
+                                        marginBottom: '12px'
+                                    }}>
+                                        {/* Address & Landmark */}
+                                        <div style={{
+                                            background: 'rgba(255,255,255,0.08)',
+                                            borderRadius: '10px',
+                                            padding: '8px 10px',
+                                            border: '1px solid rgba(255,255,255,0.1)'
+                                        }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#99f6e4', fontSize: '10.5px', fontWeight: 700, marginBottom: '2px' }}>
+                                                <MapPin size={12} color="#2dd4bf" /> Facility Location
+                                            </div>
+                                            <div style={{ fontSize: '11px', color: '#f0fdfa', lineHeight: '1.3' }}>
+                                                {activeReferral?.facilities?.address || 'Old Agra Rd, Shalimar Chowk, Nashik - 422001'}
+                                            </div>
+                                        </div>
+
+                                        {/* Doctor & Room */}
+                                        <div style={{
+                                            background: 'rgba(255,255,255,0.08)',
+                                            borderRadius: '10px',
+                                            padding: '8px 10px',
+                                            border: '1px solid rgba(255,255,255,0.1)'
+                                        }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#99f6e4', fontSize: '10.5px', fontWeight: 700, marginBottom: '2px' }}>
+                                                <UserCheck size={12} color="#2dd4bf" /> Assigned Consultant
+                                            </div>
+                                            <div style={{ fontSize: '11px', color: '#f0fdfa', fontWeight: 600 }}>
+                                                {activeReferral?.doctor_name || 'Dr. Anand Deshmukh (Cardiology)'}
+                                            </div>
+                                            <div style={{ fontSize: '10px', color: '#fed7aa', marginTop: '2px' }}>
+                                                📍 {activeReferral?.room_no || 'OPD Room #104 (1st Floor)'}
+                                            </div>
+                                        </div>
+
+                                        {/* Schedule & Reporting Time */}
+                                        <div style={{
+                                            background: 'rgba(255,255,255,0.08)',
+                                            borderRadius: '10px',
+                                            padding: '8px 10px',
+                                            border: '1px solid rgba(255,255,255,0.1)'
+                                        }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#99f6e4', fontSize: '10.5px', fontWeight: 700, marginBottom: '2px' }}>
+                                                <Calendar size={12} color="#2dd4bf" /> Appointment Schedule
+                                            </div>
+                                            <div style={{ fontSize: '11px', color: '#fef08a', fontWeight: 700 }}>
+                                                {activeReferral?.appointment_time || 'Today • 02:30 PM - 03:00 PM'}
+                                            </div>
+                                            <div style={{ fontSize: '9.5px', color: '#99f6e4', marginTop: '2px' }}>
+                                                Fast-Track OPD Entry Token Active
+                                            </div>
+                                        </div>
+
+                                        {/* Facility Contact & Helpdesk */}
+                                        <div style={{
+                                            background: 'rgba(255,255,255,0.08)',
+                                            borderRadius: '10px',
+                                            padding: '8px 10px',
+                                            border: '1px solid rgba(255,255,255,0.1)',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            justifyContent: 'space-between'
+                                        }}>
+                                            <div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#99f6e4', fontSize: '10.5px', fontWeight: 700, marginBottom: '2px' }}>
+                                                    <Phone size={12} color="#2dd4bf" /> Facility Helpdesk
+                                                </div>
+                                                <div style={{ fontSize: '11px', color: '#f0fdfa' }}>
+                                                    {activeReferral?.facilities?.phone || '+91 253 257 2038'}
+                                                </div>
+                                            </div>
+                                            <a
+                                                href={`tel:${activeReferral?.facilities?.phone || '+912532572038'}`}
+                                                style={{
+                                                    fontSize: '10px',
+                                                    color: '#6ee7b7',
+                                                    textDecoration: 'none',
+                                                    fontWeight: 700,
+                                                    marginTop: '3px',
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '3px'
+                                                }}
+                                            >
+                                                Call Helpdesk <ArrowRight size={9} />
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                    {/* Action Button & Collapse Trigger */}
+                                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
+                                        <button
+                                            onClick={() => navigate('/referrals')}
+                                            style={{
+                                                flex: 1,
+                                                minWidth: '150px',
+                                                background: 'linear-gradient(135deg, #14b8a6, #0d9488)',
+                                                color: 'white',
+                                                border: 'none',
+                                                padding: '9px 16px',
+                                                borderRadius: '10px',
+                                                fontWeight: 700,
+                                                fontSize: '11.5px',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: '6px',
+                                                boxShadow: '0 3px 10px rgba(20, 184, 166, 0.4)'
+                                            }}
+                                        >
+                                            Track Journey Timeline <ArrowRight size={13} />
+                                        </button>
+                                    </div>
+
+                                    {/* 5-Stage Live Progress Track */}
+                                    <div style={{ background: 'rgba(0,0,0,0.25)', borderRadius: '12px', padding: '10px 12px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9.5px', fontWeight: 700, color: '#ccfbf1', marginBottom: '6px', flexWrap: 'wrap', gap: '3px' }}>
+                                            <span style={{ color: '#5eead4' }}>✓ 1. Triaged</span>
+                                            <span style={{ color: '#5eead4' }}>✓ 2. Facility Assigned</span>
+                                            <span style={{ 
+                                                color: '#fef08a', 
+                                                fontWeight: 900, 
+                                                background: 'rgba(250, 204, 21, 0.2)', 
+                                                padding: '1px 5px', 
+                                                borderRadius: '4px',
+                                                border: '1px solid rgba(250, 204, 21, 0.4)'
+                                            }}>
+                                                ● 3. Booked (Active)
+                                            </span>
+                                            <span style={{ opacity: 0.75 }}>4. Transit</span>
+                                            <span style={{ opacity: 0.75 }}>5. Care Done</span>
+                                        </div>
+                                        <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.18)', borderRadius: '3px', overflow: 'hidden' }}>
+                                            <div style={{ 
+                                                width: '60%', 
+                                                height: '100%', 
+                                                background: 'linear-gradient(90deg, #2dd4bf 0%, #10b981 50%, #facc15 100%)', 
+                                                borderRadius: '3px',
+                                                boxShadow: '0 0 8px rgba(250, 204, 21, 0.6)'
+                                            }}></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
             </motion.div>
 
