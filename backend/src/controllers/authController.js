@@ -293,12 +293,18 @@ exports.emailRegister = async (req, res) => {
         const userId = uuidv4();
         const cleanName = name || cleanEmail.split('@')[0].replace(/[\._\-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 
+        let resolvedPhone = phone || profileDetails.phone || profileDetails.emergency_contact || null;
+        if (resolvedPhone) {
+            resolvedPhone = String(resolvedPhone).replace(/\D/g, '').slice(-10);
+            if (resolvedPhone.length < 10) resolvedPhone = null;
+        }
+
         const newUserData = {
             id: userId,
             email: cleanEmail,
             password_hash: passwordHash,
             name: cleanName,
-            phone: phone || null,
+            phone: resolvedPhone,
             role: role || 'patient',
             gender: profileDetails.gender || 'Male',
             blood_group: profileDetails.blood_group || 'O+',

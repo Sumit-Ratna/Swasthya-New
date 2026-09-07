@@ -69,6 +69,7 @@ const Login = () => {
     const [profileData, setProfileData] = useState({
         name: '',
         email: '',
+        phone: '',
         gender: 'Male',
         dob: '2000-01-01',
         blood_group: 'O+',
@@ -289,6 +290,7 @@ const Login = () => {
         setProfileData(prev => ({
             ...prev,
             email: email,
+            phone: phoneNumber ? phoneNumber.trim() : (prev.phone || ''),
             name: prev.name || email.split('@')[0].replace(/[\._\-]/g, ' ')
         }));
 
@@ -354,7 +356,8 @@ const Login = () => {
         setLoginError('');
 
         try {
-            const cleanPhone = phoneNumber ? phoneNumber.trim() : null;
+            const rawPhone = profileData.phone || phoneNumber || profileData.emergency_contact || '';
+            const cleanPhone = rawPhone ? rawPhone.replace(/\D/g, '').slice(-10) : null;
 
             if (authMode === 'register') {
                 // Register new account with Gmail and Password stored in Supabase
@@ -1044,7 +1047,7 @@ const Login = () => {
                             <h4 style={{ margin: '0 0 8px 0', fontSize: '13px', fontWeight: 800, color: '#1e293b', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                 <User size={15} color="#0284c7" /> 1. Personal Demographics
                             </h4>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                                 <div>
                                     <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '3px' }}>Full Name (पूरा नाम) *</label>
                                     <input
@@ -1064,6 +1067,20 @@ const Login = () => {
                                         value={email || profileData.email}
                                         onChange={(e) => { setEmail(e.target.value); setProfileData({ ...profileData, email: e.target.value }); }}
                                         placeholder="your.email@gmail.com"
+                                        style={{ width: '100%', padding: '9px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                                    />
+                                </div>
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '3px' }}>Mobile Number (मोबाइल नंबर) *</label>
+                                    <input
+                                        type="tel"
+                                        value={profileData.phone || phoneNumber}
+                                        onChange={(e) => { 
+                                            const val = e.target.value;
+                                            setPhoneNumber(val); 
+                                            setProfileData({ ...profileData, phone: val }); 
+                                        }}
+                                        placeholder="10-digit mobile"
                                         style={{ width: '100%', padding: '9px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
                                     />
                                 </div>

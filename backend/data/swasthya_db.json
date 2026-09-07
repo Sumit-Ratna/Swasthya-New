@@ -14753,6 +14753,20 @@
         "sync_status": "SYNCED"
       },
       "processed_at": "2026-09-07T10:08:03.987Z"
+    },
+    {
+      "id": "c593888e-4850-439e-b6a2-1690ac96f1f1",
+      "client_operation_id": "op-dedup-1788776860109",
+      "idempotency_key": "BEN-700460eb-e1b0-4ba1-a0dd-8ef7ba7040bf",
+      "device_id": "device-unit-test-99",
+      "operation_type": "CREATE_PATIENT",
+      "server_id": "700460eb-e1b0-4ba1-a0dd-8ef7ba7040bf",
+      "result": {
+        "patient_id": "700460eb-e1b0-4ba1-a0dd-8ef7ba7040bf",
+        "phone": "9877700011",
+        "sync_status": "SYNCED"
+      },
+      "processed_at": "2026-09-07T10:27:41.591Z"
     }
   ],
   "notifications": [
