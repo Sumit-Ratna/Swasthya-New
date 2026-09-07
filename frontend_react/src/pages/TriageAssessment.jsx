@@ -120,7 +120,7 @@ const TriageAssessment = () => {
         try {
             const n8nResponse = await axios.post(N8N_TRIAGE_WEBHOOK, n8nPayload, {
                 headers: { 'Content-Type': 'application/json' },
-                timeout: 30000
+                timeout: 90000
             });
 
             if (n8nResponse.data && (typeof n8nResponse.data === 'object' || typeof n8nResponse.data === 'string')) {
