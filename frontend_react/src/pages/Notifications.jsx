@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ArrowLeft, Activity, Bell, Droplets, Pill, FileText, MessageSquareHeart } from 'lucide-react';
+import { ArrowLeft, Activity, Bell, Droplets, Pill, FileText } from 'lucide-react';
 import { motion } from 'framer-motion';
-import FeedbackModal from '../components/FeedbackModal';
 
 const Notifications = () => {
     const navigate = useNavigate();
     
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
     useEffect(() => {
         fetchNotifications();
@@ -58,25 +56,6 @@ const Notifications = () => {
                     <h1 className="animate-enter" style={{ margin: 0, fontSize: '24px', color: 'var(--text-primary)' }}>Notifications</h1>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <button
-                        onClick={() => setIsFeedbackOpen(true)}
-                        style={{
-                            background: '#ccfbf1',
-                            border: '1px solid #99f6e4',
-                            color: '#0f766e',
-                            padding: '6px 10px',
-                            borderRadius: '16px',
-                            fontWeight: 700,
-                            fontSize: '12px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                        }}
-                    >
-                        <MessageSquareHeart size={14} />
-                        <span>Feedback</span>
-                    </button>
                     <button 
                         onClick={markAllRead}
                         style={{ background: 'none', border: 'none', color: 'var(--primary-color)', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}>
@@ -84,11 +63,6 @@ const Notifications = () => {
                     </button>
                 </div>
             </header>
-
-            <FeedbackModal 
-                isOpen={isFeedbackOpen} 
-                onClose={() => setIsFeedbackOpen(false)} 
-            />
 
             {loading ? (
                 <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>Loading...</div>

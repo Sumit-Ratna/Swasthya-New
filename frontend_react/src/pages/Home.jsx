@@ -116,7 +116,7 @@ const Home = () => {
 
     const coreFeatures = [
         {
-            title: '13-State Referral',
+            title: 'Referral Tracker',
             tag: 'Closed-Loop',
             desc: 'Milestone tracking & verified care closure',
             icon: <GitBranch size={22} color="#0d9488" />,
@@ -125,7 +125,7 @@ const Home = () => {
             link: '/referrals'
         },
         {
-            title: 'Facility Matching',
+            title: 'HealthCentres Nearby',
             tag: 'Live Beds',
             desc: 'Multi-tier directory & load meters',
             icon: <Building2 size={22} color="#2563eb" />,
@@ -134,7 +134,7 @@ const Home = () => {
             link: '/facilities'
         },
         {
-            title: 'AI Risk Triage',
+            title: 'Patient Risk Score',
             tag: 'Triage AI',
             desc: 'Vitals scoring & emergency risk alerts',
             icon: <HeartPulse size={22} color="#e11d48" />,
@@ -152,7 +152,7 @@ const Home = () => {
             link: '/records'
         },
         {
-            title: 'Drug Safety Shield',
+            title: 'Allergy & Drug interaction',
             tag: 'Guardian AI',
             desc: 'Allergy & drug interaction checks',
             icon: <ShieldCheck size={22} color="#059669" />,
@@ -170,7 +170,7 @@ const Home = () => {
             link: '/learn-medicines'
         },
         {
-            title: 'Caregiver Circles',
+            title: 'Family',
             tag: 'Family Proxy',
             desc: 'Dependent monitoring & SOS panic',
             icon: <Users size={22} color="#db2777" />,
@@ -179,7 +179,7 @@ const Home = () => {
             link: '/caregiver'
         },
         {
-            title: 'Audit Ledger',
+            title: 'Medical History',
             tag: 'SHA-256',
             desc: 'Tamper-evident logs & health KPIs',
             icon: <Lock size={22} color="#475569" />,
@@ -448,7 +448,7 @@ const Home = () => {
                         <div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
                                 <span style={{ background: '#059669', color: '#ecfdf5', fontSize: '10px', fontWeight: 800, padding: '4px 8px', borderRadius: '20px', textTransform: 'uppercase' }}>
-                                    ● 13-State Referral In Progress
+                                    ● Referral Tracker In Progress
                                 </span>
                                 <span style={{ background: 'rgba(255,255,255,0.15)', fontSize: '10px', padding: '4px 8px', borderRadius: '20px' }}>
                                     Token: {activeReferral?.slot_token || '#TK-042'}

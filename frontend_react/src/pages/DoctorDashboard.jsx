@@ -2,9 +2,8 @@ import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { motion } from 'framer-motion';
 import axios from 'axios';
-import { Users, Calendar, FileText, Activity, User, Pill, Stethoscope, QrCode, Bell, MessageSquareHeart } from 'lucide-react';
+import { Users, Calendar, FileText, Activity, User, Pill, Stethoscope, QrCode, Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import FeedbackModal from '../components/FeedbackModal';
 
 const DoctorDashboard = () => {
     const { user } = useContext(AuthContext);
@@ -12,7 +11,6 @@ const DoctorDashboard = () => {
     const [stats, setStats] = useState({ patientCount: 0, todayAppointments: 0 });
     const [patients, setPatients] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
     useEffect(() => {
         if (user?.role !== 'doctor') {
@@ -50,28 +48,6 @@ const DoctorDashboard = () => {
                     </p>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    {/* Feedback Button Near Notification Icon */}
-                    <motion.div 
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        style={{ 
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            background: 'linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%)',
-                            padding: '8px 14px',
-                            borderRadius: '20px',
-                            border: '1px solid #bfdbfe',
-                            boxShadow: '0 2px 6px rgba(2, 132, 199, 0.12)'
-                        }} 
-                        onClick={() => setIsFeedbackOpen(true)}
-                        title="Doctor Feedback & Clinical Suggestions"
-                    >
-                        <MessageSquareHeart size={18} color="#0284c7" />
-                        <span style={{ fontSize: '12px', fontWeight: 700, color: '#0284c7' }}>Feedback</span>
-                    </motion.div>
-
                     {/* Notification Bell */}
                     <div 
                         style={{ position: 'relative', cursor: 'pointer', background: 'white', padding: '8px', borderRadius: '12px', border: '1px solid var(--border-color)' }} 
@@ -89,11 +65,6 @@ const DoctorDashboard = () => {
                     </div>
                 </div>
             </header>
-
-            <FeedbackModal 
-                isOpen={isFeedbackOpen} 
-                onClose={() => setIsFeedbackOpen(false)} 
-            />
 
             {/* Stats Cards */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px', marginBottom: '24px' }}>
@@ -171,7 +142,7 @@ const DoctorDashboard = () => {
             }}>
                 <div>
                     <strong style={{ fontSize: '13px', color: '#0f172a' }}>🏥 Hospital Network & Field Collaboration</strong>
-                    <div style={{ fontSize: '11px', color: '#64748b' }}>Check inpatient bed availability, incoming ASHA triage cases, or system audit ledger</div>
+                    <div style={{ fontSize: '11px', color: '#64748b' }}>Check inpatient bed availability, incoming ASHA triage cases, or Medical History</div>
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
                     <button 

@@ -160,7 +160,7 @@ const AdminDashboard = () => {
                     { id: 'users', label: 'User Governance', icon: Users, badge: usersList.length },
                     { id: 'facilities', label: 'Facility & Beds', icon: Building2, badge: facilities.length },
                     { id: 'surveillance', label: 'AI Disease Radar', icon: Flame, badge: 'Alerts' },
-                    { id: 'audit', label: 'Cryptographic Ledger', icon: Lock },
+                    { id: 'audit', label: 'Medical History Ledger', icon: Lock },
                     { id: 'telemetry', label: 'System Telemetry', icon: Activity }
                 ].map(t => {
                     const Icon = t.icon;
@@ -571,7 +571,7 @@ const AdminDashboard = () => {
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
                                 <div>
                                     <h3 style={{ fontSize: '18px', fontWeight: '700', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <Lock size={18} color="#16A34A" /> Immutable Security Audit Ledger (SHA-256 Hash Chain)
+                                        <Lock size={18} color="#16A34A" /> Immutable Security Medical History (SHA-256 Hash Chain)
                                     </h3>
                                     <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '2px 0 0' }}>
                                         Ayushman Bharat Digital Mission (ABDM) Cryptographic Provenance & Consent Logging

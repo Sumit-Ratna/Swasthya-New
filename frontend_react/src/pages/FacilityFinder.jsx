@@ -3,11 +3,10 @@ import { AuthContext } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Building2, MapPin, Phone, ShieldAlert, CheckCircle2, 
-    Stethoscope, Clock, Filter, Search, ArrowRight, AlertCircle, MessageSquareHeart, Bell 
+    Stethoscope, Clock, Filter, Search, ArrowRight, AlertCircle, Bell 
 } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import FeedbackModal from '../components/FeedbackModal';
 
 const FacilityFinder = () => {
     const { user } = useContext(AuthContext);
@@ -17,7 +16,6 @@ const FacilityFinder = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedTier, setSelectedTier] = useState('ALL');
     const [emergencyOnly, setEmergencyOnly] = useState(false);
-    const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
     // Referral Booking Modal State
     const [bookingFacility, setBookingFacility] = useState(null);
@@ -94,32 +92,13 @@ const FacilityFinder = () => {
                 <div>
                     <h1 style={{ fontSize: '24px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
                         <Building2 color="var(--primary-color)" size={28} />
-                        Facility Smart Matching & Directory
+                        HealthCentres Nearby & Smart Directory
                     </h1>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginTop: '4px', margin: 0 }}>
                         Multi-tier public health facilities with real-time operational load & emergency capabilities
                     </p>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <button
-                        onClick={() => setIsFeedbackOpen(true)}
-                        style={{
-                            background: '#fef3c7',
-                            border: '1px solid #fde68a',
-                            color: '#b45309',
-                            padding: '6px 12px',
-                            borderRadius: '20px',
-                            fontWeight: 700,
-                            fontSize: '12px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px'
-                        }}
-                    >
-                        <MessageSquareHeart size={16} />
-                        <span>Facility Feedback</span>
-                    </button>
                     <div 
                         onClick={() => navigate('/notifications')}
                         style={{ cursor: 'pointer', background: 'white', padding: '6px 8px', borderRadius: '10px', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center' }}
@@ -128,11 +107,6 @@ const FacilityFinder = () => {
                     </div>
                 </div>
             </div>
-
-            <FeedbackModal 
-                isOpen={isFeedbackOpen} 
-                onClose={() => setIsFeedbackOpen(false)} 
-            />
 
             {/* Filter Bar */}
             <div className="card" style={{ padding: '16px', marginBottom: '24px', display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>

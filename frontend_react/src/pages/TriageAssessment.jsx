@@ -3,16 +3,14 @@ import { AuthContext } from '../context/AuthContext';
 import { motion } from 'framer-motion';
 import { 
     Activity, Heart, Thermometer, Wind, AlertTriangle, 
-    ShieldCheck, ArrowRight, Baby, Sparkles, CheckCircle, MessageSquareHeart, Bell, ArrowLeft 
+    ShieldCheck, ArrowRight, Baby, Sparkles, CheckCircle, Bell, ArrowLeft 
 } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import FeedbackModal from '../components/FeedbackModal';
 
 const TriageAssessment = () => {
     const { user } = useContext(AuthContext);
     const navigate = useNavigate();
-    const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
     const [form, setForm] = useState({
         systolic_bp: 120,
@@ -74,32 +72,13 @@ const TriageAssessment = () => {
                 <div>
                     <h1 style={{ fontSize: '24px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
                         <Sparkles color="var(--primary-color)" size={28} />
-                        AI-Assisted Clinical Triage & Risk Stratification
+                        Patient Risk Score & Clinical Triage
                     </h1>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginTop: '4px', margin: 0 }}>
                         Capture vitals and danger signs for instant explainable clinical risk classification
                     </p>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <button
-                        onClick={() => setIsFeedbackOpen(true)}
-                        style={{
-                            background: '#ccfbf1',
-                            border: '1px solid #99f6e4',
-                            color: '#0f766e',
-                            padding: '6px 12px',
-                            borderRadius: '20px',
-                            fontWeight: 700,
-                            fontSize: '12px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px'
-                        }}
-                    >
-                        <MessageSquareHeart size={16} />
-                        <span>Worker Feedback</span>
-                    </button>
                     <div 
                         onClick={() => navigate('/notifications')}
                         style={{ cursor: 'pointer', background: 'white', padding: '6px 8px', borderRadius: '10px', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center' }}
@@ -108,11 +87,6 @@ const TriageAssessment = () => {
                     </div>
                 </div>
             </div>
-
-            <FeedbackModal 
-                isOpen={isFeedbackOpen} 
-                onClose={() => setIsFeedbackOpen(false)} 
-            />
 
             <div className="card" style={{ padding: '24px', border: '1px solid var(--border-color)', marginBottom: '24px' }}>
                 <form onSubmit={handleRunTriage}>
