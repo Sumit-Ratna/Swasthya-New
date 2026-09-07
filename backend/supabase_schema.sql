@@ -282,4 +282,87 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('medical-documents', 'medical-documents', true)
 ON CONFLICT (id) DO NOTHING;
 
+-- 17. HOSPITAL FACILITIES TABLE
+CREATE TABLE IF NOT EXISTS public.hospital_facilities (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(255) NOT NULL,
+    facility_type VARCHAR(100) NOT NULL DEFAULT 'DISTRICT_HOSPITAL',
+    district VARCHAR(100) NOT NULL DEFAULT 'Pune',
+    state VARCHAR(100) NOT NULL DEFAULT 'Maharashtra',
+    pincode VARCHAR(20),
+    address TEXT,
+    contact_phone VARCHAR(30),
+    emergency_hotline VARCHAR(30) DEFAULT '108 / 102',
+    latitude NUMERIC(10, 7),
+    longitude NUMERIC(10, 7),
+    operational_status VARCHAR(50) NOT NULL DEFAULT 'OPTIMAL_ACTIVE',
+    total_beds INT NOT NULL DEFAULT 100,
+    occupied_beds INT NOT NULL DEFAULT 50,
+    icu_total INT NOT NULL DEFAULT 10,
+    icu_available INT NOT NULL DEFAULT 5,
+    oxygen_total INT NOT NULL DEFAULT 30,
+    oxygen_available INT NOT NULL DEFAULT 15,
+    general_total INT NOT NULL DEFAULT 50,
+    general_available INT NOT NULL DEFAULT 25,
+    nicu_total INT NOT NULL DEFAULT 10,
+    nicu_available INT NOT NULL DEFAULT 5,
+    dialysis_total INT NOT NULL DEFAULT 6,
+    dialysis_available INT NOT NULL DEFAULT 3,
+    has_blood_bank BOOLEAN DEFAULT TRUE,
+    has_ct_mri BOOLEAN DEFAULT TRUE,
+    has_trauma_bay BOOLEAN DEFAULT TRUE,
+    oxygen_plant_capacity_lpm INT DEFAULT 1000,
+    facilities_catalog JSONB DEFAULT '[]'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_hospital_facilities_district ON public.hospital_facilities(district);
+CREATE INDEX IF NOT EXISTS idx_hospital_facilities_type ON public.hospital_facilities(facility_type);
+CREATE INDEX IF NOT EXISTS idx_hospital_facilities_status ON public.hospital_facilities(operational_status);
+
+-- 18. HOSPITAL BED BOOKINGS TABLE
+CREATE TABLE IF NOT EXISTS public.hospital_bed_bookings (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    booking_token VARCHAR(50) UNIQUE NOT NULL,
+    facility_id UUID REFERENCES public.hospital_facilities(id) ON DELETE SET NULL,
+    patient_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
+    patient_name VARCHAR(255) NOT NULL,
+    patient_phone VARCHAR(30) NOT NULL,
+    abha_id VARCHAR(100),
+    age INT,
+    gender VARCHAR(20),
+    service_type VARCHAR(100) NOT NULL DEFAULT 'ICU_BED',
+    clinical_urgency VARCHAR(50) NOT NULL DEFAULT 'URGENT_HIGH',
+    symptoms TEXT,
+    status VARCHAR(50) NOT NULL DEFAULT 'BOOKING_SUBMITTED',
+    status_step INT NOT NULL DEFAULT 1,
+    assigned_bed_number VARCHAR(100),
+    assigned_doctor_name VARCHAR(255),
+    assigned_doctor_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
+    timeline JSONB DEFAULT '[]'::jsonb,
+    booking_date TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    admitted_at TIMESTAMPTZ,
+    discharged_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_hospital_bookings_token ON public.hospital_bed_bookings(booking_token);
+CREATE INDEX IF NOT EXISTS idx_hospital_bookings_facility ON public.hospital_bed_bookings(facility_id);
+CREATE INDEX IF NOT EXISTS idx_hospital_bookings_status ON public.hospital_bed_bookings(status);
+
+-- 19. HOSPITAL TELEMETRY LOGS
+CREATE TABLE IF NOT EXISTS public.hospital_telemetry_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    facility_id UUID REFERENCES public.hospital_facilities(id) ON DELETE CASCADE,
+    icu_occupancy_pct NUMERIC(5, 2),
+    oxygen_pressure_bar NUMERIC(5, 2) DEFAULT 4.20,
+    opd_queue_count INT DEFAULT 0,
+    emergency_trauma_count INT DEFAULT 0,
+    logged_by_user_id UUID,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+
 
