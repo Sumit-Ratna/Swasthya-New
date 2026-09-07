@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import FeedbackModal from '../components/FeedbackModal';
+import OfflineHealthHelpBot from '../components/OfflineHealthHelpBot';
 import axios from 'axios';
 
 const Home = () => {
@@ -784,6 +785,9 @@ const Home = () => {
                     ))}
                 </div>
             </div>
+
+            {/* Offline AI Medical First-Aid & Emergency Assistant Bot */}
+            <OfflineHealthHelpBot />
 
         </div>
     );
