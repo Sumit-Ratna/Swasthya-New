@@ -170,31 +170,13 @@ const Home = () => {
             link: '/triage'
         },
         {
-            title: 'Lab Report OCR',
-            tag: 'MedGemma',
-            desc: 'Automated blood test & scan summaries',
+            title: 'Lab Report OCR & Medicine Explainer',
+            tag: 'MedGemma AI',
+            desc: 'Automated blood test & visual dosage guides',
             icon: <FileText size={22} color="#7c3aed" />,
             bgColor: '#ede9fe',
             badgeColor: '#6d28d9',
             link: '/records'
-        },
-        {
-            title: 'Allergy & Drug interaction',
-            tag: 'Guardian AI',
-            desc: 'Allergy & drug interaction checks',
-            icon: <ShieldCheck size={22} color="#059669" />,
-            bgColor: '#d1fae5',
-            badgeColor: '#047857',
-            link: '/services'
-        },
-        {
-            title: 'Medicine Explainer',
-            tag: 'Visual Guide',
-            desc: 'Visual dosage storyboards & reminders',
-            icon: <BookOpen size={22} color="#d97706" />,
-            bgColor: '#fef3c7',
-            badgeColor: '#b45309',
-            link: '/learn-medicines'
         },
         {
             title: 'Family',
@@ -203,7 +185,7 @@ const Home = () => {
             icon: <Users size={22} color="#db2777" />,
             bgColor: '#fce7f3',
             badgeColor: '#be185d',
-            link: '/caregiver'
+            link: '/family'
         },
         {
             title: 'Medical History',
@@ -742,7 +724,7 @@ const Home = () => {
                         fontWeight: 700,
                         border: '1px solid #ccfbf1'
                     }}>
-                        All 8 Core Modules
+                        All 6 Core Modules
                     </span>
                 </div>
 

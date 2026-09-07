@@ -148,8 +148,8 @@ const MainApp = () => {
           <Route path="/care-team" element={<CareTeam />} />
           <Route path="/family" element={<FamilyHealth />} />
           <Route path="/family/:memberId" element={<FamilyMemberDetails />} />
-          <Route path="/learn-medicine" element={<LearnMedicines />} />
-          <Route path="/learn-medicines" element={<LearnMedicines />} />
+          <Route path="/learn-medicine" element={<Records defaultTab="medicines" />} />
+          <Route path="/learn-medicines" element={<Records defaultTab="medicines" />} />
           <Route path="/support" element={<Support />} />
           <Route path="/profile-setup" element={<ProfileSetup />} />
           <Route path="/scan" element={<ScanQR />} />
