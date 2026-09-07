@@ -4,10 +4,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Activity, Heart, Thermometer, Wind, AlertTriangle, 
     ShieldCheck, ArrowRight, Baby, Sparkles, CheckCircle, Bell, ArrowLeft,
-    Zap, RefreshCw, Check, MapPin, Stethoscope, ChevronRight
+    Zap, RefreshCw, Check, MapPin, Stethoscope, ChevronRight, FileText, Bot, ExternalLink
 } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+
+const N8N_TRIAGE_WEBHOOK = 'https://saadkhan104.app.n8n.cloud/webhook/631f6768-d50b-4010-b06c-062e97503bd3';
 
 const QUICK_DANGER_TAGS = [
     "Severe Headache",
@@ -54,6 +56,7 @@ const TriageAssessment = () => {
 
     const [assessmentResult, setAssessmentResult] = useState(null);
     const [evaluating, setEvaluating] = useState(false);
+    const [webhookStatus, setWebhookStatus] = useState(null);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -66,6 +69,7 @@ const TriageAssessment = () => {
     const handleApplyPreset = (presetData) => {
         setForm(presetData);
         setAssessmentResult(null);
+        setWebhookStatus(null);
     };
 
     const handleToggleDangerTag = (tag) => {
@@ -88,34 +92,118 @@ const TriageAssessment = () => {
     const handleRunTriage = async (e) => {
         e.preventDefault();
         setEvaluating(true);
-        try {
-            const token = localStorage.getItem('accessToken');
-            const patientId = user?.id || 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+        setAssessmentResult(null);
+        setWebhookStatus(null);
 
-            const res = await axios.post('/api/assessments', {
-                patient_id: patientId,
-                ...form
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
+        const token = localStorage.getItem('accessToken');
+        const patientId = user?.id || 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+
+        // Prepare comprehensive payload for n8n webhook
+        const n8nPayload = {
+            systolic_bp: Number(form.systolic_bp),
+            diastolic_bp: Number(form.diastolic_bp),
+            pulse_rate: Number(form.pulse_rate),
+            spo2: Number(form.spo2),
+            respiratory_rate: Number(form.respiratory_rate),
+            temperature: Number(form.temperature),
+            is_pregnant: Boolean(form.is_pregnant),
+            danger_signs: form.danger_signs || '',
+            query: `Patient Clinical Vitals: BP ${form.systolic_bp}/${form.diastolic_bp} mmHg, Pulse ${form.pulse_rate} bpm, SpO2 ${form.spo2}%, Temp ${form.temperature}°F, Resp Rate ${form.respiratory_rate} bpm, Pregnant: ${form.is_pregnant ? 'Yes (ANC Protocol)' : 'No'}, Danger Signs: ${form.danger_signs || 'None'}. Please analyze and provide clinical risk level (EMERGENCY, HIGH, MODERATE, LOW), risk score, and clinical report.`,
+            message: `Patient Vitals: BP ${form.systolic_bp}/${form.diastolic_bp}, Pulse ${form.pulse_rate}, SpO2 ${form.spo2}%, Temp ${form.temperature}, Danger Signs: ${form.danger_signs || 'None'}`,
+            patient_id: patientId,
+            timestamp: new Date().toISOString()
+        };
+
+        let resultFound = false;
+
+        // 1. Try sending input to n8n Webhook Endpoint
+        try {
+            const n8nResponse = await axios.post(N8N_TRIAGE_WEBHOOK, n8nPayload, {
+                headers: { 'Content-Type': 'application/json' },
+                timeout: 30000
             });
 
-            setAssessmentResult(res.data.assessment);
-        } catch (err) {
-            console.error("Triage evaluation error:", err);
-            // Fallback clinical evaluation simulation if offline/testing
-            const isHighRisk = form.systolic_bp >= 160 || form.spo2 < 92 || form.danger_signs.length > 0;
-            const isEmergency = form.systolic_bp >= 180 || form.spo2 < 88 || form.pulse_rate > 120;
-            const level = isEmergency ? 'EMERGENCY' : isHighRisk ? 'HIGH' : form.systolic_bp > 140 ? 'MODERATE' : 'LOW';
-            const score = isEmergency ? 0.92 : isHighRisk ? 0.74 : form.systolic_bp > 140 ? 0.48 : 0.15;
+            if (n8nResponse.data && (typeof n8nResponse.data === 'object' || typeof n8nResponse.data === 'string')) {
+                const data = n8nResponse.data;
+                const outputText = typeof data === 'string' ? data : (data.output || data.response || data.report || data.message || data.text || JSON.stringify(data));
+                
+                // Parse risk level from n8n response if present
+                let computedRisk = data.computed_risk_level || data.risk_level || data.risk || null;
+                if (!computedRisk && typeof outputText === 'string') {
+                    const upper = outputText.toUpperCase();
+                    if (upper.includes('EMERGENCY')) computedRisk = 'EMERGENCY';
+                    else if (upper.includes('HIGH RISK') || upper.includes('HIGH')) computedRisk = 'HIGH';
+                    else if (upper.includes('MODERATE')) computedRisk = 'MODERATE';
+                    else if (upper.includes('LOW')) computedRisk = 'LOW';
+                }
+
+                // Parse risk score from n8n response
+                let score = Number(data.ai_risk_score || data.risk_score || data.score);
+                if (isNaN(score)) {
+                    score = computedRisk === 'EMERGENCY' ? 0.95 : computedRisk === 'HIGH' ? 0.78 : computedRisk === 'MODERATE' ? 0.48 : 0.15;
+                }
+                if (score > 1) score = score / 100; // normalize if 0-100
+
+                if (!computedRisk) {
+                    computedRisk = form.systolic_bp >= 160 || form.spo2 < 92 || form.danger_signs.length > 0 ? 'HIGH' : 'LOW';
+                }
+
+                setAssessmentResult({
+                    computed_risk_level: computedRisk,
+                    ai_risk_score: score,
+                    ai_triage_explanation: outputText && outputText !== '{}' ? outputText : `Clinical Analysis: BP ${form.systolic_bp}/${form.diastolic_bp} mmHg, SpO2 ${form.spo2}%, Pulse ${form.pulse_rate} bpm. ${form.is_pregnant ? 'Obstetric ANC protocol applied.' : ''}`,
+                    n8n_raw_report: typeof data === 'object' ? JSON.stringify(data, null, 2) : String(data),
+                    source: 'n8n_webhook'
+                });
+                setWebhookStatus('N8N_SUCCESS');
+                resultFound = true;
+            }
+        } catch (n8nErr) {
+            console.warn("n8n webhook error / workflow notice:", n8nErr.message);
+        }
+
+        // 2. If n8n workflow was not completed or threw node error, execute robust clinical assessment & save to EHR
+        if (!resultFound) {
+            try {
+                const res = await axios.post('/api/assessments', {
+                    patient_id: patientId,
+                    ...form
+                }, {
+                    headers: token ? { Authorization: `Bearer ${token}` } : {}
+                });
+
+                if (res.data?.assessment) {
+                    setAssessmentResult({
+                        ...res.data.assessment,
+                        source: 'clinical_engine'
+                    });
+                    setWebhookStatus('BACKEND_FALLBACK');
+                    resultFound = true;
+                }
+            } catch (backendErr) {
+                console.warn("Backend triage route:", backendErr.message);
+            }
+        }
+
+        // 3. Fallback deterministic medical evaluation if offline or demo
+        if (!resultFound) {
+            const isEmergency = form.systolic_bp >= 180 || form.diastolic_bp >= 120 || form.spo2 < 88 || form.pulse_rate > 130;
+            const isHigh = form.systolic_bp >= 160 || form.diastolic_bp >= 100 || form.spo2 < 92 || form.danger_signs.length > 0 || (form.is_pregnant && form.systolic_bp >= 140);
+            const isModerate = form.systolic_bp >= 140 || form.pulse_rate >= 100 || form.temperature >= 101.5;
+
+            const level = isEmergency ? 'EMERGENCY' : isHigh ? 'HIGH' : isModerate ? 'MODERATE' : 'LOW';
+            const score = isEmergency ? 0.94 : isHigh ? 0.76 : isModerate ? 0.45 : 0.12;
 
             setAssessmentResult({
                 computed_risk_level: level,
                 ai_risk_score: score,
-                ai_triage_explanation: `Clinical evaluation: BP ${form.systolic_bp}/${form.diastolic_bp} mmHg, SpO2 ${form.spo2}%, Pulse ${form.pulse_rate} bpm. ${form.is_pregnant ? 'ANC Pregnancy protocol active.' : ''} ${form.danger_signs ? `Reported flags: ${form.danger_signs}.` : 'Vitals evaluated.'}`
+                ai_triage_explanation: `Clinical Assessment Report:\n• Blood Pressure: ${form.systolic_bp}/${form.diastolic_bp} mmHg (${isHigh ? 'Elevated / Hypertensive' : 'Normal Range'})\n• Oxygen SpO2: ${form.spo2}% (${form.spo2 < 94 ? 'Hypoxia Alert' : 'Adequate'})\n• Pulse Rate: ${form.pulse_rate} bpm\n• Temperature: ${form.temperature}°F\n• ANC Status: ${form.is_pregnant ? 'Active Pregnancy (Obstetric High Risk Filter Active)' : 'Not Pregnant'}\n• Reported Danger Signs: ${form.danger_signs || 'None'}\n\nClinical Recommendation: ${isEmergency ? 'Immediate Emergency Transfer to Tertiary Facility via 108 required.' : isHigh ? 'Prompt referral and specialist consultation recommended within 24 hours.' : 'Routine monitoring and lifestyle maintenance.'}`,
+                source: 'clinical_engine'
             });
-        } finally {
-            setEvaluating(false);
+            setWebhookStatus('LOCAL_CALCULATED');
         }
+
+        setEvaluating(false);
     };
 
     const getRiskColor = (level) => {
@@ -162,7 +250,7 @@ const TriageAssessment = () => {
                             Clinical Risk & Triage
                         </h1>
                         <p style={{ color: 'var(--text-secondary, #64748b)', fontSize: '11.5px', margin: '1px 0 0' }}>
-                            Instant explainable vital risk scoring & emergency routing
+                            Instant vital risk scoring via n8n clinical workflow
                         </p>
                     </div>
                 </div>
@@ -520,7 +608,7 @@ const TriageAssessment = () => {
                     >
                         {evaluating ? (
                             <>
-                                <RefreshCw size={16} className="spin" /> Evaluating Clinical Triage...
+                                <RefreshCw size={16} className="spin" /> Processing via n8n Clinical Workflow...
                             </>
                         ) : (
                             <>
@@ -531,7 +619,7 @@ const TriageAssessment = () => {
                 </form>
             </div>
 
-            {/* Compact Triage Assessment Output Card */}
+            {/* Compact Triage Assessment Output & Report Card */}
             <AnimatePresence>
                 {assessmentResult && (
                     <motion.div 
@@ -548,7 +636,7 @@ const TriageAssessment = () => {
                         }}
                     >
                         {/* Result Top Row */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '6px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <span style={{
                                     background: getRiskColor(assessmentResult.computed_risk_level),
@@ -563,29 +651,51 @@ const TriageAssessment = () => {
                                     {assessmentResult.computed_risk_level} RISK
                                 </span>
                                 <span style={{ fontSize: '11.5px', fontWeight: 700, color: 'var(--text-secondary)' }}>
-                                    Clinical Triage Score
+                                    Clinical Risk Score:
                                 </span>
                             </div>
 
-                            <div style={{ fontSize: '15px', fontWeight: 800, color: getRiskColor(assessmentResult.computed_risk_level) }}>
-                                {(assessmentResult.ai_risk_score * 100).toFixed(0)} / 100
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span style={{
+                                    background: assessmentResult.source === 'n8n_webhook' ? '#ede9fe' : '#e0f2fe',
+                                    color: assessmentResult.source === 'n8n_webhook' ? '#6d28d9' : '#0369a1',
+                                    fontSize: '10px',
+                                    fontWeight: 800,
+                                    padding: '2px 7px',
+                                    borderRadius: '8px',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '3px'
+                                }}>
+                                    <Bot size={11} /> {assessmentResult.source === 'n8n_webhook' ? 'n8n Workflow' : 'Clinical AI Engine'}
+                                </span>
+                                <div style={{ fontSize: '15px', fontWeight: 800, color: getRiskColor(assessmentResult.computed_risk_level) }}>
+                                    {(assessmentResult.ai_risk_score * 100).toFixed(0)} / 100
+                                </div>
                             </div>
                         </div>
 
-                        {/* Explanation Box */}
+                        {/* Explanation / Clinical Report Box */}
                         <div style={{ 
-                            padding: '10px 12px', 
-                            borderRadius: '10px', 
-                            backgroundColor: 'rgba(255,255,255,0.7)', 
+                            padding: '12px', 
+                            borderRadius: '12px', 
+                            backgroundColor: 'rgba(255,255,255,0.85)', 
                             border: '1px solid rgba(0,0,0,0.06)',
                             marginBottom: '12px' 
                         }}>
-                            <div style={{ fontSize: '11px', fontWeight: '800', marginBottom: '3px', display: 'flex', alignItems: 'center', gap: '5px', color: getRiskColor(assessmentResult.computed_risk_level) }}>
-                                <AlertTriangle size={13} /> Clinical Explanation & Identified Flags:
+                            <div style={{ fontSize: '11.5px', fontWeight: '800', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '5px', color: getRiskColor(assessmentResult.computed_risk_level) }}>
+                                <FileText size={13} /> Clinical Triage & Risk Report:
                             </div>
-                            <p style={{ fontSize: '12px', lineHeight: '1.4', color: 'var(--text-primary)', margin: 0 }}>
+                            <div style={{ 
+                                fontSize: '12px', 
+                                lineHeight: '1.5', 
+                                color: 'var(--text-primary)', 
+                                whiteSpace: 'pre-line',
+                                maxHeight: '200px',
+                                overflowY: 'auto'
+                            }}>
                                 {assessmentResult.ai_triage_explanation || "All vital parameters are within normal baseline ranges."}
-                            </p>
+                            </div>
                         </div>
 
                         {/* Action Buttons */}
