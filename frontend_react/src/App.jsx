@@ -87,9 +87,10 @@ const MainApp = () => {
   }
 
   const publicRoutes = [
-    '/', '/login', '/login/patient', '/login/doctor', '/signup', 
+    '/', '/home', '/login', '/login/patient', '/login/doctor', '/signup', 
     '/admin', '/referrals', '/facilities', '/triage',
-    '/asha', '/caregiver', '/facility-dashboard'
+    '/asha', '/caregiver', '/facility-dashboard', '/roles',
+    '/services', '/records', '/status', '/care-team', '/family', '/learn-medicine', '/learn-medicines'
   ];
   if (!user && !publicRoutes.includes(location.pathname)) {
     console.log("Redirecting to / from", location.pathname);
@@ -100,8 +101,9 @@ const MainApp = () => {
     <>
       <div style={{ paddingBottom: hideNavRoutes.includes(location.pathname) ? '0' : '80px' }}>
         <Routes>
-          {/* Landing / Auth Routes (Login opens first) */}
-          <Route path="/" element={!user ? <Login /> : (user.role === 'doctor' ? <Navigate to="/doctor/dashboard" /> : <Navigate to="/home" />)} />
+          {/* Landing / Auth Routes */}
+          <Route path="/" element={!user ? <Login /> : (user.role === 'doctor' ? <Navigate to="/doctor/dashboard" /> : <Home />)} />
+          <Route path="/home" element={<Home />} />
           <Route path="/roles" element={<RoleSelection />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/login" element={!user ? <Login /> : <Navigate to="/home" />} />
@@ -116,51 +118,38 @@ const MainApp = () => {
           <Route path="/asha" element={<AshaDashboard />} />
           <Route path="/caregiver" element={<CaregiverDashboard />} />
           <Route path="/facility-dashboard" element={<FacilityDashboard />} />
-
-          {/* Patient Routes */}
-          {user?.role === 'patient' && (
-            <>
-              <Route path="/learn-medicine" element={<LearnMedicines />} />
-              <Route path="/learn-medicines" element={<LearnMedicines />} />
-              <Route path="/profile-setup" element={<ProfileSetup />} />
-              <Route path="/status" element={<Status />} />
-              <Route path="/records" element={<Records />} />
-              <Route path="/services" element={<Services />} />
-              <Route path="/support" element={<Support />} />
-              <Route path="/home" element={<Home />} />
-              <Route path="/care-team" element={<CareTeam />} />
-              <Route path="/scan" element={<ScanQR />} />
-              <Route path="/consultation/:date/:doctorId" element={<ConsultationDetails />} />
-              <Route path="/family" element={<FamilyHealth />} />
-              <Route path="/family/:memberId" element={<FamilyMemberDetails />} />
-              <Route path="/notifications" element={<Notifications />} />
-            </>
-          )}
+          <Route path="/services" element={<Services />} />
+          <Route path="/records" element={<Records />} />
+          <Route path="/status" element={<Status />} />
+          <Route path="/care-team" element={<CareTeam />} />
+          <Route path="/family" element={<FamilyHealth />} />
+          <Route path="/family/:memberId" element={<FamilyMemberDetails />} />
+          <Route path="/learn-medicine" element={<LearnMedicines />} />
+          <Route path="/learn-medicines" element={<LearnMedicines />} />
+          <Route path="/support" element={<Support />} />
+          <Route path="/profile-setup" element={<ProfileSetup />} />
+          <Route path="/scan" element={<ScanQR />} />
+          <Route path="/consultation/:date/:doctorId" element={<ConsultationDetails />} />
+          <Route path="/notifications" element={<Notifications />} />
 
           {/* Shared Profile */}
-          {user && (
-            <Route path="/profile" element={<Profile />} />
-          )}
+          <Route path="/profile" element={<Profile />} />
 
           {/* Doctor Routes */}
-          {user?.role === 'doctor' && (
-            <>
-              <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
-              <Route path="/doctor/patients" element={<DoctorPatients />} />
-              <Route path="/doctor/patient/:patient_id" element={<PatientHistory />} />
-              <Route path="/doctor/prescribe" element={<PrescribeMedicine />} />
-              <Route path="/doctor/diagnosis" element={<AddDiagnosis />} />
-            </>
-          )}
+          <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
+          <Route path="/doctor/patients" element={<DoctorPatients />} />
+          <Route path="/doctor/patient/:patient_id" element={<PatientHistory />} />
+          <Route path="/doctor/prescribe" element={<PrescribeMedicine />} />
+          <Route path="/doctor/diagnosis" element={<AddDiagnosis />} />
 
           {/* Catch all */}
-          <Route path="*" element={<Navigate to={user ? (user.role === 'doctor' ? '/doctor/dashboard' : '/home') : '/'} />} />
+          <Route path="*" element={<Navigate to={user ? (user.role === 'doctor' ? '/doctor/dashboard' : '/home') : '/home'} />} />
         </Routes>
       </div>
 
-      {/* Show Navbar only for logged-in users and not on certain routes */}
-      {user && !hideNavRoutes.includes(location.pathname) && (
-        user.role === 'doctor' ? <DoctorNavbar /> : <Navbar />
+      {/* Show Navbar on all main pages */}
+      {!hideNavRoutes.includes(location.pathname) && (
+        user?.role === 'doctor' ? <DoctorNavbar /> : <Navbar />
       )}
     </>
   );
