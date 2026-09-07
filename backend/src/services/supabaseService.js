@@ -7,15 +7,131 @@ const notificationService = require('./notificationService');
 
 class SupabaseService {
     // ==========================================
+    // ==========================================
     // USER & PATIENT CLOUD DATABASE OPERATIONS
     // ==========================================
+    async getUserByPhone(phone) {
+        if (!phone) return null;
+        let cleanPhone = String(phone).replace(/\D/g, '').slice(-10);
+        try {
+            const { data, error } = await supabase
+                .from('users')
+                .select('*')
+                .or(`phone.eq.${cleanPhone},phone.eq.+91${cleanPhone}`)
+                .maybeSingle();
+
+            if (error) {
+                console.warn('[SUPABASE] getUserByPhone notice:', error.message);
+                return null;
+            }
+            if (data) {
+                return { ...data, name: data.full_name || data.name, role: (data.role || 'patient').toLowerCase() };
+            }
+            return null;
+        } catch (err) {
+            console.warn('[SUPABASE] getUserByPhone err:', err.message);
+            return null;
+        }
+    }
+
+    async getUserByEmail(email) {
+        if (!email) return null;
+        const cleanEmail = email.trim().toLowerCase();
+        try {
+            const { data, error } = await supabase
+                .from('users')
+                .select('*')
+                .eq('email', cleanEmail)
+                .maybeSingle();
+
+            if (error) {
+                console.warn('[SUPABASE] getUserByEmail notice:', error.message);
+                return null;
+            }
+            if (data) {
+                return { ...data, name: data.full_name || data.name, role: (data.role || 'patient').toLowerCase() };
+            }
+            return null;
+        } catch (err) {
+            console.warn('[SUPABASE] getUserByEmail err:', err.message);
+            return null;
+        }
+    }
+
+    async getUserById(id) {
+        if (!id) return null;
+        try {
+            const { data, error } = await supabase
+                .from('users')
+                .select('*')
+                .eq('id', id)
+                .maybeSingle();
+
+            if (error) {
+                console.warn('[SUPABASE] getUserById notice:', error.message);
+                return null;
+            }
+            if (data) {
+                return { ...data, name: data.full_name || data.name, role: (data.role || 'patient').toLowerCase() };
+            }
+            return null;
+        } catch (err) {
+            console.warn('[SUPABASE] getUserById err:', err.message);
+            return null;
+        }
+    }
+
+    async updateUserPassword(userId, passwordHash) {
+        try {
+            const { data, error } = await supabase
+                .from('users')
+                .update({ 
+                    password_hash: passwordHash,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', userId)
+                .select()
+                .single();
+
+            if (error) throw error;
+            return data;
+        } catch (err) {
+            console.error('[SUPABASE] updateUserPassword error:', err.message);
+            throw err;
+        }
+    }
+
+    async updateUser(userId, updates) {
+        try {
+            const payload = { ...updates, updated_at: new Date().toISOString() };
+            if (payload.name && !payload.full_name) payload.full_name = payload.name;
+            delete payload.name;
+
+            const { data, error } = await supabase
+                .from('users')
+                .update(payload)
+                .eq('id', userId)
+                .select()
+                .single();
+
+            if (error) throw error;
+            return { ...data, name: data.full_name || data.name, role: (data.role || 'patient').toLowerCase() };
+        } catch (err) {
+            console.error('[SUPABASE] updateUser error:', err.message);
+            throw err;
+        }
+    }
+
     async createUser(userId, userData) {
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        const validUserId = (userId && uuidRegex.test(userId)) ? userId : crypto.randomUUID();
+
         let phone = userData.phone ? String(userData.phone).replace(/\D/g, '').slice(-10) : null;
         if (!phone || phone.length < 10) {
             if (userData.emergency_contact && String(userData.emergency_contact).replace(/\D/g, '').length >= 10) {
                 phone = String(userData.emergency_contact).replace(/\D/g, '').slice(-10);
             } else {
-                const seed = (userData.email || userId || 'swasthya-user') + (userData.name || '');
+                const seed = (userData.email || validUserId || 'swasthya-user') + (userData.name || '');
                 const hash = crypto.createHash('md5').update(seed).digest('hex');
                 const digits = hash.replace(/\D/g, '').padEnd(9, '8').slice(0, 9);
                 phone = '9' + digits;
@@ -31,7 +147,7 @@ class SupabaseService {
         const role = rawRole.includes('DOC') ? 'DOCTOR' : (rawRole.includes('HEALTH') || rawRole.includes('WORKER') || rawRole.includes('ASHA') ? 'HEALTH_WORKER' : (rawRole.includes('STAFF') || rawRole.includes('FACILITY') ? 'FACILITY_STAFF' : (rawRole.includes('ADMIN') ? 'ADMIN' : (rawRole.includes('CAREGIVER') ? 'CAREGIVER' : 'PATIENT'))));
 
         const userPayload = {
-            id: userId,
+            id: validUserId,
             phone: phone,
             full_name: fullName.trim(),
             email: userData.email ? userData.email.trim().toLowerCase() : null,
@@ -58,6 +174,29 @@ class SupabaseService {
             }
 
             let unified = { ...userPayload, name: fullName.trim(), role: role.toLowerCase() };
+
+            // If health worker, also record in asha_workers
+            if (role === 'HEALTH_WORKER') {
+                try {
+                    await supabase
+                        .from('asha_workers')
+                        .upsert({
+                            user_id: userId,
+                            worker_id: userData.worker_id || `ASHA-${phone.slice(-4)}`,
+                            full_name: fullName.trim(),
+                            phone: phone,
+                            email: userPayload.email,
+                            role: 'health_worker',
+                            assigned_subcentre: userData.assigned_subcentre || 'Shirwal Sub-Centre',
+                            assigned_phc: userData.assigned_phc || 'Shirwal PHC',
+                            jurisdiction_district: userPayload.jurisdiction_district || 'Pune',
+                            status: 'ACTIVE'
+                        });
+                } catch (ashaErr) {
+                    console.warn('[SUPABASE] asha_workers table sync notice:', ashaErr.message);
+                }
+            }
+
 
             // ONLY create/update patient clinical profile if the user's role is PATIENT
             if (role === 'PATIENT') {

@@ -287,11 +287,39 @@ const Login = () => {
             return;
         }
 
+        const rawPhone = phoneNumber ? phoneNumber.trim() : (profileData.phone || '');
+        const cleanPhone = rawPhone ? rawPhone.replace(/\D/g, '').slice(-10) : null;
+        const resolvedName = profileData.name || email.split('@')[0].replace(/[\._\-]/g, ' ');
+
+        // If non-patient role (e.g. ASHA, Doctor, Caregiver, Facility, Admin), register and immediately navigate to their portal!
+        if (selectedRole !== 'patient') {
+            setLoading(true);
+            setLoginError('');
+            try {
+                await registerWithEmail({
+                    email: email,
+                    password: password,
+                    name: resolvedName,
+                    phone: cleanPhone,
+                    role: selectedRole || 'health_worker',
+                    assigned_subcentre: 'Shirwal Sub-Centre',
+                    assigned_phc: 'Shirwal PHC'
+                });
+                navigate(currentRole.targetRoute);
+                return;
+            } catch (err) {
+                console.error("Non-patient register error:", err);
+                setLoginError(err.response?.data?.error || err.message || "Registration failed in Supabase");
+                setLoading(false);
+                return;
+            }
+        }
+
         setProfileData(prev => ({
             ...prev,
             email: email,
-            phone: phoneNumber ? phoneNumber.trim() : (prev.phone || ''),
-            name: prev.name || email.split('@')[0].replace(/[\._\-]/g, ' ')
+            phone: rawPhone,
+            name: resolvedName
         }));
 
         setLoginError('');
@@ -390,7 +418,11 @@ const Login = () => {
                 }
             }
 
-            navigate('/home');
+            if (selectedRole === 'patient') {
+                navigate('/home');
+            } else {
+                navigate(currentRole.targetRoute);
+            }
         } catch (err) {
             console.error("Profile / Register save error:", err);
             setLoginError(err.response?.data?.error || err.message || "Failed to complete registration in Supabase.");
@@ -607,18 +639,49 @@ const Login = () => {
                 {/* Error Banner */}
                 {loginError && (
                     <div style={{
-                        padding: '10px 14px',
+                        padding: '12px 14px',
                         background: '#fee2e2',
-                        borderRadius: '10px',
-                        color: '#b91c1c',
+                        borderRadius: '12px',
+                        border: '1px solid #fca5a5',
+                        color: '#991b1b',
                         fontSize: '12px',
                         display: 'flex',
-                        alignItems: 'center',
+                        flexDirection: 'column',
                         gap: '8px',
                         marginBottom: '16px'
                     }}>
-                        <AlertCircle size={16} />
-                        <span>{loginError}</span>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                            <AlertCircle size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
+                            <span style={{ fontWeight: 600 }}>{loginError}</span>
+                        </div>
+                        {authMode === 'login' && loginError.toLowerCase().includes('no account') && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setAuthMode('register');
+                                    setStep(1);
+                                    setLoginError('');
+                                }}
+                                style={{
+                                    alignSelf: 'flex-start',
+                                    background: '#dc2626',
+                                    color: '#ffffff',
+                                    border: 'none',
+                                    padding: '6px 14px',
+                                    borderRadius: '8px',
+                                    fontSize: '11px',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    marginTop: '2px'
+                                }}
+                            >
+                                <UserPlus size={13} />
+                                <span>Register as {currentRole.label} with this Gmail now →</span>
+                            </button>
+                        )}
                     </div>
                 )}
 
