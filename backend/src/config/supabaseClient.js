@@ -1,14 +1,14 @@
 const { createClient } = require('@supabase/supabase-js');
-require('dotenv').config();
+const config = require('./env');
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+const supabaseUrl = config.supabase.url;
+const supabaseKey = config.supabase.serviceRoleKey;
 
-if (!supabaseUrl || !supabaseKey) {
-    console.warn('[WARNING] SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is missing from environment variables.');
+if (!supabaseUrl || supabaseUrl.includes('placeholder')) {
+    console.warn('[WARNING] SUPABASE_URL or keys are not properly configured.');
 }
 
-const supabase = createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseKey || 'placeholder', {
+const supabase = createClient(supabaseUrl, supabaseKey, {
     auth: {
         autoRefreshToken: false,
         persistSession: false

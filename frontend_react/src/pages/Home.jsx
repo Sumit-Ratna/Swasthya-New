@@ -115,103 +115,103 @@ const Home = () => {
 
     const coreFeatures = [
         {
-            title: '13-State Referral Engine',
+            title: '13-State Referral',
             tag: 'Closed-Loop',
-            desc: 'Track referral milestones from initial triage to verified follow-up closure.',
-            icon: <GitBranch size={26} color="#0d9488" />,
+            desc: 'Milestone tracking & verified care closure',
+            icon: <GitBranch size={22} color="#0d9488" />,
             bgColor: '#ccfbf1',
             badgeColor: '#0f766e',
             link: '/referrals'
         },
         {
-            title: 'Smart Facility Matching',
-            tag: 'Live Bed Meters',
-            desc: 'Multi-tier hospital directory with live occupancy load & emergency tags.',
-            icon: <Building2 size={26} color="#2563eb" />,
+            title: 'Facility Matching',
+            tag: 'Live Beds',
+            desc: 'Multi-tier directory & load meters',
+            icon: <Building2 size={22} color="#2563eb" />,
             bgColor: '#dbeafe',
             badgeColor: '#1d4ed8',
             link: '/facilities'
         },
         {
-            title: 'AI Clinical Risk Triage',
-            tag: 'Explainable AI',
-            desc: 'Vitals scoring (BP, SpO2, Pulse) with instant risk evaluation.',
-            icon: <HeartPulse size={26} color="#dc2626" />,
-            bgColor: '#fee2e2',
-            badgeColor: '#b91c1c',
+            title: 'AI Risk Triage',
+            tag: 'Triage AI',
+            desc: 'Vitals scoring & emergency risk alerts',
+            icon: <HeartPulse size={22} color="#e11d48" />,
+            bgColor: '#ffe4e6',
+            badgeColor: '#be123c',
             link: '/triage'
         },
         {
-            title: 'Multimodal Lab Report OCR',
-            tag: 'AI Intelligence',
-            desc: 'Upload scans & blood tests for automatic structured health summaries.',
-            icon: <FileText size={26} color="#7c3aed" />,
+            title: 'Lab Report OCR',
+            tag: 'MedGemma',
+            desc: 'Automated blood test & scan summaries',
+            icon: <FileText size={22} color="#7c3aed" />,
             bgColor: '#ede9fe',
             badgeColor: '#6d28d9',
             link: '/records'
         },
         {
-            title: '👩‍⚕️ ASHA / ANM Frontline Worker Hub',
-            tag: 'Field Operations',
-            desc: 'Mother & child RCH tracking, NIS immunizations, and DBT incentives.',
-            icon: <HeartPulse size={26} color="#0d9488" />,
-            bgColor: '#ccfbf1',
-            badgeColor: '#0f766e',
-            link: '/asha'
-        },
-        {
-            title: '👨‍👩‍👧 Caregiver Command Hub',
-            tag: 'Family Proxy',
-            desc: 'Multi-dependent vitals radar, smart pillbox adherence & SOS panic alert.',
-            icon: <Users size={26} color="#db2777" />,
-            bgColor: '#fce7f3',
-            badgeColor: '#be185d',
-            link: '/caregiver'
-        },
-        {
-            title: '🏥 Hospital & Facility Operations',
-            tag: 'Operations Desk',
-            desc: 'Live bed & ICU grid, inbound triage stream & duty doctor roster.',
-            icon: <Building2 size={26} color="#0284c7" />,
-            bgColor: '#e0f2fe',
-            badgeColor: '#0369a1',
-            link: '/facility-dashboard'
-        },
-        {
-            title: 'Guardian AI Drug Safety',
-            tag: 'Interaction Shield',
-            desc: 'Cross-checks prescriptions against allergies & chronic conditions.',
-            icon: <ShieldCheck size={26} color="#16a34a" />,
-            bgColor: '#dcfce7',
-            badgeColor: '#15803d',
+            title: 'Drug Safety Shield',
+            tag: 'Guardian AI',
+            desc: 'Allergy & drug interaction checks',
+            icon: <ShieldCheck size={22} color="#059669" />,
+            bgColor: '#d1fae5',
+            badgeColor: '#047857',
             link: '/services'
         },
         {
-            title: 'Visual Medicine Explainer',
-            tag: 'Elderly Friendly',
-            desc: 'Illustrated dosage guides and interactive medicine storyboards.',
-            icon: <BookOpen size={26} color="#d97706" />,
+            title: 'Medicine Explainer',
+            tag: 'Visual Guide',
+            desc: 'Visual dosage storyboards & reminders',
+            icon: <BookOpen size={22} color="#d97706" />,
             bgColor: '#fef3c7',
             badgeColor: '#b45309',
             link: '/learn-medicines'
         },
         {
-            title: 'Caregiver & Family Circles',
-            tag: 'Scoped Access',
-            desc: 'Grant secure family proxy access for elderly and rural dependents.',
-            icon: <Users size={26} color="#ec4899" />,
+            title: 'Caregiver Circles',
+            tag: 'Family Proxy',
+            desc: 'Dependent monitoring & SOS panic',
+            icon: <Users size={22} color="#db2777" />,
             bgColor: '#fce7f3',
             badgeColor: '#be185d',
-            link: '/family'
+            link: '/caregiver'
         },
         {
-            title: '🛡️ Health Authority Admin Center',
-            tag: 'SHA-256 Chained',
-            desc: 'Tamper-evident audit ledger, district load metrics, and disease radar.',
-            icon: <Lock size={26} color="#475569" />,
+            title: 'Audit Ledger',
+            tag: 'SHA-256',
+            desc: 'Tamper-evident logs & health KPIs',
+            icon: <Lock size={22} color="#475569" />,
             bgColor: '#f1f5f9',
             badgeColor: '#334155',
             link: '/admin'
+        }
+    ];
+
+    const stakeholderHubs = [
+        {
+            title: 'ASHA Worker Hub',
+            desc: 'RCH tracking & field triage',
+            icon: <HeartPulse size={20} color="#0d9488" />,
+            bgColor: '#f0fdfa',
+            borderColor: '#99f6e4',
+            link: '/asha'
+        },
+        {
+            title: 'Caregiver Hub',
+            desc: 'Vitals radar & SOS panic',
+            icon: <Users size={20} color="#db2777" />,
+            bgColor: '#fdf2f8',
+            borderColor: '#fbcfe8',
+            link: '/caregiver'
+        },
+        {
+            title: 'Facility Ops Desk',
+            desc: 'Bed grid & doctor roster',
+            icon: <Building2 size={20} color="#0284c7" />,
+            bgColor: '#f0f9ff',
+            borderColor: '#bae6fd',
+            link: '/facility-dashboard'
         }
     ];
 
@@ -497,21 +497,91 @@ const Home = () => {
                 </div>
             </motion.div>
 
-            {/* Quick Action Navigation Grid */}
-            <div style={{ marginBottom: '32px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                    <h2 className="section-title" style={{ margin: 0, color: 'var(--text-primary)', fontSize: '18px', fontWeight: 800 }}>
-                        Swasthya Core Ecosystem
+            {/* Stakeholder Role Command Portals */}
+            <div style={{ marginBottom: '24px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                    <h2 className="section-title" style={{ margin: 0, color: 'var(--text-primary)', fontSize: '16px', fontWeight: 800 }}>
+                        Stakeholder Command Hubs
                     </h2>
-                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                        All 11 Modules
+                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                        3 Specialized Portals
                     </span>
                 </div>
 
                 <div style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-                    gap: '14px'
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+                    gap: '10px'
+                }}>
+                    {stakeholderHubs.map((hub, idx) => (
+                        <motion.div
+                            key={idx}
+                            whileHover={{ y: -2, scale: 1.01 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => navigate(hub.link)}
+                            style={{
+                                background: hub.bgColor,
+                                border: `1.5px solid ${hub.borderColor}`,
+                                borderRadius: '14px',
+                                padding: '12px 10px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'space-between',
+                                minHeight: '86px'
+                            }}
+                        >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                                <div style={{
+                                    width: '32px',
+                                    height: '32px',
+                                    borderRadius: '8px',
+                                    background: 'white',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+                                }}>
+                                    {hub.icon}
+                                </div>
+                                <h4 style={{ margin: 0, fontSize: '12px', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+                                    {hub.title}
+                                </h4>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '2px', fontSize: '10.5px', fontWeight: 700, color: 'var(--primary-color)', marginTop: '4px' }}>
+                                <span>Enter Portal</span>
+                                <ChevronRight size={12} />
+                            </div>
+                        </motion.div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Swasthya Platform Capabilities Grid Layout */}
+            <div style={{ marginBottom: '32px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                    <div>
+                        <h2 className="section-title" style={{ margin: 0, color: 'var(--text-primary)', fontSize: '17px', fontWeight: 800 }}>
+                            Swasthya Platform Capabilities
+                        </h2>
+                    </div>
+                    <span style={{
+                        fontSize: '11px',
+                        color: 'var(--primary-color)',
+                        background: 'var(--primary-light)',
+                        padding: '3px 9px',
+                        borderRadius: '12px',
+                        fontWeight: 700,
+                        border: '1px solid #ccfbf1'
+                    }}>
+                        All 8 Core Modules
+                    </span>
+                </div>
+
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(2, 1fr)',
+                    gap: '12px'
                 }}>
                     {coreFeatures.map((feat, index) => (
                         <motion.div
@@ -519,56 +589,89 @@ const Home = () => {
                             className="card"
                             initial={{ opacity: 0, y: 15 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.04 }}
+                            transition={{ delay: index * 0.03 }}
+                            whileHover={{ y: -3, boxShadow: '0 8px 18px -4px rgba(0, 0, 0, 0.08)' }}
+                            whileTap={{ scale: 0.98 }}
                             onClick={() => navigate(feat.link)}
                             style={{
-                                padding: '18px',
+                                padding: '14px 12px',
                                 border: '1px solid var(--border-color)',
                                 cursor: 'pointer',
                                 display: 'flex',
                                 flexDirection: 'column',
                                 justifyContent: 'space-between',
-                                transition: 'all 0.25s ease',
+                                transition: 'all 0.2s ease',
                                 background: 'var(--card-bg)',
-                                borderRadius: '16px'
+                                borderRadius: '16px',
+                                marginBottom: 0,
+                                minHeight: '160px',
+                                boxSizing: 'border-box'
                             }}
-                            whileHover={{ y: -4, boxShadow: 'var(--shadow-md)' }}
                         >
                             <div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
                                     <div style={{
-                                        width: '44px',
-                                        height: '44px',
-                                        borderRadius: '12px',
+                                        width: '38px',
+                                        height: '38px',
+                                        borderRadius: '10px',
                                         background: feat.bgColor,
                                         display: 'flex',
                                         alignItems: 'center',
-                                        justifyContent: 'center'
+                                        justifyContent: 'center',
+                                        flexShrink: 0
                                     }}>
                                         {feat.icon}
                                     </div>
                                     <span style={{
-                                        fontSize: '10px',
+                                        fontSize: '9px',
                                         fontWeight: 700,
-                                        padding: '3px 8px',
-                                        borderRadius: '8px',
+                                        padding: '2px 6px',
+                                        borderRadius: '6px',
                                         background: feat.bgColor,
-                                        color: feat.badgeColor
+                                        color: feat.badgeColor,
+                                        whiteSpace: 'nowrap',
+                                        marginLeft: '4px'
                                     }}>
                                         {feat.tag}
                                     </span>
                                 </div>
-                                <h3 style={{ margin: '0 0 4px 0', fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)' }}>
+
+                                <h3 style={{
+                                    margin: '8px 0 4px 0',
+                                    fontSize: '13px',
+                                    fontWeight: 800,
+                                    color: 'var(--text-primary)',
+                                    lineHeight: '1.25'
+                                }}>
                                     {feat.title}
                                 </h3>
-                                <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+                                <p style={{
+                                    margin: 0,
+                                    fontSize: '11px',
+                                    color: 'var(--text-secondary)',
+                                    lineHeight: '1.35',
+                                    display: '-webkit-box',
+                                    WebkitLineClamp: 3,
+                                    WebkitBoxOrient: 'vertical',
+                                    overflow: 'hidden'
+                                }}>
                                     {feat.desc}
                                 </p>
                             </div>
 
-                            <div style={{ marginTop: '14px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 700, color: 'var(--primary-color)' }}>
+                            <div style={{
+                                marginTop: '10px',
+                                paddingTop: '8px',
+                                borderTop: '1px solid #f1f5f9',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '3px',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                color: 'var(--primary-color)'
+                            }}>
                                 <span>Open Module</span>
-                                <ChevronRight size={14} />
+                                <ChevronRight size={13} />
                             </div>
                         </motion.div>
                     ))}

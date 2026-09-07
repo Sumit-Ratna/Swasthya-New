@@ -1,11 +1,15 @@
 {
-    "name": "health-nexus-backend",
-    "version": "1.0.0",
-    "description": "Backend for HealthNexus Medical Application",
+    "name": "swasthya-backend",
+    "version": "2.0.0",
+    "description": "SwasthyaSetu Unified Healthcare Monolith Backend",
     "main": "src/server.js",
     "scripts": {
         "start": "node src/server.js",
-        "dev": "nodemon src/server.js"
+        "dev": "nodemon src/server.js",
+        "test": "node tests/unit/referralStateMachine.unit.test.js && node tests/e2e/closedLoopReferral.e2e.test.js",
+        "test:unit": "node tests/unit/referralStateMachine.unit.test.js",
+        "test:integration": "node tests/integration/sync.integration.test.js",
+        "test:e2e": "node tests/e2e/closedLoopReferral.e2e.test.js"
     },
     "dependencies": {
         "@google/generative-ai": "^0.24.1",
@@ -15,17 +19,13 @@
         "cors": "^2.8.5",
         "dotenv": "^16.3.1",
         "express": "^4.18.2",
-        "firebase-admin": "^13.6.1",
         "jsonwebtoken": "^9.0.3",
         "multer": "^1.4.5-lts.1",
-        "mysql2": "^2.3.3",
         "node-fetch": "^3.3.2",
         "openai": "^6.18.0",
         "pdfkit": "^0.17.2",
-        "pg": "^8.11.3",
-        "pg-hstore": "^2.3.4",
         "qrcode": "^1.5.4",
-        "sequelize": "^6.33.0",
+        "swagger-ui-express": "^5.0.1",
         "twilio": "^5.12.1",
         "uuid": "^13.0.0"
     },

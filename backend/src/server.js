@@ -1,8 +1,10 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const config = require('./config/env');
 const supabase = require('./config/supabaseClient');
-require('dotenv').config({ path: path.join(__dirname, '../.env') });
+const { errorHandler } = require('./middleware/errorHandler');
+const requestId = require('./middleware/requestId');
 
 const connectRoutes = require('./routes/connect');
 const aiRoutes = require('./routes/ai');
@@ -21,13 +23,29 @@ const feedbackRoutes = require('./routes/feedback');
 const ashaRoutes = require('./routes/asha');
 const caregiverRoutes = require('./routes/caregiver');
 const facilityOpsRoutes = require('./routes/facilityOps');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./config/swaggerDoc');
 
 const app = express();
-const PORT = process.env.PORT || 8000;
+const PORT = config.port;
+
+// Attach Unique X-Request-ID header
+app.use(requestId);
 
 // CORS configuration supporting mobile Capacitor, Web, Localhost, and LAN IPs
 app.use(cors({
-    origin: '*',
+    origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps, curl, Postman)
+        if (!origin) return callback(null, true);
+        if (config.corsOrigins.includes('*') || config.corsOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        // Allow localhost and capacitor
+        if (origin.startsWith('http://localhost') || origin.startsWith('capacitor://') || origin.startsWith('http://192.168.')) {
+            return callback(null, true);
+        }
+        return callback(null, true); // Permissive for hackathon/multi-device
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Bypass-Tunnel-Reminder', 'ngrok-skip-browser-warning', 'X-Requested-With', 'x-user-id', 'x-user-role'],
     credentials: true
@@ -45,7 +63,49 @@ app.use((req, res, next) => {
 
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// Routes
+// Root & Health check
+app.get('/', (req, res) => {
+    res.json({
+        name: 'SwasthyaSetu Unified Healthcare API',
+        version: '2.0.0',
+        message: 'API is running with Supabase PostgreSQL and Canonical Closed-Loop Referral State Engine',
+        swagger_docs: '/api-docs',
+        status: 'healthy',
+        timestamp: new Date().toISOString()
+    });
+});
+
+app.get('/api/health', async (req, res) => {
+    const startTime = Date.now();
+    let dbStatus = 'healthy';
+    let dbLatencyMs = 0;
+
+    try {
+        const { error } = await supabase.from('facilities').select('id').limit(1);
+        dbLatencyMs = Date.now() - startTime;
+        if (error) {
+            dbStatus = `degraded: ${error.message}`;
+        }
+    } catch (err) {
+        dbStatus = `unreachable: ${err.message}`;
+        dbLatencyMs = Date.now() - startTime;
+    }
+
+    const overallHealthy = !dbStatus.startsWith('unreachable');
+    res.status(overallHealthy ? 200 : 503).json({
+        status: overallHealthy ? 'healthy' : 'unhealthy',
+        environment: config.env,
+        database: {
+            status: dbStatus,
+            latencyMs: dbLatencyMs,
+            engine: 'Supabase PostgreSQL'
+        },
+        uptimeSeconds: Math.floor(process.uptime()),
+        timestamp: new Date().toISOString()
+    });
+});
+
+// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/appointments', appointmentRoutes);
@@ -64,37 +124,39 @@ app.use('/api/asha', ashaRoutes);
 app.use('/api/caregiver', caregiverRoutes);
 app.use('/api/facility-ops', facilityOpsRoutes);
 
-app.get('/', (req, res) => {
-    res.json({
-        name: 'SwasthyaSetu / HealthNexus Unified Healthcare API',
-        message: 'API is Running with Supabase PostgreSQL and Closed-Loop Referral Engine',
-        status: 'healthy',
-        database: 'Connected to Supabase PostgreSQL',
+// Swagger Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: 'Swasthya Healthcare API - Swagger Docs'
+}));
+app.use('/swagger', (req, res) => res.redirect('/api-docs'));
+
+// Centralized 404 Handler for unknown API routes
+app.use('/api/*', (req, res) => {
+    res.status(404).json({
+        success: false,
+        error: `Endpoint not found: ${req.method} ${req.originalUrl}`,
+        code: 'NOT_FOUND',
         timestamp: new Date().toISOString()
     });
 });
 
-app.get('/api/health', (req, res) => {
-    res.json({
-        status: 'healthy',
-        database: 'Supabase PostgreSQL (Active)',
-        timestamp: new Date().toISOString()
-    });
-});
+// Centralized Error Handling Middleware
+app.use(errorHandler);
 
-// Start Server listening on 0.0.0.0 (Accessible via localhost, LAN IP 192.168.29.111, & reverse proxy)
-const HOST = '0.0.0.0';
+// Start Server listening on 0.0.0.0
+const HOST = config.host;
 if (require.main && require.main.filename === __filename && !process.env.VERCEL) {
     app.listen(PORT, HOST, async () => {
         console.log(`[SERVER] Running on http://${HOST}:${PORT}`);
         console.log(`[NETWORK] Localhost: http://localhost:${PORT}`);
-        console.log(`[NETWORK] Wi-Fi LAN:  http://192.168.29.111:${PORT}`);
+        console.log(`[SWAGGER] Docs: http://localhost:${PORT}/api-docs`);
         try {
-            const { error } = await supabase.from('users').select('id').limit(1);
+            const { error } = await supabase.from('facilities').select('id').limit(1);
             if (error) {
                 console.warn('[WARNING] Supabase query notice:', error.message);
             } else {
-                console.log('[SUCCESS] Connected to Supabase Database successfully (virecfebgqsumovpumqe.supabase.co)');
+                console.log('[SUCCESS] Connected to Supabase Database successfully.');
             }
         } catch (err) {
             console.warn('[WARNING] Supabase initial ping exception:', err.message);
@@ -103,5 +165,3 @@ if (require.main && require.main.filename === __filename && !process.env.VERCEL)
 }
 
 module.exports = app;
-
-

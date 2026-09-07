@@ -14,14 +14,14 @@ const RoleSelection = () => {
     const personas = [
         {
             role: 'health_worker',
-            title: 'ASHA / ANM Health Worker',
-            badge: 'Primary Rural Route',
+            title: 'ASHA / ANM Worker',
+            badge: 'Field Ops',
             badgeColor: '#059669',
             badgeBg: '#d1fae5',
-            desc: 'Mother & child RCH tracking, NIS immunizations, field vitals triage & DBT incentives.',
-            icon: <HeartPulse size={32} color="#0d9488" />,
+            desc: 'RCH tracking, field vitals & immunizations',
+            icon: <HeartPulse size={28} color="#0d9488" />,
             gradient: 'linear-gradient(135deg, #0d9488 0%, #115e59 100%)',
-            actionText: 'Open ASHA Command Hub',
+            actionText: 'ASHA Hub',
             onClick: () => {
                 guestLogin('health_worker');
                 navigate('/asha');
@@ -29,26 +29,26 @@ const RoleSelection = () => {
         },
         {
             role: 'patient',
-            title: 'Patient Self-Service',
-            badge: 'Personal Health Portal',
+            title: 'Patient Portal',
+            badge: 'Self-Service',
             badgeColor: '#2563eb',
             badgeBg: '#dbeafe',
-            desc: 'Upload lab reports, view AI medical summaries, track referral journey.',
-            icon: <User size={32} color="#2563eb" />,
+            desc: 'Lab reports, AI triage & referral tracking',
+            icon: <User size={28} color="#2563eb" />,
             gradient: 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)',
-            actionText: 'Enter as Patient',
+            actionText: 'Enter Patient',
             onClick: () => navigate('/login')
         },
         {
             role: 'caregiver',
-            title: 'Caregiver / Family Proxy',
-            badge: 'Scoped Access',
+            title: 'Caregiver / Family',
+            badge: 'Proxy Access',
             badgeColor: '#db2777',
             badgeBg: '#fce7f3',
-            desc: 'Multi-dependent vitals radar, smart pillbox adherence & 1-click Emergency SOS panic.',
-            icon: <Users size={32} color="#db2777" />,
+            desc: 'Dependent vitals radar, pillbox & SOS panic',
+            icon: <Users size={28} color="#db2777" />,
             gradient: 'linear-gradient(135deg, #db2777 0%, #9d174d 100%)',
-            actionText: 'Caregiver Command Hub',
+            actionText: 'Caregiver Hub',
             onClick: () => {
                 guestLogin('caregiver');
                 navigate('/caregiver');
@@ -56,26 +56,26 @@ const RoleSelection = () => {
         },
         {
             role: 'doctor',
-            title: 'Doctor & Medical Officer',
-            badge: 'Clinical OPD & Telehealth',
+            title: 'Doctor OPD',
+            badge: 'Clinical EHR',
             badgeColor: '#0284c7',
             badgeBg: '#e0f2fe',
-            desc: 'Review incoming referrals, access longitudinal EHR, issue e-prescriptions.',
-            icon: <Stethoscope size={32} color="#0284c7" />,
+            desc: 'EHR records, e-prescriptions & consults',
+            icon: <Stethoscope size={28} color="#0284c7" />,
             gradient: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
-            actionText: 'Doctor Portal Login',
+            actionText: 'Doctor Login',
             onClick: () => navigate('/login/doctor')
         },
         {
             role: 'facility_staff',
-            title: 'Hospital & Facility Operations',
-            badge: 'Operational Load',
+            title: 'Hospital Operations',
+            badge: 'Bed & ICU Grid',
             badgeColor: '#d97706',
             badgeBg: '#fef3c7',
-            desc: 'Live bed & ICU grid, inbound triage queue, doctor duty roster & oxygen manifold.',
-            icon: <Building2 size={32} color="#0284c7" />,
+            desc: 'Live beds, triage stream & duty roster',
+            icon: <Building2 size={28} color="#0284c7" />,
             gradient: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
-            actionText: 'Facility Operations Hub',
+            actionText: 'Facility Hub',
             onClick: () => {
                 guestLogin('facility_coordinator');
                 navigate('/facility-dashboard');
@@ -83,14 +83,14 @@ const RoleSelection = () => {
         },
         {
             role: 'admin',
-            title: 'Health Authority & MSInS Admin',
-            badge: 'SHA-256 Audit Chain',
+            title: 'Admin Oversight',
+            badge: 'SHA-256 Ledger',
             badgeColor: '#475569',
             badgeBg: '#f1f5f9',
-            desc: 'Closed-loop KPI metrics, referral bottleneck alerts, tamper-evident logs.',
-            icon: <Lock size={32} color="#475569" />,
+            desc: 'Referral KPIs & tamper-evident logs',
+            icon: <Lock size={28} color="#475569" />,
             gradient: 'linear-gradient(135deg, #334155 0%, #0f172a 100%)',
-            actionText: 'Admin Oversight',
+            actionText: 'Admin Dashboard',
             onClick: () => navigate('/admin')
         }
     ];
@@ -111,82 +111,82 @@ const RoleSelection = () => {
                 style={{
                     background: 'linear-gradient(90deg, #0f766e, #0284c7)',
                     color: 'white',
-                    padding: '8px 16px',
+                    padding: '6px 14px',
                     borderRadius: '20px',
-                    fontSize: '12px',
+                    fontSize: '11px',
                     fontWeight: 700,
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px',
-                    marginBottom: '20px',
+                    gap: '6px',
+                    marginBottom: '16px',
                     boxShadow: '0 4px 12px rgba(13, 148, 136, 0.25)'
                 }}
             >
-                <Sparkles size={16} color="#fef08a" />
-                <span>Swasthya (स्वास्थ्य सेतु) • Problem Statement #26133 • MSInS SIH 2026</span>
+                <Sparkles size={14} color="#fef08a" />
+                <span>Health Coordination & Care Platform</span>
             </motion.div>
 
             {/* Logo and Title */}
             <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                style={{ textAlign: 'center', marginBottom: '36px', color: '#1e293b' }}
+                style={{ textAlign: 'center', marginBottom: '28px', color: '#1e293b' }}
             >
                 <div style={{
-                    width: '80px',
-                    height: '80px',
+                    width: '68px',
+                    height: '68px',
                     background: 'white',
-                    borderRadius: '20px',
-                    margin: '0 auto 16px',
+                    borderRadius: '18px',
+                    margin: '0 auto 12px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: '0 12px 24px -6px rgba(0, 0, 0, 0.12)'
+                    boxShadow: '0 10px 20px -5px rgba(0, 0, 0, 0.1)'
                 }}>
-                    <HeartPulse size={44} color="#0d9488" />
+                    <HeartPulse size={38} color="#0d9488" />
                 </div>
-                <h1 style={{ fontSize: '32px', fontWeight: '800', margin: '0 0 8px 0', color: '#0f172a' }}>
+                <h1 style={{ fontSize: '28px', fontWeight: '800', margin: '0 0 4px 0', color: '#0f172a' }}>
                     Swasthya
                 </h1>
-                <p style={{ fontSize: '15px', color: '#64748b', maxWidth: '580px', margin: '0 auto 20px', lineHeight: '1.5' }}>
-                    AI-Assisted Rural Healthcare Coordination, 13-State Closed-Loop Referral Engine & Electronic Health Record Platform
+                <p style={{ fontSize: '13px', color: '#64748b', maxWidth: '420px', margin: '0 auto 16px', lineHeight: '1.4' }}>
+                    AI Clinical Triage, Referral Engine & Health Records
                 </p>
 
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', flexWrap: 'wrap' }}>
                     <button
                         onClick={() => navigate('/login')}
                         style={{
-                            padding: '10px 22px',
+                            padding: '9px 18px',
                             background: 'linear-gradient(135deg, #0d9488 0%, #0284c7 100%)',
                             color: 'white',
                             border: 'none',
-                            borderRadius: '24px',
-                            fontSize: '14px',
+                            borderRadius: '20px',
+                            fontSize: '13px',
                             fontWeight: 700,
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '8px',
+                            gap: '6px',
                             cursor: 'pointer',
-                            boxShadow: '0 4px 14px rgba(13, 148, 136, 0.3)'
+                            boxShadow: '0 4px 12px rgba(13, 148, 136, 0.25)'
                         }}
                     >
-                        <span>Open Unified Login Page</span>
-                        <ArrowRight size={16} />
+                        <span>Sign In</span>
+                        <ArrowRight size={15} />
                     </button>
                     <button
                         onClick={() => { guestLogin('patient'); navigate('/home'); }}
                         style={{
-                            padding: '10px 20px',
+                            padding: '9px 16px',
                             background: 'white',
                             color: '#0f766e',
                             border: '1.5px solid #99f6e4',
-                            borderRadius: '24px',
-                            fontSize: '14px',
+                            borderRadius: '20px',
+                            fontSize: '13px',
                             fontWeight: 700,
                             cursor: 'pointer'
                         }}
                     >
-                        ⚡ 1-Click Patient Demo
+                        ⚡ 1-Click Demo
                     </button>
                 </div>
             </motion.div>

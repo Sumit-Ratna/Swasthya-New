@@ -1,74 +1,57 @@
-const dbService = require('../services/supabaseService');
+const supabase = require('../config/supabaseClient');
+const {
+    REFERRAL_STATES,
+    transitionReferral,
+    isValidTransition
+} = require('../services/referralStateMachine');
+const { normalizeRole } = require('../middleware/auth');
 
-const DEMO_REFERRALS = [
-    {
-        id: 'dddddddd-dddd-dddd-dddd-dddddddddddd',
-        patient_id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
-        receiving_facility_id: '22222222-2222-2222-2222-222222222222',
-        assigned_doctor_id: '44444444-4444-4444-4444-444444444444',
-        status: 'APPOINTMENT_BOOKED',
-        risk_level: 'HIGH',
-        urgency: 'URGENT',
-        specialty_required: 'OBSTETRICS',
-        primary_complaint: 'Maternal hypertension at 32 weeks ANC',
-        clinical_summary: 'BP 150/98, elevated protein, referred for ultrasound and specialist consult.',
-        slot_token: 'Token #A-14',
-        created_at: new Date().toISOString(),
-        facilities: {
-            name: 'District Hospital Nashik',
-            tier: 'DISTRICT_HOSPITAL',
-            address: 'Civil Hospital Road, Nashik',
-            district: 'Nashik'
-        },
-        doctors: {
-            name: 'Dr. Anand Deshmukh',
-            specialty_name: 'OBSTETRICS'
-        }
-    }
-];
-
-const DEMO_TIMELINE = [
-    {
-        id: '1',
-        from_status: 'INIT',
-        to_status: 'TRIAGED',
-        actor_role: 'HEALTH_WORKER',
-        reason: 'Health Worker completed clinical vitals triage (High Maternal Risk)',
-        created_at: new Date(Date.now() - 3600000).toISOString()
-    },
-    {
-        id: '2',
-        from_status: 'TRIAGED',
-        to_status: 'FACILITY_SELECTED',
-        actor_role: 'SYSTEM',
-        reason: 'District Hospital Nashik selected based on Obstetrics capability',
-        created_at: new Date(Date.now() - 2800000).toISOString()
-    },
-    {
-        id: '3',
-        from_status: 'FACILITY_SELECTED',
-        to_status: 'APPOINTMENT_BOOKED',
-        actor_role: 'FACILITY_STAFF',
-        reason: 'Appointment confirmed for 10:30 AM (Slot Token #A-14)',
-        created_at: new Date(Date.now() - 1500000).toISOString()
-    }
-];
-
-// In-memory store for active session if Supabase is offline
-let localReferrals = [...DEMO_REFERRALS];
-let localTimeline = [...DEMO_TIMELINE];
-
-exports.getAllReferrals = async (req, res) => {
+/**
+ * Get all referrals (filtered by role / query parameters)
+ */
+exports.getAllReferrals = async (req, res, next) => {
     try {
-        const referrals = await dbService.getReferralsByPatient('all');
-        res.json(referrals || localReferrals);
-    } catch (error) {
-        console.warn('[REFERRAL] Returning fallback referrals list:', error.message);
-        res.json(localReferrals);
+        const { status, urgency, facility_id, patient_id } = req.query;
+
+        let query = supabase
+            .from('referrals')
+            .select(`
+                *,
+                patient:patients!referrals_patient_id_fkey(id, full_name, phone, gender, date_of_birth),
+                facilities:facilities!referrals_receiving_facility_id_fkey(id, name, tier, district, address),
+                doctors:doctors!referrals_assigned_doctor_id_fkey(id, name, specialty_name)
+            `)
+            .order('created_at', { ascending: false });
+
+        if (status) query = query.eq('status', status);
+        if (urgency) query = query.eq('urgency', urgency);
+        if (facility_id) query = query.eq('receiving_facility_id', facility_id);
+        if (patient_id) query = query.eq('patient_id', patient_id);
+
+        const { data, error } = await query;
+
+        if (error) {
+            return res.status(500).json({
+                success: false,
+                error: `Failed to fetch referrals: ${error.message}`,
+                code: 'DB_ERROR'
+            });
+        }
+
+        return res.json({
+            success: true,
+            count: data ? data.length : 0,
+            data: data || []
+        });
+    } catch (err) {
+        next(err);
     }
 };
 
-exports.createReferral = async (req, res) => {
+/**
+ * Create a new referral (Canonical entry point: TRIAGED)
+ */
+exports.createReferral = async (req, res, next) => {
     try {
         const {
             patient_id,
@@ -83,198 +66,474 @@ exports.createReferral = async (req, res) => {
             appointment_slot_time
         } = req.body;
 
+        if (!patient_id) {
+            return res.status(400).json({
+                success: false,
+                error: 'patient_id is required to create a referral',
+                code: 'VALIDATION_ERROR'
+            });
+        }
+
+        if (!primary_complaint) {
+            return res.status(400).json({
+                success: false,
+                error: 'primary_complaint is required to create a referral',
+                code: 'VALIDATION_ERROR'
+            });
+        }
+
         const referring_user_id = req.user?.id || null;
+        const referringRole = req.user?.role || 'HEALTH_WORKER';
 
-        let initialStatus = 'TRIAGED';
+        // 1. Initial State is ALWAYS TRIAGED per architectural spec
+        let initialStatus = REFERRAL_STATES.TRIAGED;
+
+        // If receiving facility is already selected at creation, target state is FACILITY_SELECTED
         if (receiving_facility_id) {
-            initialStatus = urgency === 'EMERGENCY' ? 'PATIENT_IN_TRANSIT' : 'APPOINTMENT_BOOKED';
+            initialStatus = urgency === 'EMERGENCY' || urgency === 'CRITICAL'
+                ? REFERRAL_STATES.URGENT_ESCALATION
+                : REFERRAL_STATES.FACILITY_SELECTED;
         }
 
-        let referral = null;
-        try {
-            referral = await dbService.createReferral({
-                patient_id,
-                assessment_id,
-                referring_user_id,
-                receiving_facility_id,
-                status: initialStatus,
-                risk_level,
-                urgency,
-                specialty_required,
-                primary_complaint,
-                clinical_summary,
-                reason_for_referral,
-                appointment_slot_time
-            });
-        } catch (dbErr) {
-            console.warn("[REFERRAL] Supabase notice (storing in memory):", dbErr.message);
-            const refId = `ref-${Date.now()}`;
-            referral = {
-                id: refId,
-                patient_id: patient_id || 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
-                receiving_facility_id,
-                status: initialStatus,
-                risk_level,
-                urgency,
-                specialty_required,
-                primary_complaint,
-                clinical_summary,
-                slot_token: `Token #${Math.floor(10 + Math.random() * 90)}`,
-                created_at: new Date().toISOString(),
-                facilities: {
-                    name: 'District Hospital Nashik',
-                    tier: 'DISTRICT_HOSPITAL'
-                }
-            };
-            localReferrals.unshift(referral);
-            localTimeline.unshift({
-                id: `evt-${Date.now()}`,
-                referral_id: refId,
-                from_status: 'INIT',
-                to_status: initialStatus,
-                actor_role: 'CREATOR',
-                reason: 'Referral created and dispatched',
-                created_at: new Date().toISOString()
+        const referralPayload = {
+            patient_id,
+            assessment_id: assessment_id || null,
+            referring_user_id,
+            receiving_facility_id: receiving_facility_id || null,
+            status: initialStatus,
+            risk_level,
+            urgency,
+            specialty_required,
+            primary_complaint,
+            clinical_summary: clinical_summary || '',
+            reason_for_referral: reason_for_referral || '',
+            appointment_slot_time: appointment_slot_time || null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+        };
+
+        const { data: referral, error } = await supabase
+            .from('referrals')
+            .insert([referralPayload])
+            .select(`
+                *,
+                patient:patients!referrals_patient_id_fkey(id, full_name, phone),
+                facilities:facilities!referrals_receiving_facility_id_fkey(id, name, tier, district)
+            `)
+            .single();
+
+        if (error) {
+            return res.status(500).json({
+                success: false,
+                error: `Database error creating referral: ${error.message}`,
+                code: 'DB_INSERT_ERROR'
             });
         }
 
-        res.status(201).json({
-            message: "Referral created successfully",
-            referral
+        // Record creation event in referral_events audit table
+        await supabase.from('referral_events').insert([{
+            referral_id: referral.id,
+            from_status: 'INIT',
+            to_status: initialStatus,
+            actor_user_id: referring_user_id,
+            actor_role: normalizeRole(referringRole),
+            reason: `Referral initiated at ${initialStatus}`,
+            created_at: new Date().toISOString()
+        }]);
+
+        return res.status(201).json({
+            success: true,
+            message: 'Referral created successfully',
+            data: referral
         });
     } catch (err) {
-        console.error("[REFERRAL] Creation failed:", err);
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 
-exports.getReferralDetails = async (req, res) => {
+/**
+ * Get detailed referral info, immutable timeline, prescriptions & assessments
+ */
+exports.getReferralDetails = async (req, res, next) => {
     try {
         const { id } = req.params;
-        let referral = null;
-        let timeline = [];
 
-        try {
-            referral = await dbService.getReferralById(id);
-            timeline = await dbService.getReferralTimeline(id);
-        } catch (e) {}
+        // 1. Fetch Referral Record
+        const { data: referral, error: refErr } = await supabase
+            .from('referrals')
+            .select(`
+                *,
+                patient:patients!referrals_patient_id_fkey(id, full_name, phone, gender, date_of_birth),
+                facilities:facilities!referrals_receiving_facility_id_fkey(id, name, tier, district, address, latitude, longitude),
+                doctors:doctors!referrals_assigned_doctor_id_fkey(id, name, specialty_name)
+            `)
+            .eq('id', id)
+            .single();
 
-        if (!referral) {
-            referral = localReferrals.find(r => r.id === id) || localReferrals[0];
-            timeline = localTimeline;
+        if (refErr || !referral) {
+            return res.status(404).json({
+                success: false,
+                error: `Referral not found with ID: ${id}`,
+                code: 'REFERRAL_NOT_FOUND'
+            });
         }
 
-        res.json({
-            referral,
-            timeline,
-            diagnostics: []
+        // 2. Fetch Timeline Events
+        const { data: timeline } = await supabase
+            .from('referral_events')
+            .select('*')
+            .eq('referral_id', id)
+            .order('created_at', { ascending: true });
+
+        // 3. Fetch Linked Prescriptions
+        const { data: prescriptions } = await supabase
+            .from('prescriptions')
+            .select('*')
+            .eq('referral_id', id)
+            .order('created_at', { ascending: false });
+
+        // 4. Fetch Linked Assessment if present
+        let assessment = null;
+        if (referral.assessment_id) {
+            const { data: assessData } = await supabase
+                .from('assessments')
+                .select('*')
+                .eq('id', referral.assessment_id)
+                .maybeSingle();
+            assessment = assessData;
+        }
+
+        return res.json({
+            success: true,
+            data: {
+                referral,
+                timeline: timeline || [],
+                prescriptions: prescriptions || [],
+                assessment: assessment || null
+            }
         });
     } catch (err) {
-        console.error("[REFERRAL] Fetch details error:", err);
-        res.json({ referral: DEMO_REFERRALS[0], timeline: DEMO_TIMELINE, diagnostics: [] });
+        next(err);
     }
 };
 
-exports.getPatientReferrals = async (req, res) => {
+/**
+ * Get all referrals for a specific patient
+ */
+exports.getPatientReferrals = async (req, res, next) => {
     try {
         const patientId = req.params.patient_id || req.user?.id;
-        let referrals = [];
-        try {
-            referrals = await dbService.getReferralsByPatient(patientId);
-        } catch (e) {}
 
-        if (!referrals || referrals.length === 0) {
-            referrals = localReferrals;
+        const { data, error } = await supabase
+            .from('referrals')
+            .select(`
+                *,
+                facilities:facilities!referrals_receiving_facility_id_fkey(id, name, tier, district, address),
+                doctors:doctors!referrals_assigned_doctor_id_fkey(id, name, specialty_name)
+            `)
+            .eq('patient_id', patientId)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            return res.status(500).json({
+                success: false,
+                error: `Failed to fetch patient referrals: ${error.message}`,
+                code: 'DB_ERROR'
+            });
         }
 
-        res.json(referrals);
+        return res.json({
+            success: true,
+            count: data ? data.length : 0,
+            data: data || []
+        });
     } catch (err) {
-        console.error("[REFERRAL] Patient referrals error:", err);
-        res.json(localReferrals);
+        next(err);
     }
 };
 
-exports.getFacilityReferrals = async (req, res) => {
+/**
+ * Get all referrals routed to a specific facility
+ */
+exports.getFacilityReferrals = async (req, res, next) => {
     try {
         const { facility_id } = req.params;
         const { status } = req.query;
-        let referrals = [];
-        try {
-            referrals = await dbService.getReferralsByFacility(facility_id, status);
-        } catch (e) {}
 
-        if (!referrals || referrals.length === 0) {
-            referrals = localReferrals;
+        let query = supabase
+            .from('referrals')
+            .select(`
+                *,
+                patient:patients!referrals_patient_id_fkey(id, full_name, phone, gender, date_of_birth),
+                doctors:doctors!referrals_assigned_doctor_id_fkey(id, name, specialty_name)
+            `)
+            .eq('receiving_facility_id', facility_id)
+            .order('created_at', { ascending: false });
+
+        if (status) {
+            query = query.eq('status', status);
         }
 
-        res.json(referrals);
+        const { data, error } = await query;
+
+        if (error) {
+            return res.status(500).json({
+                success: false,
+                error: `Failed to fetch facility referrals: ${error.message}`,
+                code: 'DB_ERROR'
+            });
+        }
+
+        return res.json({
+            success: true,
+            count: data ? data.length : 0,
+            data: data || []
+        });
     } catch (err) {
-        console.error("[REFERRAL] Facility referrals error:", err);
-        res.json(localReferrals);
+        next(err);
     }
 };
 
-exports.updateStatus = async (req, res) => {
+/**
+ * Transition referral state via Canonical State Machine
+ */
+exports.updateStatus = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { to_status, reason } = req.body;
-        const actorId = req.user?.id || 'demo-actor';
+        const { to_status, reason, payload } = req.body;
+
+        if (!to_status) {
+            return res.status(400).json({
+                success: false,
+                error: "to_status is required for state transition",
+                code: "VALIDATION_ERROR"
+            });
+        }
+
+        const actorUserId = req.user?.id || null;
         const actorRole = req.user?.role || 'DOCTOR';
 
-        let updated = null;
-        try {
-            updated = await dbService.updateReferralStatus(id, to_status, actorId, actorRole, reason);
-        } catch (e) {
-            const idx = localReferrals.findIndex(r => r.id === id);
-            if (idx !== -1) {
-                const prev = localReferrals[idx].status;
-                localReferrals[idx].status = to_status;
-                updated = localReferrals[idx];
-                localTimeline.push({
-                    id: `evt-${Date.now()}`,
-                    referral_id: id,
-                    from_status: prev,
-                    to_status: to_status,
-                    actor_role: actorRole,
-                    reason: reason || 'Status updated',
-                    created_at: new Date().toISOString()
-                });
-            }
-        }
+        const result = await transitionReferral({
+            referralId: id,
+            toStatus: to_status,
+            actorUserId,
+            actorRole,
+            reason: reason || `Updated by ${actorRole}`,
+            payload: payload || {}
+        });
 
-        res.json({
-            message: `Referral status updated to ${to_status}`,
-            referral: updated || localReferrals[0]
+        return res.json({
+            success: true,
+            message: `Referral status successfully updated to ${to_status}`,
+            data: result.referral,
+            event: result.event
         });
     } catch (err) {
-        console.error("[REFERRAL] Status update error:", err);
-        res.status(500).json({ error: err.message });
+        return res.status(400).json({
+            success: false,
+            error: err.message,
+            code: 'INVALID_TRANSITION'
+        });
     }
 };
 
-exports.assignDoctor = async (req, res) => {
+/**
+ * Assign Doctor internally at Receiving Facility (Semantics: only allowed after PATIENT_REACHED)
+ */
+exports.assignDoctor = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { doctor_id } = req.body;
-        let updated = null;
-        try {
-            updated = await dbService.assignDoctorToReferral(id, doctor_id);
-        } catch (e) {
-            const idx = localReferrals.findIndex(r => r.id === id);
-            if (idx !== -1) {
-                localReferrals[idx].status = 'CONSULTATION_IN_PROGRESS';
-                localReferrals[idx].assigned_doctor_id = doctor_id;
-                localReferrals[idx].doctors = { name: 'Dr. Anand Deshmukh', specialty_name: 'OBSTETRICS' };
-                updated = localReferrals[idx];
-            }
+        const { doctor_id, reason } = req.body;
+
+        if (!doctor_id) {
+            return res.status(400).json({
+                success: false,
+                error: "doctor_id is required to assign doctor",
+                code: "VALIDATION_ERROR"
+            });
         }
 
-        res.json({
-            message: "Doctor assigned successfully",
-            referral: updated || localReferrals[0]
+        // Verify doctor exists
+        const { data: doctor, error: docErr } = await supabase
+            .from('doctors')
+            .select('id, name, specialty_name, facility_id')
+            .eq('id', doctor_id)
+            .single();
+
+        if (docErr || !doctor) {
+            return res.status(404).json({
+                success: false,
+                error: `Doctor not found with ID: ${doctor_id}`,
+                code: "DOCTOR_NOT_FOUND"
+            });
+        }
+
+        const actorUserId = req.user?.id || null;
+        const actorRole = req.user?.role || 'FACILITY_STAFF';
+
+        // Check if referral has reached or transition to DOCTOR_ASSIGNED
+        const result = await transitionReferral({
+            referralId: id,
+            toStatus: REFERRAL_STATES.DOCTOR_ASSIGNED,
+            actorUserId,
+            actorRole,
+            reason: reason || `Doctor ${doctor.name} (${doctor.specialty_name}) assigned`,
+            payload: {
+                assigned_doctor_id: doctor_id
+            }
+        });
+
+        return res.json({
+            success: true,
+            message: `Doctor ${doctor.name} assigned successfully`,
+            data: result.referral
         });
     } catch (err) {
-        console.error("[REFERRAL] Doctor assignment error:", err);
-        res.status(500).json({ error: err.message });
+        return res.status(400).json({
+            success: false,
+            error: err.message,
+            code: 'ASSIGNMENT_ERROR'
+        });
+    }
+};
+
+/**
+ * Emergency Reroute Referral to a new facility
+ */
+exports.rerouteReferral = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { new_facility_id, reason } = req.body;
+
+        if (!new_facility_id) {
+            return res.status(400).json({
+                success: false,
+                error: "new_facility_id is required to reroute referral",
+                code: "VALIDATION_ERROR"
+            });
+        }
+
+        const actorUserId = req.user?.id || null;
+        const actorRole = req.user?.role || 'HEALTH_WORKER';
+
+        // 1. Move to REROUTING_REQUIRED
+        await transitionReferral({
+            referralId: id,
+            toStatus: REFERRAL_STATES.REROUTING_REQUIRED,
+            actorUserId,
+            actorRole,
+            reason: reason || 'Facility capacity overloaded / specialty unavailable'
+        });
+
+        // 2. Select new facility
+        const result = await transitionReferral({
+            referralId: id,
+            toStatus: REFERRAL_STATES.FACILITY_SELECTED,
+            actorUserId,
+            actorRole,
+            reason: `Rerouted to facility ID: ${new_facility_id}`,
+            payload: {
+                receiving_facility_id: new_facility_id
+            }
+        });
+
+        return res.json({
+            success: true,
+            message: 'Referral rerouted successfully to new facility',
+            data: result.referral
+        });
+    } catch (err) {
+        return res.status(400).json({
+            success: false,
+            error: err.message,
+            code: 'REROUTE_ERROR'
+        });
+    }
+};
+
+/**
+ * Confirm appointment slot booking
+ */
+exports.bookAppointmentSlot = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { slot_time, slot_token } = req.body;
+
+        const actorUserId = req.user?.id || null;
+        const actorRole = req.user?.role || 'FACILITY_STAFF';
+
+        const token = slot_token || `Token #${Math.floor(10 + Math.random() * 90)}`;
+
+        const result = await transitionReferral({
+            referralId: id,
+            toStatus: REFERRAL_STATES.APPOINTMENT_BOOKED,
+            actorUserId,
+            actorRole,
+            reason: `Appointment confirmed for slot ${slot_time || 'scheduled time'}`,
+            payload: {
+                appointment_slot_time: slot_time || new Date().toISOString(),
+                slot_token: token
+            }
+        });
+
+        return res.json({
+            success: true,
+            message: 'Appointment slot booked and confirmed',
+            data: result.referral
+        });
+    } catch (err) {
+        return res.status(400).json({
+            success: false,
+            error: err.message,
+            code: 'BOOKING_ERROR'
+        });
+    }
+};
+
+/**
+ * Complete doctor consultation & attach clinical diagnosis
+ */
+exports.completeConsultation = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { clinical_summary, diagnosis, requires_diagnostics = false, prescription_items } = req.body;
+
+        const actorUserId = req.user?.id || null;
+        const actorRole = req.user?.role || 'DOCTOR';
+
+        // 1. Move to CONSULTATION_COMPLETED
+        await transitionReferral({
+            referralId: id,
+            toStatus: REFERRAL_STATES.CONSULTATION_COMPLETED,
+            actorUserId,
+            actorRole,
+            reason: diagnosis ? `Diagnosis: ${diagnosis}` : 'Doctor consultation completed',
+            payload: {
+                clinical_summary: clinical_summary || diagnosis || 'Consultation completed'
+            }
+        });
+
+        // 2. If diagnostics required, move to DIAGNOSTICS_PENDING, otherwise TREATMENT_COMPLETED -> FOLLOW_UP_PENDING
+        let nextStatus = requires_diagnostics ? REFERRAL_STATES.DIAGNOSTICS_PENDING : REFERRAL_STATES.TREATMENT_COMPLETED;
+
+        const finalResult = await transitionReferral({
+            referralId: id,
+            toStatus: nextStatus,
+            actorUserId,
+            actorRole,
+            reason: requires_diagnostics ? 'Diagnostic lab tests ordered' : 'Treatment plan prescribed'
+        });
+
+        return res.json({
+            success: true,
+            message: `Consultation completed and status moved to ${nextStatus}`,
+            data: finalResult.referral
+        });
+    } catch (err) {
+        return res.status(400).json({
+            success: false,
+            error: err.message,
+            code: 'CONSULTATION_ERROR'
+        });
     }
 };

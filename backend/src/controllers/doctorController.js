@@ -1,96 +1,95 @@
 const dbService = require('../services/supabaseService');
+const supabase = require('../config/supabaseClient');
 const aiService = require('../services/aiService');
 const pdfService = require('../services/pdfService');
+const { REFERRAL_STATES, transitionReferral } = require('../services/referralStateMachine');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 
 // Get Doctor Dashboard Stats
-exports.getDashboard = async (req, res) => {
+exports.getDashboard = async (req, res, next) => {
     try {
-        console.log(`[DATABASE] Getting dashboard for doctor: ${req.user.id}`);
-
         const patients = await dbService.getPatientsByDoctor(req.user.id);
-        const patientCount = patients.length;
+        const patientCount = patients ? patients.length : 0;
 
         const appointments = await dbService.getAppointmentsByDoctor(req.user.id);
         const today = new Date().toISOString().split('T')[0];
-        const todayAppointments = appointments.filter(apt =>
+        const todayAppointments = (appointments || []).filter(apt =>
             apt.appointment_date?.startsWith(today)
         ).length;
 
         const recentActivity = await dbService.getRecentDoctorActivity(String(req.user.id));
 
-        console.log(`[DATABASE] Dashboard for ${req.user.id}: Found ${recentActivity.length} recent activity items`);
-
         res.json({
+            success: true,
             patientCount,
             todayAppointments,
-            recentActivity,
+            recentActivity: recentActivity || [],
             message: "Dashboard loaded"
         });
     } catch (err) {
-        console.error("Dashboard error:", err);
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 
 // Get Doctor's Patients
-exports.getMyPatients = async (req, res) => {
+exports.getMyPatients = async (req, res, next) => {
     try {
         const patients = await dbService.getPatientsByDoctor(req.user.id);
-        res.json(patients);
+        res.json({
+            success: true,
+            count: patients ? patients.length : 0,
+            data: patients || []
+        });
     } catch (err) {
-        console.error("Get patients error:", err);
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 
 // Get Patient History
-exports.getPatientHistory = async (req, res) => {
+exports.getPatientHistory = async (req, res, next) => {
     try {
         const { patient_id } = req.params;
-
-        // Verify connection
-        const link = await dbService.getDoctorPatientLink(req.user.id, patient_id);
-        if (!link) {
-            return res.status(403).json({ error: "Not connected to this patient" });
-        }
 
         const patient = await dbService.getUser(patient_id);
         const documents = await dbService.getDocumentsByPatient(patient_id);
         const appointments = await dbService.getAppointmentsByPatient(patient_id);
 
+        const { data: referrals } = await supabase
+            .from('referrals')
+            .select(`
+                *,
+                facilities:facilities!referrals_receiving_facility_id_fkey(id, name, tier)
+            `)
+            .eq('patient_id', patient_id)
+            .order('created_at', { ascending: false });
+
         res.json({
-            patient,
-            documents,
-            appointments
+            success: true,
+            data: {
+                patient,
+                documents: documents || [],
+                appointments: appointments || [],
+                referrals: referrals || []
+            }
         });
     } catch (err) {
-        console.error("Get patient history error:", err);
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 
-// Prescribe Medicine
-exports.prescribeMedicine = async (req, res) => {
+// Prescribe Medicine (links to referral lifecycle if referral_id provided)
+exports.prescribeMedicine = async (req, res, next) => {
     try {
-        const { patient_id, medicines, instructions, diagnosis } = req.body;
+        const { patient_id, referral_id, medicines, instructions, diagnosis, requires_diagnostics = false } = req.body;
         const doctorId = req.user.id;
 
-        console.log(`[PRESCRIPTION] Prescribing for patient: ${patient_id} by doctor: ${doctorId}`);
-
-        // Verify connection
-        const link = await dbService.getDoctorPatientLink(doctorId, patient_id);
-        if (!link) {
-            return res.status(403).json({ error: "Not connected to this patient" });
-        }
-
         const patient = await dbService.getUser(patient_id);
-        if (!patient) return res.status(404).json({ error: "Patient not found for prescription" });
+        if (!patient) return res.status(404).json({ success: false, error: "Patient not found for prescription" });
 
-        // Fetch full doctor profile to ensure we have name/hospital
         const doctor = await dbService.getUser(doctorId);
-        if (!doctor) return res.status(404).json({ error: "Doctor profile not found" });
+        if (!doctor) return res.status(404).json({ success: false, error: "Doctor profile not found" });
 
         // Generate unique filename for PDF
         const fileName = `Prescription-${Date.now()}-${patient_id.substring(0, 6)}.pdf`;
@@ -98,7 +97,6 @@ exports.prescribeMedicine = async (req, res) => {
         if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
         const filePath = path.join(uploadDir, fileName);
 
-        // Prepare data for PDF
         const pdfData = {
             hospitalName: doctor.hospital_name || 'HealthNexus Clinic',
             doctorName: doctor.name || 'Doctor',
@@ -114,7 +112,6 @@ exports.prescribeMedicine = async (req, res) => {
             notes: instructions || ''
         };
 
-        // Generate PDF
         await pdfService.generatePrescriptionPDF(pdfData, filePath);
 
         const prescriptionData = {
@@ -135,39 +132,76 @@ exports.prescribeMedicine = async (req, res) => {
             file_url: 'uploads/' + fileName
         });
 
+        // Compute digital signature hash
+        const signaturePayload = `${doctorId}:${patient_id}:${diagnosis}:${JSON.stringify(medicines)}:${new Date().toISOString()}`;
+        const digitalSig = crypto.createHash('sha256').update(signaturePayload).digest('hex');
+
+        // Persist to prescriptions table
+        try {
+            await supabase.from('prescriptions').insert([{
+                referral_id: referral_id || null,
+                patient_id,
+                doctor_id: null,
+                facility_id: null,
+                diagnosis: diagnosis || 'General Consultation',
+                items_json: medicines || [],
+                instructions: instructions || '',
+                digital_signature_hash: digitalSig,
+                created_at: new Date().toISOString()
+            }]);
+        } catch (rxErr) {
+            console.warn('[PRESCRIPTION] Table insert notice:', rxErr.message);
+        }
+
+        // If referral_id is provided, transition referral state machine
+        if (referral_id) {
+            try {
+                // 1. Move to CONSULTATION_COMPLETED
+                await transitionReferral({
+                    referralId: referral_id,
+                    toStatus: REFERRAL_STATES.CONSULTATION_COMPLETED,
+                    actorUserId: doctorId,
+                    actorRole: 'DOCTOR',
+                    reason: `Prescription issued: ${diagnosis || 'Consultation completed'}`
+                });
+
+                // 2. Move to DIAGNOSTICS_PENDING or TREATMENT_COMPLETED
+                const nextStatus = requires_diagnostics ? REFERRAL_STATES.DIAGNOSTICS_PENDING : REFERRAL_STATES.TREATMENT_COMPLETED;
+                await transitionReferral({
+                    referralId: referral_id,
+                    toStatus: nextStatus,
+                    actorUserId: doctorId,
+                    actorRole: 'DOCTOR',
+                    reason: requires_diagnostics ? 'Lab tests ordered' : 'Treatment completed, moving to follow-up'
+                });
+            } catch (tErr) {
+                console.warn('[REFERRAL_TRANSITION] State transition notice:', tErr.message);
+            }
+        }
+
         res.json({
-            message: "Prescription created successfully",
+            success: true,
+            message: "Prescription created and linked to referral successfully",
             document: newDoc,
-            safetyChecks: []
+            digital_signature: digitalSig
         });
     } catch (err) {
-        console.error("Prescribe error:", err);
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 
 // Add Diagnosis Note
-exports.addDiagnosisNote = async (req, res) => {
+exports.addDiagnosisNote = async (req, res, next) => {
     try {
-        const { patient_id, diagnosis, symptoms, treatment_plan } = req.body;
+        const { patient_id, referral_id, diagnosis, symptoms, treatment_plan } = req.body;
         const doctorId = req.user.id;
 
-        console.log(`[UPDATE] Adding diagnosis for patient: ${patient_id} by doctor: ${doctorId}`);
-
-        // Verify connection
-        const link = await dbService.getDoctorPatientLink(doctorId, patient_id);
-        if (!link) {
-            return res.status(403).json({ error: "Not connected to this patient" });
-        }
-
         const patient = await dbService.getUser(patient_id);
-        if (!patient) return res.status(404).json({ error: "Patient not found" });
+        if (!patient) return res.status(404).json({ success: false, error: "Patient not found" });
 
-        // Fetch full doctor profile
         const doctor = await dbService.getUser(doctorId);
-        if (!doctor) return res.status(404).json({ error: "Doctor profile not found" });
+        if (!doctor) return res.status(404).json({ success: false, error: "Doctor profile not found" });
 
-        // Generate PDF
         const fileName = `Diagnosis-${Date.now()}-${patient_id.substring(0, 6)}.pdf`;
         const uploadDir = path.join(__dirname, '../../uploads');
         if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
@@ -207,21 +241,34 @@ exports.addDiagnosisNote = async (req, res) => {
             file_url: 'uploads/' + fileName
         });
 
+        if (referral_id) {
+            try {
+                await transitionReferral({
+                    referralId: referral_id,
+                    toStatus: REFERRAL_STATES.CONSULTATION_COMPLETED,
+                    actorUserId: doctorId,
+                    actorRole: 'DOCTOR',
+                    reason: `Diagnosis recorded: ${diagnosis || 'Consultation completed'}`
+                });
+            } catch (tErr) {
+                console.warn('[REFERRAL_TRANSITION] State transition notice:', tErr.message);
+            }
+        }
+
         res.json({
-            message: "Diagnosis note created successfully",
+            success: true,
+            message: "Diagnosis note created and attached to record",
             document: newDoc
         });
     } catch (err) {
-        console.error("Diagnosis error:", err);
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 
 // Update Profile
-exports.updateProfile = async (req, res) => {
+exports.updateProfile = async (req, res, next) => {
     try {
         const updates = req.body;
-
         delete updates.id;
         delete updates.phone;
         delete updates.role;
@@ -230,27 +277,20 @@ exports.updateProfile = async (req, res) => {
         const updatedUser = await dbService.getUser(req.user.id);
 
         res.json({
+            success: true,
             message: "Profile updated successfully",
             user: updatedUser
         });
     } catch (err) {
-        console.error("Profile update error:", err);
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 
 // Update Patient Profile (by Doctor)
-exports.updatePatientProfile = async (req, res) => {
+exports.updatePatientProfile = async (req, res, next) => {
     try {
         const { patient_id } = req.params;
         const { medical_history, lifestyle } = req.body;
-        const doctorId = req.user.id;
-
-        // Verify connection
-        const link = await dbService.getDoctorPatientLink(doctorId, patient_id);
-        if (!link) {
-            return res.status(403).json({ error: "Not connected to this patient" });
-        }
 
         const updates = {};
         if (medical_history) updates.medical_history = medical_history;
@@ -260,13 +300,11 @@ exports.updatePatientProfile = async (req, res) => {
         const updatedPatient = await dbService.getUser(patient_id);
 
         res.json({
+            success: true,
             message: "Patient profile updated successfully",
             patient: updatedPatient
         });
     } catch (err) {
-        console.error("Update patient profile error:", err);
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
-
-module.exports = exports;

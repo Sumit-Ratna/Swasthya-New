@@ -432,18 +432,6 @@ const Login = () => {
                         style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
                     />
                 </div>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#f0fdfa', border: '1px solid #ccfbf1', color: '#0f766e', padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 700, marginBottom: '8px' }}>
-                    <ShieldCheck size={14} color="#0d9488" />
-                    <span>Govt. of Maharashtra MSInS • ABDM FHIR</span>
-                </div>
-                <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#0f172a', margin: '0 0 4px 0' }}>
-                    Swasthya
-                </h1>
-                <p style={{ fontSize: '12px', color: '#64748b', margin: 0, lineHeight: 1.4 }}>
-                    {step === 3 
-                        ? 'Complete your Indian Citizen Health Profile (ABDM / Ayushman Bharat)' 
-                        : (authMode === 'register' ? 'Register New Patient Account & Digital Health Locker' : 'AI-Assisted Rural Healthcare Coordination & Closed-Loop Referral Platform')}
-                </p>
             </motion.div>
 
             {/* Main Interactive Card */}
