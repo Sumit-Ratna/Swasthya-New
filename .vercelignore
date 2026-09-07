@@ -1,0 +1,13 @@
+node_modules
+**/node_modules
+ai_service
+offline health help
+.idea
+.vscode
+.git
+frontend_react/node_modules
+backend/node_modules
+*.jpeg
+*.png
+*.apk
+apks.json
