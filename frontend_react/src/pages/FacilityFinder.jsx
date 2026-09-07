@@ -1052,7 +1052,7 @@ const FacilityFinder = () => {
                                             fontSize: '12px',
                                             borderRadius: '8px'
                                         }}
-                                        onClick={() => setBookingFacility(facility)}
+                                        onClick={() => navigate('/referrals', { state: { selectedHospital: facility } })}
                                     >
                                         <span>Referral</span>
                                         <ArrowRight size={13} />
