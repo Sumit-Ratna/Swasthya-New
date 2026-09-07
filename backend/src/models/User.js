@@ -5,7 +5,7 @@ const User = sequelize.define('User', {
     id: {
         type: DataTypes.STRING(100),
         primaryKey: true,
-        defaultValue: () => require('uuid').v4() 
+        defaultValue: () => require('crypto').randomUUID() 
     },
     phone: {
         type: DataTypes.STRING,

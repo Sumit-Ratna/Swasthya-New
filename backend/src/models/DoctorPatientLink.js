@@ -5,7 +5,7 @@ const DoctorPatientLink = sequelize.define('DoctorPatientLink', {
     id: {
         type: DataTypes.STRING(100),
         primaryKey: true,
-        defaultValue: () => require('uuid').v4()
+        defaultValue: () => require('crypto').randomUUID()
     },
     doctor_id: {
         type: DataTypes.STRING(100),

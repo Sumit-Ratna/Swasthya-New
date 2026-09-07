@@ -13,3 +13,6 @@ ai_service/venv/
 frontend_react/android/app/build/
 frontend_react/android/.gradle/
 .DS_Store
+
+.vercel
+.env*

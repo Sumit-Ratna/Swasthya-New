@@ -5,7 +5,7 @@ const Document = sequelize.define('Document', {
     id: {
         type: DataTypes.STRING(100),
         primaryKey: true,
-        defaultValue: () => require('uuid').v4()
+        defaultValue: () => require('crypto').randomUUID()
     },
     patient_id: {
         type: DataTypes.STRING(100),

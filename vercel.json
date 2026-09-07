@@ -1,12 +1,14 @@
 {
+  "buildCommand": "cd frontend_react && npm install && npm run build",
+  "outputDirectory": "frontend_react/dist",
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/api/index.js"
+      "destination": "/api/index"
     },
     {
       "source": "/(.*)",
-      "destination": "/frontend_react/dist/$1"
+      "destination": "/index.html"
     }
   ]
 }

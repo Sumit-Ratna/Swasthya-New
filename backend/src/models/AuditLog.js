@@ -5,7 +5,7 @@ const AuditLog = sequelize.define('AuditLog', {
     id: {
         type: DataTypes.STRING(100),
         primaryKey: true,
-        defaultValue: () => require('uuid').v4()
+        defaultValue: () => require('crypto').randomUUID()
     },
     actor_id: { type: DataTypes.STRING(100), allowNull: false }, // Who performed action
     action_type: { type: DataTypes.STRING }, // e.g., 'VIEW_RECORD', 'PRESCRIBE', 'LOGIN'
