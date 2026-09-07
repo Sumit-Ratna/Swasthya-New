@@ -97,8 +97,8 @@ const Login = () => {
     const rolesConfig = [
         {
             id: 'health_worker',
-            label: 'ASHA / ANM',
-            title: 'ASHA / ANM Rural Health Worker',
+            label: 'ASHA / ANM / Caregiver',
+            title: 'ASHA / ANM & Caregiver Proxy',
             icon: <HeartPulse size={20} color="#0d9488" />,
             badgeBg: '#ccfbf1',
             badgeColor: '#0f766e',
@@ -124,16 +124,6 @@ const Login = () => {
             badgeColor: '#0369a1',
             targetRoute: '/doctor/dashboard',
             demoPhone: '+919123456780'
-        },
-        {
-            id: 'caregiver',
-            label: 'Caregiver',
-            title: 'Caregiver / Family Proxy',
-            icon: <Users size={20} color="#db2777" />,
-            badgeBg: '#fce7f3',
-            badgeColor: '#be185d',
-            targetRoute: '/caregiver',
-            demoPhone: '+919000000001'
         },
         {
             id: 'facility_coordinator',

@@ -14,14 +14,14 @@ const RoleSelection = () => {
     const personas = [
         {
             role: 'health_worker',
-            title: 'ASHA / ANM Worker',
-            badge: 'Field Ops',
+            title: 'ASHA / ANM / Caregiver',
+            badge: 'Field & Family Ops',
             badgeColor: '#059669',
             badgeBg: '#d1fae5',
-            desc: 'RCH tracking, field vitals & immunizations',
+            desc: 'RCH tracking, dependent vitals & household family proxy',
             icon: <HeartPulse size={28} color="#0d9488" />,
             gradient: 'linear-gradient(135deg, #0d9488 0%, #115e59 100%)',
-            actionText: 'ASHA Hub',
+            actionText: 'ASHA / Caregiver Hub',
             onClick: () => {
                 guestLogin('health_worker');
                 navigate('/asha');
@@ -40,21 +40,6 @@ const RoleSelection = () => {
             onClick: () => {
                 guestLogin('patient');
                 navigate('/home');
-            }
-        },
-        {
-            role: 'caregiver',
-            title: 'Caregiver / Family',
-            badge: 'Proxy Access',
-            badgeColor: '#db2777',
-            badgeBg: '#fce7f3',
-            desc: 'Dependent vitals radar, pillbox & SOS panic',
-            icon: <Users size={28} color="#db2777" />,
-            gradient: 'linear-gradient(135deg, #db2777 0%, #9d174d 100%)',
-            actionText: 'Caregiver Hub',
-            onClick: () => {
-                guestLogin('caregiver');
-                navigate('/caregiver');
             }
         },
         {

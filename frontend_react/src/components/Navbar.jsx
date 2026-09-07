@@ -45,7 +45,7 @@ const Navbar = () => {
     // Configure role-specific nav items
     let navItems = [];
 
-    if (role === 'health_worker' || role === 'asha') {
+    if (role === 'health_worker' || role === 'asha' || role === 'anm' || role === 'caregiver') {
         navItems = [
             { path: '/asha', label: 'ASHA Hub', icon: HeartPulse },
             { path: '/triage', label: 'Field Vitals', icon: Activity },
@@ -55,7 +55,7 @@ const Navbar = () => {
                 icon: GitBranch,
                 highlight: true 
             },
-            { path: '/learn-medicines', label: 'Med Formulary', icon: Pill },
+            { path: '/family', label: 'Dependents', icon: Users },
             { path: '/profile', label: 'Profile', icon: User }
         ];
     } else if (role === 'doctor') {
@@ -82,19 +82,6 @@ const Navbar = () => {
                 highlight: true 
             },
             { path: '/care-team', label: 'Doc Roster', icon: Users },
-            { path: '/profile', label: 'Profile', icon: User }
-        ];
-    } else if (role === 'caregiver') {
-        navItems = [
-            { path: '/caregiver', label: 'Family Radar', icon: Users },
-            { path: '/family', label: 'Dependents', icon: HeartPulse },
-            { 
-                path: '/learn-medicines', 
-                label: 'Med Pillbox', 
-                icon: Pill,
-                highlight: true 
-            },
-            { path: '/records', label: 'EHR Vault', icon: FileText },
             { path: '/profile', label: 'Profile', icon: User }
         ];
     } else if (role === 'admin') {

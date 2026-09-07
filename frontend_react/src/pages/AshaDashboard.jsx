@@ -185,7 +185,7 @@ const AshaDashboard = () => {
                         letterSpacing: '-0.02em',
                         color: '#ffffff'
                     }}>
-                        ASHA Worker Portal
+                        ASHA / ANM / Caregiver Portal
                     </h1>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -234,7 +234,7 @@ const AshaDashboard = () => {
                         {/* Logout / Exit Door Icon */}
                         <div 
                             onClick={() => {
-                                if (window.confirm("Do you want to logout from ASHA Portal?")) {
+                                if (window.confirm("Do you want to logout from ASHA / Caregiver Portal?")) {
                                     logout();
                                     navigate('/login');
                                 }
@@ -320,7 +320,7 @@ const AshaDashboard = () => {
                                 marginTop: '3px',
                                 fontWeight: '500'
                             }}>
-                                Sunita (ASHA) - Shirwal Sub-Centre Catchment
+                                Sunita (ASHA / Caregiver) - Shirwal Sub-Centre & Family Circle
                             </div>
                         </div>
                     </div>

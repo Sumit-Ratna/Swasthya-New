@@ -89,9 +89,8 @@ const MainApp = () => {
   const getRoleHome = (role) => {
     const r = (role || 'patient').toLowerCase();
     if (r === 'doctor') return '/doctor/dashboard';
-    if (r === 'health_worker' || r === 'asha' || r === 'anm') return '/asha';
+    if (r === 'health_worker' || r === 'asha' || r === 'anm' || r === 'caregiver') return '/asha';
     if (r === 'facility_staff' || r === 'facility_coordinator' || r === 'facility') return '/facility-dashboard';
-    if (r === 'caregiver') return '/caregiver';
     if (r === 'admin') return '/admin';
     return '/home';
   };
@@ -114,17 +113,15 @@ const MainApp = () => {
           {/* Landing / Auth Routes with Role-Specific Default Redirects */}
           <Route path="/" element={!user ? <Login /> : <Navigate to={getRoleHome(user.role)} replace />} />
           <Route path="/home" element={
-            user && (user.role?.toLowerCase() === 'health_worker' || user.role?.toLowerCase() === 'asha' || user.role?.toLowerCase() === 'anm')
+            user && (user.role?.toLowerCase() === 'health_worker' || user.role?.toLowerCase() === 'asha' || user.role?.toLowerCase() === 'anm' || user.role?.toLowerCase() === 'caregiver')
               ? <Navigate to="/asha" replace />
               : (user && user.role?.toLowerCase() === 'doctor'
                   ? <Navigate to="/doctor/dashboard" replace />
                   : (user && (user.role?.toLowerCase() === 'facility_staff' || user.role?.toLowerCase() === 'facility_coordinator' || user.role?.toLowerCase() === 'facility')
                       ? <Navigate to="/facility-dashboard" replace />
-                      : (user && user.role?.toLowerCase() === 'caregiver'
-                          ? <Navigate to="/caregiver" replace />
-                          : (user && user.role?.toLowerCase() === 'admin'
-                              ? <Navigate to="/admin" replace />
-                              : <Home />))))
+                      : (user && user.role?.toLowerCase() === 'admin'
+                          ? <Navigate to="/admin" replace />
+                          : <Home />)))
           } />
           <Route path="/roles" element={<RoleSelection />} />
           <Route path="/signup" element={<Signup />} />
@@ -136,7 +133,7 @@ const MainApp = () => {
           <Route path="/asha" element={<AshaDashboard />} />
           <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
           <Route path="/facility-dashboard" element={<FacilityDashboard />} />
-          <Route path="/caregiver" element={<CaregiverDashboard />} />
+          <Route path="/caregiver" element={<Navigate to="/asha" replace />} />
           <Route path="/admin" element={<AdminDashboard />} />
 
           {/* Shared Healthcare & Swasthya Core Modules */}

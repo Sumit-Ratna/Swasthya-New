@@ -214,14 +214,14 @@ const Profile = () => {
     };
 
     const getRoleMeta = () => {
-        if (role === 'health_worker' || role === 'asha') {
+        if (role === 'health_worker' || role === 'asha' || role === 'anm' || role === 'caregiver') {
             return {
-                title: 'ASHA / ANM Health Worker',
-                badge: 'Maternal & Field Healthcare Official',
+                title: 'ASHA / ANM / Caregiver Official',
+                badge: 'Field Healthcare & Family Proxy Lead',
                 color: '#0d9488',
                 bg: '#ccfbf1',
                 icon: HeartPulse,
-                tabs: ['overview', 'rch_credentials', 'dbt_wallet']
+                tabs: ['overview', 'rch_credentials', 'dependents_proxy', 'dbt_wallet']
             };
         }
         if (role === 'doctor') {
@@ -242,16 +242,6 @@ const Profile = () => {
                 bg: '#e0f2fe',
                 icon: Building2,
                 tabs: ['overview', 'facility_license', 'bed_capacity']
-            };
-        }
-        if (role === 'caregiver') {
-            return {
-                title: 'Family Caregiver & Proxy',
-                badge: 'Dependent Health Monitoring',
-                color: '#db2777',
-                bg: '#fce7f3',
-                icon: Users,
-                tabs: ['overview', 'dependents_proxy', 'sos_priority']
             };
         }
         if (role === 'admin') {
