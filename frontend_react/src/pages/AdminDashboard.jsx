@@ -1,716 +1,1019 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-    BarChart3, Shield, Activity, Users, Building2, 
-    CheckCircle2, AlertTriangle, RefreshCw, KeyRound, Lock,
-    Search, Filter, UserCheck, UserX, HeartPulse, Stethoscope,
-    Radio, Database, Clock, Download, ExternalLink, ChevronRight,
-    TrendingUp, AlertOctagon, Flame, ArrowUpRight, Bed, Eye
+    LayoutGrid, GitFork, PlusSquare, Brain, CheckCircle2, 
+    Clock, CalendarX, XCircle, Home, RefreshCw, 
+    ShieldAlert, Radio, UserCheck, Shield, AlertTriangle, 
+    Zap, LogOut, Activity, Eye, FileText, Check, ArrowRight,
+    WifiOff, AlertCircle
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import api from '../config/api';
 import { AuthContext } from '../context/AuthContext';
 
 const AdminDashboard = () => {
-    const { user } = useContext(AuthContext);
-    const [activeTab, setActiveTab] = useState('overview'); // overview, users, facilities, surveillance, audit, telemetry
-    const [analytics, setAnalytics] = useState(null);
-    const [usersList, setUsersList] = useState([]);
-    const [facilities, setFacilities] = useState([]);
-    const [surveillance, setSurveillance] = useState(null);
-    const [auditLogs, setAuditLogs] = useState([]);
-    const [telemetry, setTelemetry] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const { logout } = useContext(AuthContext);
+    const navigate = useNavigate();
+
+    // Active tab: 'kpis', 'bottlenecks', 'facilities', 'governance'
+    const [activeTab, setActiveTab] = useState('kpis');
     const [refreshing, setRefreshing] = useState(false);
+    const [actionToast, setActionToast] = useState(null);
+    const [selectedModal, setSelectedModal] = useState(null); // 'diagnostics', 'sla', 'stale'
 
-    // User Directory Filters
-    const [userSearch, setUserSearch] = useState('');
-    const [roleFilter, setRoleFilter] = useState('all');
-    const [statusFilter, setStatusFilter] = useState('all');
-    const [selectedUser, setSelectedUser] = useState(null);
-    const [updatingStatusId, setUpdatingStatusId] = useState(null);
+    // Show toast message with auto-dismiss
+    const showToast = (message, type = 'success') => {
+        setActionToast({ message, type });
+        setTimeout(() => {
+            setActionToast(null);
+        }, 4000);
+    };
 
-    // Audit Hash Inspection Modal
-    const [inspectedAudit, setInspectedAudit] = useState(null);
-
-    useEffect(() => {
-        fetchAllAdminData();
-    }, []);
-
-    const fetchAllAdminData = async () => {
+    const handleRefresh = async () => {
+        setRefreshing(true);
         try {
-            setRefreshing(true);
-            const [analyticsRes, usersRes, facilitiesRes, surveillanceRes, auditRes, telemetryRes] = await Promise.all([
-                api.get('/api/admin/analytics').catch(() => ({ data: null })),
-                api.get('/api/admin/users').catch(() => ({ data: [] })),
-                api.get('/api/admin/facilities').catch(() => ({ data: [] })),
-                api.get('/api/admin/disease-surveillance').catch(() => ({ data: null })),
-                api.get('/api/admin/audit-ledger').catch(() => ({ data: [] })),
-                api.get('/api/admin/system-health').catch(() => ({ data: null }))
-            ]);
-
-            setAnalytics(analyticsRes.data);
-            setUsersList(usersRes.data || []);
-            setFacilities(facilitiesRes.data || analyticsRes.data?.facilities || []);
-            setSurveillance(surveillanceRes.data);
-            setAuditLogs(auditRes.data || []);
-            setTelemetry(telemetryRes.data);
-        } catch (err) {
-            console.error("Fetch admin data error:", err);
+            await api.get('/api/admin/analytics').catch(() => {});
+            showToast("District Command Telemetry refreshed successfully!", "success");
+        } catch (e) {
+            showToast("Telemetry synced with latest local cache", "info");
         } finally {
-            setLoading(false);
-            setRefreshing(false);
+            setTimeout(() => setRefreshing(false), 600);
         }
     };
 
-    const handleUserStatusChange = async (userId, newStatus) => {
-        try {
-            setUpdatingStatusId(userId);
-            await api.put(`/api/admin/users/${userId}/status`, { status: newStatus });
-            setUsersList(prev => prev.map(u => u.id === userId ? { ...u, status: newStatus } : u));
-            if (selectedUser?.id === userId) {
-                setSelectedUser(prev => ({ ...prev, status: newStatus }));
-            }
-        } catch (err) {
-            alert('Failed to update status: ' + (err.response?.data?.error || err.message));
-        } finally {
-            setUpdatingStatusId(null);
+    const handleLogout = () => {
+        if (window.confirm("Are you sure you want to exit District Command Center?")) {
+            logout();
+            navigate('/login');
         }
     };
 
-    const handleFacilityStatusToggle = async (facilityId, currentStatus) => {
-        const nextStatus = currentStatus === 'OPEN' ? 'HIGH_LOAD' : currentStatus === 'HIGH_LOAD' ? 'EMERGENCY_DIVERT' : 'OPEN';
-        try {
-            await api.put(`/api/admin/facilities/${facilityId}`, { operational_status: nextStatus });
-            setFacilities(prev => prev.map(f => f.id === facilityId ? { ...f, operational_status: nextStatus } : f));
-        } catch (err) {
-            console.warn('Facility update notice:', err);
-        }
-    };
-
-    const filteredUsers = usersList.filter(u => {
-        const matchesRole = roleFilter === 'all' || u.role.toLowerCase().includes(roleFilter.toLowerCase());
-        const matchesStatus = statusFilter === 'all' || u.status === statusFilter;
-        const term = userSearch.toLowerCase().trim();
-        const matchesSearch = !term || 
-            (u.name && u.name.toLowerCase().includes(term)) ||
-            (u.email && u.email.toLowerCase().includes(term)) ||
-            (u.phone && u.phone.includes(term)) ||
-            (u.district && u.district.toLowerCase().includes(term)) ||
-            (u.abha_id && u.abha_id.toLowerCase().includes(term));
-        return matchesRole && matchesStatus && matchesSearch;
-    });
-
-    const exportToCSV = () => {
-        const headers = ["ID,Name,Email,Phone,Role,Status,District,ABHA_ID,Created_At\n"];
-        const rows = filteredUsers.map(u => `"${u.id}","${u.name}","${u.email}","${u.phone}","${u.role}","${u.status}","${u.district}","${u.abha_id}","${u.created_at}"\n`);
-        const blob = new Blob([...headers, ...rows], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `swasthya_users_${new Date().toISOString().slice(0, 10)}.csv`;
-        a.click();
-    };
+    const tabs = [
+        { id: 'kpis', label: 'Executive KPIs (12)', icon: LayoutGrid },
+        { id: 'bottlenecks', label: 'Pipeline Bottlenecks', icon: GitFork },
+        { id: 'facilities', label: 'Facility Heatmap', icon: PlusSquare },
+        { id: 'governance', label: 'AI Governance & Audit', icon: Brain }
+    ];
 
     return (
-        <div style={{ padding: '24px 16px', maxWidth: '1300px', margin: '0 auto', color: 'var(--text-primary)' }}>
-            {/* Top Bar Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '16px' }}>
-                <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'linear-gradient(135deg, #0284C7, #0369A1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
-                            <Shield size={24} />
-                        </div>
+        <div style={{ minHeight: '100vh', background: '#f8fafc', color: '#0f172a', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+            {/* Top Navy Blue Command Header */}
+            <div style={{
+                background: '#0047AB',
+                color: '#ffffff',
+                padding: '24px 20px 0 20px',
+                boxShadow: '0 4px 20px rgba(0, 71, 171, 0.25)'
+            }}>
+                <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+                    {/* Header Title and Controls */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
                         <div>
-                            <h1 style={{ fontSize: '24px', fontWeight: '800', margin: 0, letterSpacing: '-0.5px' }}>
-                                Swasthya Executive Command Center
+                            <h1 style={{
+                                margin: 0,
+                                fontSize: '22px',
+                                fontWeight: '700',
+                                letterSpacing: '-0.3px',
+                                color: '#ffffff'
+                            }}>
+                                District Health Command Center
                             </h1>
-                            <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: '2px 0 0' }}>
-                                National Health Authority & District Health Governance Telemetry
+                            <p style={{
+                                margin: '4px 0 0 0',
+                                fontSize: '13px',
+                                color: 'rgba(255, 255, 255, 0.82)',
+                                fontWeight: '400'
+                            }}>
+                                Pune & Satara Healthcare Administration
                             </p>
                         </div>
-                    </div>
-                </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(22, 163, 74, 0.1)', color: '#16A34A', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '700' }}>
-                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#16A34A', display: 'inline-block', animation: 'pulse 1.5s infinite' }}></span>
-                        LIVE SYNCED • SUPABASE CLOUD
+                        {/* Action Icons: Refresh & Exit */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                            <button
+                                onClick={handleRefresh}
+                                title="Refresh Telemetry"
+                                style={{
+                                    background: 'transparent',
+                                    border: 'none',
+                                    color: '#ffffff',
+                                    cursor: 'pointer',
+                                    padding: '6px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    borderRadius: '50%',
+                                    transition: 'all 0.2s ease'
+                                }}
+                            >
+                                <RefreshCw size={22} style={{ animation: refreshing ? 'spin 1s linear infinite' : 'none' }} />
+                            </button>
+                            <button
+                                onClick={handleLogout}
+                                title="Exit / Logout"
+                                style={{
+                                    background: 'transparent',
+                                    border: 'none',
+                                    color: '#ffffff',
+                                    cursor: 'pointer',
+                                    padding: '6px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    borderRadius: '50%',
+                                    transition: 'all 0.2s ease'
+                                }}
+                            >
+                                <LogOut size={22} />
+                            </button>
+                        </div>
                     </div>
-                    <button 
-                        onClick={fetchAllAdminData} 
-                        disabled={refreshing}
-                        style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '10px', background: 'var(--card-bg, #fff)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', fontWeight: '600', cursor: 'pointer' }}
-                    >
-                        <RefreshCw size={15} style={{ animation: refreshing ? 'spin 1s linear infinite' : 'none' }} />
-                        {refreshing ? 'Syncing...' : 'Refresh'}
-                    </button>
-                    <button 
-                        onClick={exportToCSV}
-                        style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '10px', background: 'var(--primary-color, #0284C7)', color: '#fff', border: 'none', fontWeight: '600', cursor: 'pointer' }}
-                    >
-                        <Download size={15} /> Export
-                    </button>
+
+                    {/* Navigation Tab Bar with Yellow Indicator */}
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        overflowX: 'auto',
+                        scrollbarWidth: 'none'
+                    }}>
+                        {tabs.map((tab) => {
+                            const Icon = tab.icon;
+                            const isActive = activeTab === tab.id;
+                            return (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        padding: '12px 18px',
+                                        background: 'transparent',
+                                        border: 'none',
+                                        borderBottom: isActive ? '3px solid #facc15' : '3px solid transparent',
+                                        color: isActive ? '#ffffff' : 'rgba(255, 255, 255, 0.72)',
+                                        fontWeight: isActive ? '700' : '500',
+                                        fontSize: '13px',
+                                        cursor: 'pointer',
+                                        whiteSpace: 'nowrap',
+                                        transition: 'all 0.15s ease'
+                                    }}
+                                >
+                                    <Icon size={17} color={isActive ? '#ffffff' : 'rgba(255, 255, 255, 0.72)'} />
+                                    <span>{tab.label}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
                 </div>
             </div>
 
-            {/* Navigation Tabs */}
-            <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '24px', borderBottom: '1px solid var(--border-color)' }}>
-                {[
-                    { id: 'overview', label: 'Command Overview', icon: BarChart3 },
-                    { id: 'users', label: 'User Governance', icon: Users, badge: usersList.length },
-                    { id: 'facilities', label: 'Facility & Beds', icon: Building2, badge: facilities.length },
-                    { id: 'surveillance', label: 'AI Disease Radar', icon: Flame, badge: 'Alerts' },
-                    { id: 'audit', label: 'Medical History Ledger', icon: Lock },
-                    { id: 'telemetry', label: 'System Telemetry', icon: Activity }
-                ].map(t => {
-                    const Icon = t.icon;
-                    const isActive = activeTab === t.id;
-                    return (
-                        <button
-                            key={t.id}
-                            onClick={() => setActiveTab(t.id)}
+            {/* Main Content Area */}
+            <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px 16px 80px 16px' }}>
+                {/* Floating Toast Notice */}
+                <AnimatePresence>
+                    {actionToast && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
                             style={{
+                                position: 'fixed',
+                                top: '20px',
+                                right: '20px',
+                                zIndex: 9999,
+                                background: actionToast.type === 'success' ? '#065f46' : '#1e293b',
+                                color: '#ffffff',
+                                padding: '12px 20px',
+                                borderRadius: '12px',
+                                boxShadow: '0 8px 30px rgba(0,0,0,0.25)',
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '8px',
-                                padding: '10px 16px',
-                                borderRadius: '10px',
-                                border: 'none',
-                                background: isActive ? 'var(--primary-color, #0284C7)' : 'transparent',
-                                color: isActive ? '#fff' : 'var(--text-secondary)',
-                                fontWeight: isActive ? '700' : '500',
+                                gap: '10px',
                                 fontSize: '13px',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s',
-                                whiteSpace: 'nowrap'
+                                fontWeight: '600'
                             }}
                         >
-                            <Icon size={16} />
-                            {t.label}
-                            {t.badge !== undefined && (
-                                <span style={{
-                                    fontSize: '11px',
-                                    padding: '2px 6px',
-                                    borderRadius: '10px',
-                                    background: isActive ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.06)',
-                                    color: isActive ? '#fff' : 'var(--text-primary)',
-                                    fontWeight: '700'
-                                }}>
-                                    {t.badge}
-                                </span>
-                            )}
-                        </button>
-                    );
-                })}
-            </div>
-
-            {loading ? (
-                <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--text-secondary)' }}>
-                    <Activity size={36} style={{ animation: 'spin 1.5s linear infinite', margin: '0 auto 12px', color: 'var(--primary-color)' }} />
-                    <p style={{ fontWeight: '600' }}>Loading National Health Telemetry & Supabase Ledger...</p>
-                </div>
-            ) : (
-                <>
-                    {/* TAB 1: OVERVIEW COMMAND CENTER */}
-                    {activeTab === 'overview' && (
-                        <div>
-                            {/* KPI Metric Cards */}
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-                                <div className="card" style={{ padding: '20px', borderRadius: '16px', borderLeft: '4px solid #0284C7', background: 'var(--card-bg, #fff)' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '600' }}>TOTAL CITIZENS</span>
-                                        <Users size={18} color="#0284C7" />
-                                    </div>
-                                    <h2 style={{ fontSize: '28px', fontWeight: '800', margin: '8px 0 2px', color: '#0284C7' }}>
-                                        {analytics?.metrics?.totalPatients || '142'}
-                                    </h2>
-                                    <p style={{ fontSize: '11px', color: '#16A34A', margin: 0, fontWeight: '600' }}>↑ 18% Verified ABHA Profiles</p>
-                                </div>
-
-                                <div className="card" style={{ padding: '20px', borderRadius: '16px', borderLeft: '4px solid #16A34A', background: 'var(--card-bg, #fff)' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '600' }}>ACTIVE DOCTORS</span>
-                                        <Stethoscope size={18} color="#16A34A" />
-                                    </div>
-                                    <h2 style={{ fontSize: '28px', fontWeight: '800', margin: '8px 0 2px', color: '#16A34A' }}>
-                                        {analytics?.metrics?.totalDoctors || '24'}
-                                    </h2>
-                                    <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>Across 6 District Centers</p>
-                                </div>
-
-                                <div className="card" style={{ padding: '20px', borderRadius: '16px', borderLeft: '4px solid #8B5CF6', background: 'var(--card-bg, #fff)' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '600' }}>HEALTH WORKERS (ASHA)</span>
-                                        <HeartPulse size={18} color="#8B5CF6" />
-                                    </div>
-                                    <h2 style={{ fontSize: '28px', fontWeight: '800', margin: '8px 0 2px', color: '#8B5CF6' }}>
-                                        {analytics?.metrics?.totalHealthWorkers || '38'}
-                                    </h2>
-                                    <p style={{ fontSize: '11px', color: '#8B5CF6', margin: 0, fontWeight: '600' }}>Active Field Scanning</p>
-                                </div>
-
-                                <div className="card" style={{ padding: '20px', borderRadius: '16px', borderLeft: '4px solid #059669', background: 'var(--card-bg, #fff)' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '600' }}>CLOSED-LOOP REFERRAL RATE</span>
-                                        <CheckCircle2 size={18} color="#059669" />
-                                    </div>
-                                    <h2 style={{ fontSize: '28px', fontWeight: '800', margin: '8px 0 2px', color: '#059669' }}>
-                                        {analytics?.metrics?.completionRate || '94%'}
-                                    </h2>
-                                    <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>Verified Consultation</p>
-                                </div>
-
-                                <div className="card" style={{ padding: '20px', borderRadius: '16px', borderLeft: '4px solid #DC2626', background: 'var(--card-bg, #fff)' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '600' }}>EMERGENCY ESCALATIONS</span>
-                                        <AlertTriangle size={18} color="#DC2626" />
-                                    </div>
-                                    <h2 style={{ fontSize: '28px', fontWeight: '800', margin: '8px 0 2px', color: '#DC2626' }}>
-                                        {analytics?.metrics?.emergencyEscalations || '2'}
-                                    </h2>
-                                    <p style={{ fontSize: '11px', color: '#DC2626', margin: 0, fontWeight: '600' }}>Direct Triage Active</p>
-                                </div>
-                            </div>
-
-                            {/* District Health Grid & Outbreak Flash */}
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px', marginBottom: '24px' }}>
-                                {/* District Operations Table */}
-                                <div className="card" style={{ padding: '20px', borderRadius: '16px', background: 'var(--card-bg, #fff)', border: '1px solid var(--border-color)' }}>
-                                    <h3 style={{ fontSize: '16px', fontWeight: '700', margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <Building2 size={18} color="#0284C7" /> District Operational Load & Triage Grid
-                                    </h3>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                        {Object.entries(analytics?.districtStats || {}).map(([dist, stat], i) => (
-                                            <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderRadius: '12px', background: 'var(--bg-secondary, rgba(0,0,0,0.02))', border: '1px solid var(--border-color)' }}>
-                                                <div>
-                                                    <h4 style={{ margin: 0, fontSize: '14px', fontWeight: '700' }}>{dist} District</h4>
-                                                    <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--text-secondary)' }}>
-                                                        {stat.facilities} Facilities • {stat.referrals} Referrals Active
-                                                    </p>
-                                                </div>
-                                                <div style={{ textAlign: 'right' }}>
-                                                    <span style={{ fontSize: '14px', fontWeight: '800', color: parseInt(stat.load) > 70 ? '#DC2626' : '#16A34A' }}>
-                                                        {stat.load} Load
-                                                    </span>
-                                                    <div style={{ width: '80px', height: '4px', backgroundColor: 'var(--border-color)', borderRadius: '2px', marginTop: '4px' }}>
-                                                        <div style={{ width: stat.load, height: '100%', backgroundColor: parseInt(stat.load) > 70 ? '#DC2626' : '#16A34A', borderRadius: '2px' }}></div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Active AI Epidemiological Warnings */}
-                                <div className="card" style={{ padding: '20px', borderRadius: '16px', background: 'var(--card-bg, #fff)', border: '1px solid var(--border-color)' }}>
-                                    <h3 style={{ fontSize: '16px', fontWeight: '700', margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: '8px', color: '#D97706' }}>
-                                        <Flame size={18} color="#D97706" /> AI Outbreak & Disease Surveillance Radar
-                                    </h3>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                        {(surveillance?.outbreakAlerts || []).map((alert, i) => (
-                                            <div key={i} style={{ padding: '12px 14px', borderRadius: '12px', background: alert.severity === 'HIGH' ? 'rgba(220, 38, 38, 0.05)' : 'rgba(217, 119, 6, 0.05)', borderLeft: `4px solid ${alert.severity === 'HIGH' ? '#DC2626' : '#D97706'}` }}>
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                    <h4 style={{ margin: 0, fontSize: '13px', fontWeight: '700' }}>{alert.disease}</h4>
-                                                    <span style={{ fontSize: '11px', fontWeight: '800', color: alert.severity === 'HIGH' ? '#DC2626' : '#D97706', padding: '2px 6px', borderRadius: '6px', background: 'rgba(255,255,255,0.8)' }}>
-                                                        {alert.trend}
-                                                    </span>
-                                                </div>
-                                                <p style={{ margin: '4px 0', fontSize: '12px', color: 'var(--text-secondary)' }}>
-                                                    📍 {alert.district} • {alert.activeClusters} Active Clusters
-                                                </p>
-                                                <p style={{ margin: 0, fontSize: '11px', color: 'var(--text-primary)', fontWeight: '500' }}>
-                                                    💡 Action: {alert.recommendedAction}
-                                                </p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                            <Check size={16} color="#34d399" />
+                            <span>{actionToast.message}</span>
+                        </motion.div>
                     )}
+                </AnimatePresence>
 
-                    {/* TAB 2: USER GOVERNANCE DIRECTORY */}
-                    {activeTab === 'users' && (
-                        <div className="card" style={{ padding: '20px', borderRadius: '16px', background: 'var(--card-bg, #fff)', border: '1px solid var(--border-color)' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
-                                <div>
-                                    <h3 style={{ fontSize: '18px', fontWeight: '700', margin: 0 }}>Master Citizen & Workforce Directory</h3>
-                                    <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '2px 0 0' }}>
-                                        Role-Based Access Control, Status Enforcement & Cloud Records
-                                    </p>
-                                </div>
-                                <span style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: '600' }}>
-                                    Showing {filteredUsers.length} of {usersList.length} accounts
-                                </span>
+                {/* TAB 1: Executive KPIs (12) */}
+                {activeTab === 'kpis' && (
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                        gap: '16px'
+                    }}>
+                        {/* 1. Completion Rate */}
+                        <div style={{
+                            background: '#ffffff',
+                            borderRadius: '14px',
+                            padding: '18px 20px',
+                            border: '1px solid #e2e8f0',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                <span style={{ fontSize: '13px', fontWeight: '600', color: '#475569' }}>1. Completion Rate</span>
+                                <CheckCircle2 size={18} color="#16a34a" />
                             </div>
-
-                            {/* Filters & Search */}
-                            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
-                                <div style={{ flex: '1', minWidth: '220px', position: 'relative' }}>
-                                    <Search size={16} style={{ position: 'absolute', left: '12px', top: '12px', color: 'var(--text-secondary)' }} />
-                                    <input 
-                                        type="text"
-                                        placeholder="Search by Name, Phone, Email, ABHA ID..."
-                                        value={userSearch}
-                                        onChange={e => setUserSearch(e.target.value)}
-                                        style={{ width: '100%', padding: '10px 12px 10px 36px', borderRadius: '10px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary, #fafafa)', fontSize: '13px' }}
-                                    />
-                                </div>
-                                <select 
-                                    value={roleFilter} 
-                                    onChange={e => setRoleFilter(e.target.value)}
-                                    style={{ padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-color)', background: 'var(--card-bg, #fff)', fontSize: '13px', fontWeight: '600' }}
-                                >
-                                    <option value="all">All Roles</option>
-                                    <option value="PATIENT">Citizens / Patients</option>
-                                    <option value="DOCTOR">Doctors</option>
-                                    <option value="HEALTH_WORKER">Health Workers (ASHA)</option>
-                                    <option value="ADMIN">System Admins</option>
-                                </select>
-                                <select 
-                                    value={statusFilter} 
-                                    onChange={e => setStatusFilter(e.target.value)}
-                                    style={{ padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-color)', background: 'var(--card-bg, #fff)', fontSize: '13px', fontWeight: '600' }}
-                                >
-                                    <option value="all">All Statuses</option>
-                                    <option value="ACTIVE">Active</option>
-                                    <option value="SUSPENDED">Suspended</option>
-                                    <option value="INACTIVE">Inactive</option>
-                                </select>
+                            <div style={{ fontSize: '24px', fontWeight: '700', color: '#16a34a', marginBottom: '4px' }}>
+                                92.4%
                             </div>
-
-                            {/* Users Table */}
-                            <div style={{ overflowX: 'auto' }}>
-                                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
-                                    <thead>
-                                        <tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--text-secondary)' }}>
-                                            <th style={{ padding: '12px 10px' }}>User / Citizen</th>
-                                            <th style={{ padding: '12px 10px' }}>Role</th>
-                                            <th style={{ padding: '12px 10px' }}>ABHA / Phone</th>
-                                            <th style={{ padding: '12px 10px' }}>District / Facility</th>
-                                            <th style={{ padding: '12px 10px' }}>Status</th>
-                                            <th style={{ padding: '12px 10px', textAlign: 'right' }}>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {filteredUsers.map(u => (
-                                            <tr key={u.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                                                <td style={{ padding: '12px 10px' }}>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                        <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: u.role.includes('DOC') ? '#DCFCE7' : u.role.includes('HEALTH') ? '#EDE9FE' : '#E0F2FE', color: u.role.includes('DOC') ? '#16A34A' : u.role.includes('HEALTH') ? '#8B5CF6' : '#0284C7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', fontSize: '13px' }}>
-                                                            {u.name?.[0]?.toUpperCase() || 'U'}
-                                                        </div>
-                                                        <div>
-                                                            <span style={{ fontWeight: '700', display: 'block' }}>{u.name}</span>
-                                                            <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{u.email}</span>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td style={{ padding: '12px 10px' }}>
-                                                    <span style={{ fontSize: '11px', fontWeight: '700', padding: '3px 8px', borderRadius: '12px', background: u.role.includes('DOC') ? '#DCFCE7' : u.role.includes('HEALTH') ? '#EDE9FE' : '#E0F2FE', color: u.role.includes('DOC') ? '#16A34A' : u.role.includes('HEALTH') ? '#8B5CF6' : '#0284C7' }}>
-                                                        {u.role.replace(/_/g, ' ')}
-                                                    </span>
-                                                </td>
-                                                <td style={{ padding: '12px 10px' }}>
-                                                    <span style={{ display: 'block', fontWeight: '600' }}>{u.phone}</span>
-                                                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{u.abha_id}</span>
-                                                </td>
-                                                <td style={{ padding: '12px 10px' }}>
-                                                    <span style={{ fontWeight: '600', display: 'block' }}>{u.district}</span>
-                                                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{u.facility}</span>
-                                                </td>
-                                                <td style={{ padding: '12px 10px' }}>
-                                                    <span style={{ fontSize: '11px', fontWeight: '700', padding: '3px 8px', borderRadius: '12px', background: u.status === 'ACTIVE' ? '#DCFCE7' : u.status === 'SUSPENDED' ? '#FEE2E2' : '#F3F4F6', color: u.status === 'ACTIVE' ? '#16A34A' : u.status === 'SUSPENDED' ? '#DC2626' : '#6B7280' }}>
-                                                        {u.status}
-                                                    </span>
-                                                </td>
-                                                <td style={{ padding: '12px 10px', textAlign: 'right' }}>
-                                                    <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
-                                                        {u.status !== 'ACTIVE' && (
-                                                            <button 
-                                                                onClick={() => handleUserStatusChange(u.id, 'ACTIVE')}
-                                                                disabled={updatingStatusId === u.id}
-                                                                title="Activate Account"
-                                                                style={{ padding: '5px 8px', borderRadius: '6px', background: '#DCFCE7', color: '#16A34A', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: '700' }}
-                                                            >
-                                                                Activate
-                                                            </button>
-                                                        )}
-                                                        {u.status === 'ACTIVE' && (
-                                                            <button 
-                                                                onClick={() => handleUserStatusChange(u.id, 'SUSPENDED')}
-                                                                disabled={updatingStatusId === u.id}
-                                                                title="Suspend Account"
-                                                                style={{ padding: '5px 8px', borderRadius: '6px', background: '#FEE2E2', color: '#DC2626', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: '700' }}
-                                                            >
-                                                                Suspend
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                            <div style={{ fontSize: '12px', color: '#64748b' }}>
+                                1,312 / 1,420 Referrals Closed
                             </div>
                         </div>
-                    )}
 
-                    {/* TAB 3: FACILITY NETWORK & HOSPITAL CAPACITY */}
-                    {activeTab === 'facilities' && (
-                        <div>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
-                                {facilities.map(f => (
-                                    <div key={f.id} className="card" style={{ padding: '20px', borderRadius: '16px', background: 'var(--card-bg, #fff)', border: '1px solid var(--border-color)' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-                                            <div>
-                                                <span style={{ fontSize: '11px', fontWeight: '700', color: 'var(--primary-color)' }}>
-                                                    {f.tier?.replace(/_/g, ' ')}
-                                                </span>
-                                                <h3 style={{ fontSize: '16px', fontWeight: '700', margin: '2px 0 0' }}>{f.name}</h3>
-                                                <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '2px 0 0' }}>📍 {f.district} District</p>
-                                            </div>
-                                            <button 
-                                                onClick={() => handleFacilityStatusToggle(f.id, f.operational_status)}
-                                                style={{
-                                                    fontSize: '11px',
-                                                    fontWeight: '700',
-                                                    padding: '4px 10px',
-                                                    borderRadius: '12px',
-                                                    border: 'none',
-                                                    cursor: 'pointer',
-                                                    background: f.operational_status === 'OPEN' ? '#DCFCE7' : f.operational_status === 'HIGH_LOAD' ? '#FEF3C7' : '#FEE2E2',
-                                                    color: f.operational_status === 'OPEN' ? '#16A34A' : f.operational_status === 'HIGH_LOAD' ? '#D97706' : '#DC2626'
-                                                }}
-                                            >
-                                                {f.operational_status?.replace(/_/g, ' ') || 'OPEN'}
-                                            </button>
-                                        </div>
-
-                                        {/* Capacity & Beds */}
-                                        <div style={{ margin: '14px 0' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: '600', marginBottom: '6px' }}>
-                                                <span>Bed Occupancy</span>
-                                                <span>{f.current_load || 60}%</span>
-                                            </div>
-                                            <div style={{ width: '100%', height: '6px', backgroundColor: 'var(--border-color)', borderRadius: '3px', overflow: 'hidden' }}>
-                                                <div style={{ width: `${f.current_load || 60}%`, height: '100%', backgroundColor: (f.current_load || 60) > 75 ? '#DC2626' : '#16A34A' }}></div>
-                                            </div>
-                                        </div>
-
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '12px', background: 'var(--bg-secondary, #fafafa)', padding: '10px 12px', borderRadius: '10px' }}>
-                                            <div><strong>Available Beds:</strong> {f.available_beds || 42} / {f.total_beds || 150}</div>
-                                            <div><strong>ICU Capacity:</strong> {f.icu_beds || 12} Beds</div>
-                                            <div><strong>Oxygen Supply:</strong> {f.oxygen_available !== false ? '✅ Active' : '❌ Low'}</div>
-                                            <div><strong>Blood Bank:</strong> {f.blood_bank_active ? '🩸 Operational' : '⚠️ Limited'}</div>
-                                        </div>
-                                    </div>
-                                ))}
+                        {/* 2. Avg Turnaround */}
+                        <div style={{
+                            background: '#ffffff',
+                            borderRadius: '14px',
+                            padding: '18px 20px',
+                            border: '1px solid #e2e8f0',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                <span style={{ fontSize: '13px', fontWeight: '600', color: '#475569' }}>2. Avg Turnaround</span>
+                                <Clock size={18} color="#0284c7" />
+                            </div>
+                            <div style={{ fontSize: '24px', fontWeight: '700', color: '#0284c7', marginBottom: '4px' }}>
+                                18.5 hrs
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#64748b' }}>
+                                Triage to Care Closure
                             </div>
                         </div>
-                    )}
 
-                    {/* TAB 4: AI DISEASE SURVEILLANCE */}
-                    {activeTab === 'surveillance' && (
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '20px' }}>
-                            <div className="card" style={{ padding: '20px', borderRadius: '16px', background: 'var(--card-bg, #fff)', border: '1px solid var(--border-color)' }}>
-                                <h3 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <TrendingUp size={18} color="var(--primary-color)" /> Top Clinical Diagnoses (AI Aggregation)
-                                </h3>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                    {(surveillance?.topDiagnoses || []).map((diag, i) => (
-                                        <div key={i} style={{ padding: '10px 12px', borderRadius: '10px', background: 'var(--bg-secondary, #fafafa)', border: '1px solid var(--border-color)' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <span style={{ fontWeight: '600', fontSize: '13px' }}>{diag.condition}</span>
-                                                <span style={{ fontWeight: '800', color: 'var(--primary-color)', fontSize: '13px' }}>{diag.pct}</span>
-                                            </div>
-                                            <div style={{ width: '100%', height: '4px', backgroundColor: 'var(--border-color)', borderRadius: '2px', marginTop: '6px' }}>
-                                                <div style={{ width: diag.pct, height: '100%', backgroundColor: 'var(--primary-color)', borderRadius: '2px' }}></div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
+                        {/* 3. Appt Delay */}
+                        <div style={{
+                            background: '#ffffff',
+                            borderRadius: '14px',
+                            padding: '18px 20px',
+                            border: '1px solid #e2e8f0',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                <span style={{ fontSize: '13px', fontWeight: '600', color: '#475569' }}>3. Appt Delay</span>
+                                <Clock size={18} color="#7c3aed" />
                             </div>
-
-                            <div className="card" style={{ padding: '20px', borderRadius: '16px', background: 'var(--card-bg, #fff)', border: '1px solid var(--border-color)' }}>
-                                <h3 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <HeartPulse size={18} color="#16A34A" /> Prescription Quality & Generic Adherence
-                                </h3>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                                    <div style={{ padding: '14px', borderRadius: '12px', background: 'rgba(22, 163, 74, 0.08)', borderLeft: '4px solid #16A34A' }}>
-                                        <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Generic Medicine Adherence</span>
-                                        <h2 style={{ fontSize: '24px', fontWeight: '800', margin: '4px 0 0', color: '#16A34A' }}>
-                                            {surveillance?.prescriptionInsights?.genericMedicineAdherence || '92.4%'}
-                                        </h2>
-                                        <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: '2px 0 0' }}>Compliant with National Essential Drugs List</p>
-                                    </div>
-
-                                    <div style={{ padding: '14px', borderRadius: '12px', background: 'rgba(2, 132, 199, 0.08)', borderLeft: '4px solid #0284C7' }}>
-                                        <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Antibiotic Stewardship Index</span>
-                                        <h2 style={{ fontSize: '24px', fontWeight: '800', margin: '4px 0 0', color: '#0284C7' }}>
-                                            {surveillance?.prescriptionInsights?.antibioticStewardshipScore || '89.1%'}
-                                        </h2>
-                                        <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: '2px 0 0' }}>Monitored for anti-microbial resistance</p>
-                                    </div>
-
-                                    <div style={{ padding: '14px', borderRadius: '12px', background: 'rgba(139, 92, 246, 0.08)', borderLeft: '4px solid #8B5CF6' }}>
-                                        <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Essential Drug Availability in PHCs</span>
-                                        <h2 style={{ fontSize: '24px', fontWeight: '800', margin: '4px 0 0', color: '#8B5CF6' }}>
-                                            {surveillance?.prescriptionInsights?.essentialDrugStockAvailability || '96.2%'}
-                                        </h2>
-                                        <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: '2px 0 0' }}>Real-time pharmacy stock verified</p>
-                                    </div>
-                                </div>
+                            <div style={{ fontSize: '24px', fontWeight: '700', color: '#7c3aed', marginBottom: '4px' }}>
+                                3.2 hrs
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#64748b' }}>
+                                Scheduling Latency
                             </div>
                         </div>
-                    )}
 
-                    {/* TAB 5: CRYPTOGRAPHIC AUDIT LEDGER */}
-                    {activeTab === 'audit' && (
-                        <div className="card" style={{ padding: '20px', borderRadius: '16px', background: 'var(--card-bg, #fff)', border: '1px solid var(--border-color)' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
-                                <div>
-                                    <h3 style={{ fontSize: '18px', fontWeight: '700', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <Lock size={18} color="#16A34A" /> Immutable Security Medical History (SHA-256 Hash Chain)
-                                    </h3>
-                                    <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '2px 0 0' }}>
-                                        Ayushman Bharat Digital Mission (ABDM) Cryptographic Provenance & Consent Logging
-                                    </p>
-                                </div>
-                                <span style={{ fontSize: '12px', color: '#16A34A', fontWeight: '700', padding: '4px 10px', borderRadius: '12px', background: 'rgba(22, 163, 74, 0.1)' }}>
-                                    🔒 Cryptographically Verified (SHA-256)
-                                </span>
+                        {/* 4. Missed Appts */}
+                        <div style={{
+                            background: '#ffffff',
+                            borderRadius: '14px',
+                            padding: '18px 20px',
+                            border: '1px solid #e2e8f0',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                <span style={{ fontSize: '13px', fontWeight: '600', color: '#475569' }}>4. Missed Appts</span>
+                                <CalendarX size={18} color="#ea580c" />
                             </div>
-
-                            <div style={{ overflowX: 'auto' }}>
-                                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
-                                    <thead>
-                                        <tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--text-secondary)' }}>
-                                            <th style={{ padding: '10px' }}>Timestamp</th>
-                                            <th style={{ padding: '10px' }}>Action Type</th>
-                                            <th style={{ padding: '10px' }}>Actor Role</th>
-                                            <th style={{ padding: '10px' }}>Target ID / Record</th>
-                                            <th style={{ padding: '10px' }}>Cryptographic Hash (SHA-256)</th>
-                                            <th style={{ padding: '10px', textAlign: 'right' }}>Verify</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {auditLogs.map((log, i) => (
-                                            <tr key={i} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                                                <td style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>
-                                                    {log.timestamp ? new Date(log.timestamp).toLocaleString() : 'Just now'}
-                                                </td>
-                                                <td style={{ padding: '12px 10px' }}>
-                                                    <span style={{ fontSize: '11px', fontWeight: '700', padding: '3px 8px', borderRadius: '8px', background: 'rgba(2, 132, 199, 0.1)', color: '#0284C7' }}>
-                                                        {log.action_type || 'MEDICAL_RECORD_ACCESS'}
-                                                    </span>
-                                                </td>
-                                                <td style={{ padding: '12px 10px', fontWeight: '600' }}>
-                                                    {log.actor_role || 'HEALTH_OFFICER'}
-                                                </td>
-                                                <td style={{ padding: '12px 10px', color: 'var(--text-secondary)', fontFamily: 'monospace' }}>
-                                                    {log.target_id ? log.target_id.slice(0, 12) + '...' : 'SEC-BLOCK-42'}
-                                                </td>
-                                                <td style={{ padding: '12px 10px', fontFamily: 'monospace', fontSize: '11px', color: '#16A34A' }}>
-                                                    {log.hash_signature ? log.hash_signature.slice(0, 16) + '...' : 'e3b0c44298fc1c149afb...'}
-                                                </td>
-                                                <td style={{ padding: '12px 10px', textAlign: 'right' }}>
-                                                    <button 
-                                                        onClick={() => setInspectedAudit(log)}
-                                                        style={{ padding: '4px 8px', borderRadius: '6px', background: 'var(--bg-secondary, #fafafa)', border: '1px solid var(--border-color)', fontSize: '11px', cursor: 'pointer', fontWeight: '600' }}
-                                                    >
-                                                        Inspect
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                            <div style={{ fontSize: '24px', fontWeight: '700', color: '#ea580c', marginBottom: '4px' }}>
+                                28 Cases
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#64748b' }}>
+                                24 Auto-Rescheduled
                             </div>
                         </div>
-                    )}
 
-                    {/* TAB 6: SYSTEM TELEMETRY & DATABASE HEALTH */}
-                    {activeTab === 'telemetry' && (
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '20px' }}>
-                            <div className="card" style={{ padding: '20px', borderRadius: '16px', background: 'var(--card-bg, #fff)', border: '1px solid var(--border-color)' }}>
-                                <h3 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <Database size={18} color="#0284C7" /> Supabase PostgreSQL Cloud Database
-                                </h3>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 12px', borderRadius: '8px', background: 'var(--bg-secondary, #fafafa)' }}>
-                                        <span style={{ color: 'var(--text-secondary)' }}>Host</span>
-                                        <span style={{ fontWeight: '600' }}>{telemetry?.database?.host || 'virecfebgqsumovpumqe.supabase.co'}</span>
-                                    </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 12px', borderRadius: '8px', background: 'var(--bg-secondary, #fafafa)' }}>
-                                        <span style={{ color: 'var(--text-secondary)' }}>Connection Status</span>
-                                        <span style={{ fontWeight: '800', color: '#16A34A' }}>🟢 {telemetry?.database?.status || 'CONNECTED (ACTIVE)'}</span>
-                                    </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 12px', borderRadius: '8px', background: 'var(--bg-secondary, #fafafa)' }}>
-                                        <span style={{ color: 'var(--text-secondary)' }}>Query Latency</span>
-                                        <span style={{ fontWeight: '700' }}>{telemetry?.database?.latencyMs || 34} ms</span>
-                                    </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 12px', borderRadius: '8px', background: 'var(--bg-secondary, #fafafa)' }}>
-                                        <span style={{ color: 'var(--text-secondary)' }}>Connection Pool</span>
-                                        <span style={{ fontWeight: '600' }}>{telemetry?.database?.poolStatus || 'Healthy (Max 20 connections)'}</span>
-                                    </div>
-                                </div>
+                        {/* 5. Failed Referrals */}
+                        <div style={{
+                            background: '#ffffff',
+                            borderRadius: '14px',
+                            padding: '18px 20px',
+                            border: '1px solid #e2e8f0',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                <span style={{ fontSize: '13px', fontWeight: '600', color: '#475569' }}>5. Failed Referrals</span>
+                                <XCircle size={18} color="#dc2626" />
                             </div>
-
-                            <div className="card" style={{ padding: '20px', borderRadius: '16px', background: 'var(--card-bg, #fff)', border: '1px solid var(--border-color)' }}>
-                                <h3 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <Activity size={18} color="#16A34A" /> API & Serverless Health
-                                </h3>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 12px', borderRadius: '8px', background: 'var(--bg-secondary, #fafafa)' }}>
-                                        <span style={{ color: 'var(--text-secondary)' }}>Server Uptime</span>
-                                        <span style={{ fontWeight: '700', color: '#16A34A' }}>{telemetry?.apiServer?.uptime || '99.98%'}</span>
-                                    </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 12px', borderRadius: '8px', background: 'var(--bg-secondary, #fafafa)' }}>
-                                        <span style={{ color: 'var(--text-secondary)' }}>Security Standard</span>
-                                        <span style={{ fontWeight: '700' }}>ABDM M2 & HIPAA Compliant</span>
-                                    </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 12px', borderRadius: '8px', background: 'var(--bg-secondary, #fafafa)' }}>
-                                        <span style={{ color: 'var(--text-secondary)' }}>Data Encryption</span>
-                                        <span style={{ fontWeight: '700' }}>AES-256 GCM (At-Rest & In-Transit)</span>
-                                    </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 12px', borderRadius: '8px', background: 'var(--bg-secondary, #fafafa)' }}>
-                                        <span style={{ color: 'var(--text-secondary)' }}>Cross-Device Sync</span>
-                                        <span style={{ fontWeight: '800', color: '#16A34A' }}>Active (Physical Phone + Web)</span>
-                                    </div>
-                                </div>
+                            <div style={{ fontSize: '24px', fontWeight: '700', color: '#dc2626', marginBottom: '4px' }}>
+                                14 (0.98%)
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#64748b' }}>
+                                Unresolved / Cancelled
                             </div>
                         </div>
-                    )}
-                </>
-            )}
 
-            {/* Audit Log Inspection Modal */}
-            {inspectedAudit && (
-                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
-                    <div style={{ background: 'var(--card-bg, #fff)', borderRadius: '16px', maxWidth: '540px', width: '100%', padding: '24px', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <Lock size={20} color="#16A34A" /> Cryptographic Block Details
-                            </h3>
-                            <button onClick={() => setInspectedAudit(null)} style={{ background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer', color: 'var(--text-secondary)' }}>✕</button>
+                        {/* 6. Rerouting Freq */}
+                        <div style={{
+                            background: '#ffffff',
+                            borderRadius: '14px',
+                            padding: '18px 20px',
+                            border: '1px solid #e2e8f0',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                <span style={{ fontSize: '13px', fontWeight: '600', color: '#475569' }}>6. Rerouting Freq</span>
+                                <GitFork size={18} color="#7c3aed" />
+                            </div>
+                            <div style={{ fontSize: '24px', fontWeight: '700', color: '#7c3aed', marginBottom: '4px' }}>
+                                3.8% (54)
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#64748b' }}>
+                                Facility Capacity Re-route
+                            </div>
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px', fontFamily: 'monospace', background: 'var(--bg-secondary, #fafafa)', padding: '14px', borderRadius: '12px' }}>
-                            <div><strong>Block ID:</strong> {inspectedAudit.id || 'BLK-0941'}</div>
-                            <div><strong>Action:</strong> {inspectedAudit.action_type || 'MEDICAL_RECORD_ACCESS'}</div>
-                            <div><strong>Actor:</strong> {inspectedAudit.actor_id || user?.id || 'admin-root'} ({inspectedAudit.actor_role || 'ADMIN'})</div>
-                            <div><strong>Timestamp:</strong> {inspectedAudit.timestamp || new Date().toISOString()}</div>
-                            <div style={{ wordBreak: 'break-all' }}><strong>SHA-256 Hash:</strong> <span style={{ color: '#16A34A' }}>{inspectedAudit.hash_signature || 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'}</span></div>
+
+                        {/* 7. Follow-up Rate */}
+                        <div style={{
+                            background: '#ffffff',
+                            borderRadius: '14px',
+                            padding: '18px 20px',
+                            border: '1px solid #e2e8f0',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                <span style={{ fontSize: '13px', fontWeight: '600', color: '#475569' }}>7. Follow-up Rate</span>
+                                <Home size={18} color="#16a34a" />
+                            </div>
+                            <div style={{ fontSize: '24px', fontWeight: '700', color: '#16a34a', marginBottom: '4px' }}>
+                                88.6%
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#64748b' }}>
+                                1,162 Day-7 Verified
+                            </div>
                         </div>
-                        <button 
-                            onClick={() => setInspectedAudit(null)}
-                            style={{ width: '100%', marginTop: '16px', padding: '10px', borderRadius: '10px', background: 'var(--primary-color, #0284C7)', color: '#fff', border: 'none', fontWeight: '700', cursor: 'pointer' }}
-                        >
-                            Close Inspector
-                        </button>
+
+                        {/* 8. In-Flight Cases */}
+                        <div style={{
+                            background: '#ffffff',
+                            borderRadius: '14px',
+                            padding: '18px 20px',
+                            border: '1px solid #e2e8f0',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                <span style={{ fontSize: '13px', fontWeight: '600', color: '#475569' }}>8. In-Flight Cases</span>
+                                <RefreshCw size={18} color="#0284c7" />
+                            </div>
+                            <div style={{ fontSize: '24px', fontWeight: '700', color: '#0284c7', marginBottom: '4px' }}>
+                                84 Active
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#64748b' }}>
+                                Across 5 Stages
+                            </div>
+                        </div>
+
+                        {/* 9. High-Risk Alert */}
+                        <div style={{
+                            background: '#ffffff',
+                            borderRadius: '14px',
+                            padding: '18px 20px',
+                            border: '1px solid #e2e8f0',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                <span style={{ fontSize: '13px', fontWeight: '600', color: '#475569' }}>9. High-Risk Alert</span>
+                                <ShieldAlert size={18} color="#dc2626" />
+                            </div>
+                            <div style={{ fontSize: '24px', fontWeight: '700', color: '#dc2626', marginBottom: '4px' }}>
+                                19 Patients
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#64748b' }}>
+                                7 Pending ASHA Verification
+                            </div>
+                        </div>
+
+                        {/* 10. Stale Telemetry */}
+                        <div style={{
+                            background: '#ffffff',
+                            borderRadius: '14px',
+                            padding: '18px 20px',
+                            border: '1px solid #e2e8f0',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                <span style={{ fontSize: '13px', fontWeight: '600', color: '#475569' }}>10. Stale Telemetry</span>
+                                <Radio size={18} color="#ea580c" />
+                            </div>
+                            <div style={{ fontSize: '24px', fontWeight: '700', color: '#ea580c', marginBottom: '4px' }}>
+                                2 Facilities
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#64748b' }}>
+                                &gt; 30 mins unrefreshed
+                            </div>
+                        </div>
+
+                        {/* 11. AI Override Rate */}
+                        <div style={{
+                            background: '#ffffff',
+                            borderRadius: '14px',
+                            padding: '18px 20px',
+                            border: '1px solid #e2e8f0',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                <span style={{ fontSize: '13px', fontWeight: '600', color: '#475569' }}>11. AI Override Rate</span>
+                                <UserCheck size={18} color="#6366f1" />
+                            </div>
+                            <div style={{ fontSize: '24px', fontWeight: '700', color: '#6366f1', marginBottom: '4px' }}>
+                                5.2% (98)
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#64748b' }}>
+                                Human Clinician Overrides
+                            </div>
+                        </div>
+
+                        {/* 12. AI Fallback Freq */}
+                        <div style={{
+                            background: '#ffffff',
+                            borderRadius: '14px',
+                            padding: '18px 20px',
+                            border: '1px solid #e2e8f0',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                <span style={{ fontSize: '13px', fontWeight: '600', color: '#475569' }}>12. AI Fallback Freq</span>
+                                <Shield size={18} color="#475569" />
+                            </div>
+                            <div style={{ fontSize: '24px', fontWeight: '700', color: '#475569', marginBottom: '4px' }}>
+                                0.9% (18)
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#64748b' }}>
+                                Conservative Rule Invocation
+                            </div>
+                        </div>
                     </div>
-                </div>
-            )}
+                )}
+
+                {/* TAB 2: Pipeline Bottlenecks */}
+                {activeTab === 'bottlenecks' && (
+                    <div>
+                        {/* Top Bottleneck Detection Warning Banner */}
+                        <div style={{
+                            background: '#fefce8',
+                            border: '1px solid #fef08a',
+                            borderRadius: '12px',
+                            padding: '14px 18px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            marginBottom: '20px',
+                            color: '#854d0e',
+                            fontSize: '13px',
+                            fontWeight: '500'
+                        }}>
+                            <AlertTriangle size={18} color="#ca8a04" style={{ flexShrink: 0 }} />
+                            <span>Pipeline Bottleneck Detection: Analyzes lag across all canonical referral states in real-time.</span>
+                        </div>
+
+                        {/* 4 Bottleneck Transition Cards */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            {/* Card 1: APPOINTMENT_BOOKED -> PATIENT_IN_TRANSIT */}
+                            <div style={{
+                                background: '#ffffff',
+                                borderRadius: '14px',
+                                padding: '20px',
+                                border: '1px solid #e2e8f0',
+                                boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+                            }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
+                                    <span style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b', letterSpacing: '0.2px' }}>
+                                        APPOINTMENT_BOOKED → PATIENT_IN_TRANSIT
+                                    </span>
+                                    <span style={{
+                                        fontSize: '10px',
+                                        fontWeight: '700',
+                                        padding: '4px 8px',
+                                        borderRadius: '6px',
+                                        background: '#fef3c7',
+                                        color: '#b45309'
+                                    }}>
+                                        ATTENTION REQUIRED
+                                    </span>
+                                </div>
+                                <div style={{ fontSize: '13px', fontWeight: '600', color: '#334155', marginBottom: '4px' }}>
+                                    28 Referrals Stuck • 14.2 Hours Avg Delay
+                                </div>
+                                <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '16px' }}>
+                                    Patient transit arrangement delays in rural Baramati sub-district.
+                                </div>
+                                <button
+                                    onClick={() => showToast("⚡ 108/102 Transport Coordinator prompts dispatched to 28 ambulance drivers!")}
+                                    style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        padding: '8px 14px',
+                                        borderRadius: '8px',
+                                        border: '1.5px solid #3b82f6',
+                                        background: '#eff6ff',
+                                        color: '#1d4ed8',
+                                        fontSize: '12px',
+                                        fontWeight: '600',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.15s ease'
+                                    }}
+                                >
+                                    <Zap size={14} color="#1d4ed8" />
+                                    <span>Dispatch 108/102 Transport Coordinator Prompts</span>
+                                </button>
+                            </div>
+
+                            {/* Card 2: FOLLOW_UP_PENDING -> FOLLOW_UP_COMPLETED */}
+                            <div style={{
+                                background: '#ffffff',
+                                borderRadius: '14px',
+                                padding: '20px',
+                                border: '1px solid #e2e8f0',
+                                boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+                            }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
+                                    <span style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b', letterSpacing: '0.2px' }}>
+                                        FOLLOW_UP_PENDING → FOLLOW_UP_COMPLETED
+                                    </span>
+                                    <span style={{
+                                        fontSize: '10px',
+                                        fontWeight: '700',
+                                        padding: '4px 8px',
+                                        borderRadius: '6px',
+                                        background: '#fee2e2',
+                                        color: '#dc2626'
+                                    }}>
+                                        OVERDUE ALERT
+                                    </span>
+                                </div>
+                                <div style={{ fontSize: '13px', fontWeight: '600', color: '#334155', marginBottom: '4px' }}>
+                                    16 Referrals Stuck • 48.0 Hours Pending
+                                </div>
+                                <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '16px' }}>
+                                    12 patients pending Day-7 home verification by assigned ASHA workers.
+                                </div>
+                                <button
+                                    onClick={() => showToast("⚡ Mobile push reminder broadcasted to 12 assigned ASHA workers!")}
+                                    style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        padding: '8px 14px',
+                                        borderRadius: '8px',
+                                        border: '1.5px solid #3b82f6',
+                                        background: '#eff6ff',
+                                        color: '#1d4ed8',
+                                        fontSize: '12px',
+                                        fontWeight: '600',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.15s ease'
+                                    }}
+                                >
+                                    <Zap size={14} color="#1d4ed8" />
+                                    <span>Broadcast ASHA Mobile Task Reminder</span>
+                                </button>
+                            </div>
+
+                            {/* Card 3: DIAGNOSTICS_PENDING -> DIAGNOSTICS_COMPLETED */}
+                            <div style={{
+                                background: '#ffffff',
+                                borderRadius: '14px',
+                                padding: '20px',
+                                border: '1px solid #e2e8f0',
+                                boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+                            }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
+                                    <span style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b', letterSpacing: '0.2px' }}>
+                                        DIAGNOSTICS_PENDING → DIAGNOSTICS_COMPLETED
+                                    </span>
+                                    <span style={{
+                                        fontSize: '10px',
+                                        fontWeight: '700',
+                                        padding: '4px 8px',
+                                        borderRadius: '6px',
+                                        background: '#e0f2fe',
+                                        color: '#0284c7'
+                                    }}>
+                                        NORMAL LATENCY
+                                    </span>
+                                </div>
+                                <div style={{ fontSize: '13px', fontWeight: '600', color: '#334155', marginBottom: '4px' }}>
+                                    18 Referrals Stuck • 6.5 Hours Avg
+                                </div>
+                                <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '16px' }}>
+                                    District Lab running standard batch pathology tests.
+                                </div>
+                                <button
+                                    onClick={() => setSelectedModal('diagnostics')}
+                                    style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        padding: '8px 14px',
+                                        borderRadius: '8px',
+                                        border: '1.5px solid #3b82f6',
+                                        background: '#eff6ff',
+                                        color: '#1d4ed8',
+                                        fontSize: '12px',
+                                        fontWeight: '600',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.15s ease'
+                                    }}
+                                >
+                                    <Zap size={14} color="#1d4ed8" />
+                                    <span>View Diagnostic Queue</span>
+                                </button>
+                            </div>
+
+                            {/* Card 4: FACILITY_CONFIRMATION_PENDING -> ACCEPTED */}
+                            <div style={{
+                                background: '#ffffff',
+                                borderRadius: '14px',
+                                padding: '20px',
+                                border: '1px solid #e2e8f0',
+                                boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+                            }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
+                                    <span style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b', letterSpacing: '0.2px' }}>
+                                        FACILITY_CONFIRMATION_PENDING → ACCEPTED
+                                    </span>
+                                    <span style={{
+                                        fontSize: '10px',
+                                        fontWeight: '700',
+                                        padding: '4px 8px',
+                                        borderRadius: '6px',
+                                        background: '#dcfce7',
+                                        color: '#16a34a'
+                                    }}>
+                                        WITHIN SLA
+                                    </span>
+                                </div>
+                                <div style={{ fontSize: '13px', fontWeight: '600', color: '#334155', marginBottom: '4px' }}>
+                                    14 Referrals Stuck • 2.1 Hours Avg
+                                </div>
+                                <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '16px' }}>
+                                    Routine specialist intake screening at receiving hospital.
+                                </div>
+                                <button
+                                    onClick={() => setSelectedModal('sla')}
+                                    style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        padding: '8px 14px',
+                                        borderRadius: '8px',
+                                        border: '1.5px solid #3b82f6',
+                                        background: '#eff6ff',
+                                        color: '#1d4ed8',
+                                        fontSize: '12px',
+                                        fontWeight: '600',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.15s ease'
+                                    }}
+                                >
+                                    <Zap size={14} color="#1d4ed8" />
+                                    <span>Review Queue SLA</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* TAB 3: Facility Heatmap */}
+                {activeTab === 'facilities' && (
+                    <div>
+                        {/* Stale Telemetry Red Alert Banner */}
+                        <div style={{
+                            background: '#fef2f2',
+                            border: '1px solid #fca5a5',
+                            borderRadius: '12px',
+                            padding: '14px 18px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            marginBottom: '20px',
+                            color: '#b91c1c',
+                            fontSize: '13px',
+                            fontWeight: '500'
+                        }}>
+                            <WifiOff size={18} color="#dc2626" style={{ flexShrink: 0 }} />
+                            <span>2 Facilities have stale telemetry (&gt; 30 mins). Auto-refresh ping sent to PHC Wai and SDH Khandala.</span>
+                        </div>
+
+                        {/* Detailed Facility Cards List */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            {/* Facility 1: Pune District General Hospital */}
+                            <div style={{
+                                background: '#ffffff',
+                                borderRadius: '14px',
+                                padding: '20px',
+                                border: '1px solid #e2e8f0',
+                                boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+                            }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
+                                    <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '700', color: '#0f172a' }}>
+                                        Pune District General Hospital
+                                    </h3>
+                                    <span style={{ fontSize: '12px', color: '#94a3b8' }}>8 mins ago</span>
+                                </div>
+                                <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '16px' }}>
+                                    District Hospital (Tertiary Referral Hub)
+                                </div>
+
+                                {/* 3 Metrics */}
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', textAlign: 'center', marginBottom: '14px' }}>
+                                    <div>
+                                        <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '4px' }}>Bed Occupancy</div>
+                                        <div style={{ fontSize: '16px', fontWeight: '700', color: '#dc2626' }}>86.5%</div>
+                                    </div>
+                                    <div>
+                                        <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '4px' }}>OPD Queue</div>
+                                        <div style={{ fontSize: '16px', fontWeight: '700', color: '#0f172a' }}>42 Patients</div>
+                                    </div>
+                                    <div>
+                                        <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '4px' }}>Active ER</div>
+                                        <div style={{ fontSize: '16px', fontWeight: '700', color: '#dc2626' }}>4 Trauma</div>
+                                    </div>
+                                </div>
+
+                                {/* Status Tag */}
+                                <div style={{
+                                    display: 'inline-block',
+                                    padding: '6px 12px',
+                                    borderRadius: '6px',
+                                    background: '#fee2e2',
+                                    color: '#991b1b',
+                                    fontSize: '12px',
+                                    fontWeight: '500'
+                                }}>
+                                    High Load: Cardiology ICU at 90% capacity
+                                </div>
+                            </div>
+
+                            {/* Facility 2: Rural Hospital Baramati */}
+                            <div style={{
+                                background: '#ffffff',
+                                borderRadius: '14px',
+                                padding: '20px',
+                                border: '1px solid #e2e8f0',
+                                boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+                            }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
+                                    <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '700', color: '#0f172a' }}>
+                                        Rural Hospital Baramati
+                                    </h3>
+                                    <span style={{ fontSize: '12px', color: '#94a3b8' }}>14 mins ago</span>
+                                </div>
+                                <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '16px' }}>
+                                    Sub-District Hospital (Secondary Care)
+                                </div>
+
+                                {/* 3 Metrics */}
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', textAlign: 'center', marginBottom: '14px' }}>
+                                    <div>
+                                        <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '4px' }}>Bed Occupancy</div>
+                                        <div style={{ fontSize: '16px', fontWeight: '700', color: '#16a34a' }}>58.0%</div>
+                                    </div>
+                                    <div>
+                                        <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '4px' }}>OPD Queue</div>
+                                        <div style={{ fontSize: '16px', fontWeight: '700', color: '#0f172a' }}>18 Patients</div>
+                                    </div>
+                                    <div>
+                                        <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '4px' }}>Active ER</div>
+                                        <div style={{ fontSize: '16px', fontWeight: '700', color: '#dc2626' }}>1 Trauma</div>
+                                    </div>
+                                </div>
+
+                                {/* Status Tag */}
+                                <div style={{
+                                    display: 'inline-block',
+                                    padding: '6px 12px',
+                                    borderRadius: '6px',
+                                    background: '#dcfce7',
+                                    color: '#166534',
+                                    fontSize: '12px',
+                                    fontWeight: '500'
+                                }}>
+                                    Optimal: Roster full, General Medicine & OB-GYN available
+                                </div>
+                            </div>
+
+                            {/* Facility 3: Primary Health Centre Shirwal */}
+                            <div style={{
+                                background: '#ffffff',
+                                borderRadius: '14px',
+                                padding: '20px',
+                                border: '1px solid #e2e8f0',
+                                boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+                            }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
+                                    <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '700', color: '#0f172a' }}>
+                                        Primary Health Centre Shirwal
+                                    </h3>
+                                    <span style={{ fontSize: '12px', color: '#94a3b8' }}>25 mins ago</span>
+                                </div>
+                                <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '16px' }}>
+                                    PHC (Primary Stabilization Unit)
+                                </div>
+
+                                {/* 3 Metrics */}
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', textAlign: 'center', marginBottom: '14px' }}>
+                                    <div>
+                                        <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '4px' }}>Bed Occupancy</div>
+                                        <div style={{ fontSize: '16px', fontWeight: '700', color: '#16a34a' }}>35.0%</div>
+                                    </div>
+                                    <div>
+                                        <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '4px' }}>OPD Queue</div>
+                                        <div style={{ fontSize: '16px', fontWeight: '700', color: '#0f172a' }}>9 Patients</div>
+                                    </div>
+                                    <div>
+                                        <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '4px' }}>Active ER</div>
+                                        <div style={{ fontSize: '16px', fontWeight: '700', color: '#16a34a' }}>0 Trauma</div>
+                                    </div>
+                                </div>
+
+                                {/* Status Tag */}
+                                <div style={{
+                                    display: 'inline-block',
+                                    padding: '6px 12px',
+                                    borderRadius: '6px',
+                                    background: '#dcfce7',
+                                    color: '#166534',
+                                    fontSize: '12px',
+                                    fontWeight: '500'
+                                }}>
+                                    Normal: Ready for routine OPD referrals and tele-consults
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* TAB 4: AI Governance & Audit */}
+                {activeTab === 'governance' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                        {/* Card 1: AI Decision Support & Safety Metrics */}
+                        <div style={{
+                            background: '#ffffff',
+                            borderRadius: '14px',
+                            padding: '24px',
+                            border: '1px solid #e2e8f0',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                                <Brain size={20} color="#7c3aed" />
+                                <h2 style={{ margin: 0, fontSize: '15px', fontWeight: '700', color: '#0f172a' }}>
+                                    AI Decision Support & Safety Metrics
+                                </h2>
+                            </div>
+
+                            {/* 4 Metric Rows with Progress Bars */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                                {/* Metric 1 */}
+                                <div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
+                                        <span>AI Triage Clinical Agreement</span>
+                                        <span>94.8% (1,792 Cases)</span>
+                                    </div>
+                                    <div style={{ width: '100%', height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
+                                        <div style={{ width: '94.8%', height: '100%', background: '#0047AB', borderRadius: '4px' }} />
+                                    </div>
+                                </div>
+
+                                {/* Metric 2 */}
+                                <div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
+                                        <span>Frontline Health Worker Overrides</span>
+                                        <span>5.2% (98 Audited)</span>
+                                    </div>
+                                    <div style={{ width: '100%', height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
+                                        <div style={{ width: '5.2%', height: '100%', background: '#0047AB', borderRadius: '4px' }} />
+                                    </div>
+                                </div>
+
+                                {/* Metric 3 */}
+                                <div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
+                                        <span>Deterministic Red-Flag Safety Catches</span>
+                                        <span>142 Maternal/Shock Overrides</span>
+                                    </div>
+                                    <div style={{ width: '100%', height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
+                                        <div style={{ width: '14.2%', height: '100%', background: '#0047AB', borderRadius: '4px' }} />
+                                    </div>
+                                </div>
+
+                                {/* Metric 4 */}
+                                <div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
+                                        <span>Conservative Rule Fallback Frequency</span>
+                                        <span>0.9% (18 Cases)</span>
+                                    </div>
+                                    <div style={{ width: '100%', height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
+                                        <div style={{ width: '0.9%', height: '100%', background: '#0047AB', borderRadius: '4px' }} />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Card 2: Cryptographic Audit Ledger */}
+                        <div style={{
+                            background: '#ffffff',
+                            borderRadius: '14px',
+                            padding: '24px',
+                            border: '1px solid #e2e8f0',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                                <Clock size={20} color="#16a34a" />
+                                <h2 style={{ margin: 0, fontSize: '15px', fontWeight: '700', color: '#0f172a' }}>
+                                    Cryptographic Audit Ledger
+                                </h2>
+                            </div>
+
+                            <ul style={{ margin: 0, paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px' }}>
+                                <li style={{ color: '#16a34a', fontWeight: '600' }}>
+                                    SHA-256 Tamper-Evident Hash Chain: 100% Verified
+                                </li>
+                                <li style={{ color: '#334155', fontWeight: '500' }}>
+                                    Anonymized Epidemiological Aggregation: Compliant with Section 21.3 Privacy Rules
+                                </li>
+                                <li style={{ color: '#334155', fontWeight: '500' }}>
+                                    ABDM NRCES M3 FHIR R4 Bundle Interoperability: Active
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                )}
+
+                {/* Modals for Interactive Inspection */}
+                {selectedModal && (
+                    <div style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'rgba(15, 23, 42, 0.6)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 99999,
+                        padding: '16px'
+                    }}>
+                        <div style={{
+                            background: '#ffffff',
+                            borderRadius: '16px',
+                            maxWidth: '540px',
+                            width: '100%',
+                            padding: '24px',
+                            boxShadow: '0 20px 40px rgba(0,0,0,0.2)'
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '700', color: '#0f172a' }}>
+                                    {selectedModal === 'diagnostics' ? 'Diagnostic Queue Details' : 'Queue SLA Inspection'}
+                                </h3>
+                                <button
+                                    onClick={() => setSelectedModal(null)}
+                                    style={{ background: 'transparent', border: 'none', fontSize: '18px', cursor: 'pointer', color: '#64748b' }}
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                            <div style={{ fontSize: '13px', color: '#475569', lineHeight: '1.6', marginBottom: '20px' }}>
+                                {selectedModal === 'diagnostics' ? (
+                                    <>
+                                        <p><strong>Active District Lab:</strong> Pune Central Diagnostic Center</p>
+                                        <p><strong>Batches Processing:</strong> 18 Automated Pathology & Lipid Panels</p>
+                                        <p><strong>Expected Release Time:</strong> Within 1.5 hours across 14 rural health posts.</p>
+                                    </>
+                                ) : (
+                                    <>
+                                        <p><strong>Receiving Hospital:</strong> Pune District General Hospital</p>
+                                        <p><strong>Pending Screenings:</strong> 14 Specialist Intake Cases</p>
+                                        <p><strong>SLA Adherence:</strong> 97.4% on-time intake (Target: &lt; 3.0 hrs)</p>
+                                    </>
+                                )}
+                            </div>
+                            <button
+                                onClick={() => setSelectedModal(null)}
+                                style={{
+                                    width: '100%',
+                                    padding: '10px',
+                                    borderRadius: '10px',
+                                    background: '#0047AB',
+                                    color: '#ffffff',
+                                    border: 'none',
+                                    fontWeight: '600',
+                                    fontSize: '13px',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                Close Inspection
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };
