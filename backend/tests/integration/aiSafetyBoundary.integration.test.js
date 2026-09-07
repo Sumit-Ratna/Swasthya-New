@@ -209,7 +209,6 @@ async function runPhase15Tests() {
 
 if (require.main === module) {
     runPhase15Tests()
-        .then(() => process.exit(0))
         .catch(err => {
             console.error('Test run failed:', err);
             process.exit(1);

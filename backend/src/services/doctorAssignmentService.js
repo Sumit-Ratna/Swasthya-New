@@ -80,13 +80,17 @@ async function assignDoctorToReferral({
     }
 
     // 1. Fetch Referral Record
-    const { data: referral, error: refErr } = await supabase
+    let { data: referral, error: refErr } = await supabase
         .from('referrals')
         .select('*')
         .eq('id', referralId)
         .single();
 
     if (refErr || !referral) {
+        referral = localDb.findById('referrals', referralId);
+    }
+
+    if (!referral) {
         throw new DoctorAssignmentError(`Referral not found with ID: ${referralId}`, 'REFERRAL_NOT_FOUND', 404);
     }
 
@@ -111,9 +115,7 @@ async function assignDoctorToReferral({
             .single();
 
         if (docErr || !doc) {
-            if (config.demoMode) {
-                doc = localDb.findById('doctors', doctorId);
-            }
+            doc = localDb.findById('doctors', doctorId);
         }
 
         if (!doc) {

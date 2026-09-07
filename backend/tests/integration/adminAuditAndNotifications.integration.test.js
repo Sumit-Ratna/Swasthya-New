@@ -252,7 +252,6 @@ async function runPhase14Tests() {
 
 if (require.main === module) {
     runPhase14Tests()
-        .then(() => process.exit(0))
         .catch(err => {
             console.error('Test run failed:', err);
             process.exit(1);

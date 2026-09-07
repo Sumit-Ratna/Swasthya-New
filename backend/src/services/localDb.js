@@ -343,6 +343,10 @@ class LocalDb {
         return list.find(filterFn) || null;
     }
 
+    findById(collectionName, id) {
+        return this.findOne(collectionName, item => item.id === id);
+    }
+
     delete(collectionName, filterFn) {
         const list = this.getCollection(collectionName);
         const nextList = list.filter(item => !filterFn(item));
