@@ -2,6 +2,8 @@ const crypto = require('crypto');
 const supabase = require('../config/supabaseClient');
 const config = require('../config/env');
 const localDb = require('./localDb');
+const auditService = require('./auditService');
+const notificationService = require('./notificationService');
 
 class ProxyAuthorizationError extends Error {
     constructor(message, code = 'PROXY_ERROR', status = 400) {
@@ -51,24 +53,29 @@ const SCOPE_HIERARCHY = {
  */
 async function logProxyAuditEvent({ eventType, patientId, caregiverUserId, actorUserId, scope, details = {} }) {
     try {
-        const auditRecord = {
-            id: crypto.randomUUID(),
-            event_type: eventType,
-            entity_id: patientId,
-            actor_id: actorUserId || caregiverUserId,
-            actor_role: 'CAREGIVER_PROXY',
-            action: `PROXY_${eventType}:${scope || 'DEFAULT'}`,
-            created_at: new Date().toISOString(),
-            details: JSON.stringify(details)
-        };
-
-        if (config.demoMode) {
-            localDb.insert('security_audit_ledger', auditRecord);
-        } else {
-            const { error } = await supabase.from('security_audit_ledger').insert([auditRecord]);
-            if (error) {
-                localDb.insert('security_audit_ledger', auditRecord);
+        await auditService.logAudit({
+            actorId: actorUserId || caregiverUserId,
+            actorRole: 'CAREGIVER_PROXY',
+            actionType: `PROXY_${eventType}`,
+            resourceType: 'CAREGIVER_PROXY',
+            resourceId: patientId,
+            result: 'SUCCESS',
+            metadata: {
+                scope: scope || 'DEFAULT',
+                caregiver_user_id: caregiverUserId,
+                ...details
             }
+        });
+
+        // Notify patient when proxy access changes
+        if (['GRANT_PROXY', 'REVOKE_PROXY'].includes(eventType) && patientId) {
+            await notificationService.dispatchNotification({
+                recipientUserId: patientId,
+                title: `Caregiver Proxy ${eventType === 'GRANT_PROXY' ? 'Granted' : 'Revoked'}`,
+                message: `Caregiver proxy authorization has been ${eventType === 'GRANT_PROXY' ? 'granted' : 'revoked'} with scope: ${scope || 'DEFAULT'}.`,
+                type: 'PROXY_AUTH_CHANGE',
+                channels: ['IN_APP']
+            });
         }
     } catch (err) {
         console.warn('[PROXY_AUDIT] Non-fatal audit log notice:', err.message);

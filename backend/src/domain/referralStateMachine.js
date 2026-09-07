@@ -2,6 +2,9 @@ const crypto = require('crypto');
 const supabase = require('../config/supabaseClient');
 const config = require('../config/env');
 const { normalizeRole } = require('../middleware/auth');
+const auditService = require('../services/auditService');
+const notificationService = require('../services/notificationService');
+const localDb = require('../services/localDb');
 
 /**
  * 1. Single Canonical ReferralState Enum
@@ -226,17 +229,27 @@ async function transitionReferral({
     const normalizedActorRole = normalizeRole(actorRole);
 
     // 2. Fetch current referral state from database
-    const { data: referral, error: fetchErr } = await supabase
-        .from('referrals')
-        .select(`
-            *,
-            patient:patients!referrals_patient_id_fkey(id, full_name, phone),
-            facilities:facilities!referrals_receiving_facility_id_fkey(id, name, tier, district)
-        `)
-        .eq('id', referralId)
-        .single();
+    let referral = null;
+    try {
+        const { data, error } = await supabase
+            .from('referrals')
+            .select(`
+                *,
+                patient:patients!referrals_patient_id_fkey(id, full_name, phone),
+                facilities:facilities!referrals_receiving_facility_id_fkey(id, name, tier, district)
+            `)
+            .eq('id', referralId)
+            .single();
+        if (!error && data) {
+            referral = data;
+        }
+    } catch (e) {}
 
-    if (fetchErr || !referral) {
+    if (!referral) {
+        referral = localDb.findOne('referrals', r => r.id === referralId);
+    }
+
+    if (!referral) {
         throw new StateMachineError(`Referral not found: ${referralId}`, 'REFERRAL_NOT_FOUND', 404);
     }
 
@@ -286,20 +299,28 @@ async function transitionReferral({
     if (payload.reason_for_referral) updateData.reason_for_referral = payload.reason_for_referral;
     if (payload.clinical_summary) updateData.clinical_summary = payload.clinical_summary;
 
-    const { data: updatedReferral, error: updateErr } = await supabase
-        .from('referrals')
-        .update(updateData)
-        .eq('id', referralId)
-        .select(`
-            *,
-            patient:patients!referrals_patient_id_fkey(id, full_name, phone),
-            facilities:facilities!referrals_receiving_facility_id_fkey(id, name, tier, district),
-            doctors:doctors!referrals_assigned_doctor_id_fkey(id, name, specialty_name)
-        `)
-        .single();
+    let updatedReferral = null;
+    try {
+        const { data, error } = await supabase
+            .from('referrals')
+            .update(updateData)
+            .eq('id', referralId)
+            .select(`
+                *,
+                patient:patients!referrals_patient_id_fkey(id, full_name, phone),
+                facilities:facilities!referrals_receiving_facility_id_fkey(id, name, tier, district),
+                doctors:doctors!referrals_assigned_doctor_id_fkey(id, name, specialty_name)
+            `)
+            .single();
+        if (!error && data) {
+            updatedReferral = data;
+        }
+    } catch (e) {}
 
-    if (updateErr) {
-        throw new StateMachineError(`Database error updating referral state: ${updateErr.message}`, 'DB_ERROR', 500);
+    // Always update localDb record
+    localDb.update('referrals', r => r.id === referralId, updateData);
+    if (!updatedReferral) {
+        updatedReferral = localDb.findOne('referrals', r => r.id === referralId);
     }
 
     // 7. Record Immutable Transition Event in referral_events
@@ -323,32 +344,33 @@ async function transitionReferral({
         console.warn(`[REFERRAL_EVENT] Warning appending event log: ${eventErr.message}`);
     }
 
-    // 8. Cryptographic Audit Ledger Chaining
-    if (config.enableAuditChain) {
-        try {
-            const { data: lastBlock } = await supabase
-                .from('security_audit_ledger')
-                .select('current_hash')
-                .order('block_index', { ascending: false })
-                .limit(1)
-                .maybeSingle();
+    // 8. Cryptographic Audit Ledger Logging
+    try {
+        await auditService.logStateTransition({
+            referralId,
+            fromStatus,
+            toStatus,
+            actorId: actorUserId,
+            actorRole: normalizedActorRole,
+            reason
+        });
+    } catch (auditErr) {
+        console.warn('[AUDIT_LEDGER] State transition audit notice (non-fatal):', auditErr.message);
+    }
 
-            const prevHash = lastBlock?.current_hash || 'GENESIS_BLOCK_SWSTHYA_2026';
-            const currHash = computeAuditHash(prevHash, eventRecord);
-
-            await supabase.from('security_audit_ledger').insert([{
-                event_type: 'REFERRAL_STATE_TRANSITION',
-                entity_id: referralId,
-                actor_id: actorUserId || 'SYSTEM',
-                actor_role: normalizedActorRole,
-                action: `State moved ${fromStatus} -> ${toStatus}`,
-                previous_hash: prevHash,
-                current_hash: currHash,
-                created_at: new Date().toISOString()
-            }]);
-        } catch (auditErr) {
-            console.warn('[AUDIT_LEDGER] Chaining notice:', auditErr.message);
-        }
+    // 9. Multi-Channel Notification Dispatch (Resilient, Non-Blocking)
+    try {
+        const targetRef = updatedReferral || referral;
+        await notificationService.notifyReferralStateChange({
+            referral: targetRef,
+            previousState: fromStatus,
+            newState: toStatus,
+            actorUser: { id: actorUserId, role: normalizedActorRole },
+            recipientUserId: targetRef?.patient_id,
+            recipientPhone: targetRef?.patient?.phone
+        });
+    } catch (notifErr) {
+        console.warn('[NOTIFICATION] State transition notification notice (non-fatal):', notifErr.message);
     }
 
     return {

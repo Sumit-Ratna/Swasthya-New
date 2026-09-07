@@ -95,17 +95,20 @@ exports.getDiseaseSurveillance = async (req, res) => {
     }
 };
 
+const auditService = require('../services/auditService');
+
 // Get Cryptographic Security Audit Ledger
 exports.getAuditLedger = async (req, res) => {
     try {
-        let logs = [];
-        try {
-            logs = await dbService.getAuditLedger(50);
-        } catch (e) {}
-
-        if (!logs || logs.length === 0) {
-            logs = localDb.getCollection('security_audit_ledger') || [];
-        }
+        const { limit = 50, offset = 0, actorId, resourceType, actionType, status, result } = req.query;
+        const logs = await auditService.getAuditLogs({
+            limit: parseInt(limit, 10) || 50,
+            offset: parseInt(offset, 10) || 0,
+            actorId,
+            resourceType,
+            actionType,
+            result: status || result
+        });
         res.json(logs);
     } catch (err) {
         console.error("[ADMIN] Audit error:", err);
