@@ -3,6 +3,9 @@ const supabase = require('../config/supabaseClient');
 const config = require('../config/env');
 const { normalizeRole } = require('../middleware/auth');
 
+/**
+ * 1. Single Canonical ReferralState Enum
+ */
 const REFERRAL_STATES = {
     TRIAGED: 'TRIAGED',
     FACILITY_RECOMMENDED: 'FACILITY_RECOMMENDED',
@@ -27,7 +30,10 @@ const REFERRAL_STATES = {
     CANCELLED: 'CANCELLED'
 };
 
-const VALID_TRANSITIONS = {
+/**
+ * 2. Allowed Transitions Map (Topological Lifecycle Invariants)
+ */
+const ALLOWED_TRANSITIONS = {
     [REFERRAL_STATES.TRIAGED]: [
         REFERRAL_STATES.FACILITY_RECOMMENDED,
         REFERRAL_STATES.FACILITY_SELECTED,
@@ -66,11 +72,13 @@ const VALID_TRANSITIONS = {
     [REFERRAL_STATES.URGENT_ESCALATION]: [
         REFERRAL_STATES.FACILITY_ALERTED,
         REFERRAL_STATES.REROUTING_REQUIRED,
-        REFERRAL_STATES.PATIENT_IN_TRANSIT
+        REFERRAL_STATES.PATIENT_IN_TRANSIT,
+        REFERRAL_STATES.CANCELLED
     ],
     [REFERRAL_STATES.FACILITY_ALERTED]: [
         REFERRAL_STATES.PATIENT_IN_TRANSIT,
-        REFERRAL_STATES.REROUTING_REQUIRED
+        REFERRAL_STATES.REROUTING_REQUIRED,
+        REFERRAL_STATES.CANCELLED
     ],
     [REFERRAL_STATES.PATIENT_IN_TRANSIT]: [
         REFERRAL_STATES.PATIENT_REACHED,
@@ -106,19 +114,67 @@ const VALID_TRANSITIONS = {
         REFERRAL_STATES.FACILITY_SELECTED,
         REFERRAL_STATES.FAILED_REFERRAL
     ],
+    // Terminal states cannot transition to anything
     [REFERRAL_STATES.FOLLOW_UP_COMPLETED]: [],
     [REFERRAL_STATES.FAILED_REFERRAL]: [],
     [REFERRAL_STATES.CANCELLED]: []
 };
 
 /**
- * Checks whether a given transition is topologically valid in the state machine
+ * 3. State transitions that require a mandatory, non-empty clinical / operational reason
+ */
+const MANDATORY_REASON_STATES = [
+    REFERRAL_STATES.CANCELLED,
+    REFERRAL_STATES.REROUTING_REQUIRED,
+    REFERRAL_STATES.FAILED_REFERRAL,
+    REFERRAL_STATES.MISSED_APPOINTMENT
+];
+
+/**
+ * 4. Actor Role Authorization Matrix for state transitions
+ */
+const TRANSITION_ROLES = {
+    [REFERRAL_STATES.FACILITY_RECOMMENDED]: ['HEALTH_WORKER', 'DOCTOR', 'ADMIN', 'SYSTEM'],
+    [REFERRAL_STATES.FACILITY_SELECTED]: ['PATIENT', 'CAREGIVER', 'HEALTH_WORKER', 'DOCTOR', 'ADMIN'],
+    [REFERRAL_STATES.FACILITY_CONFIRMATION_PENDING]: ['HEALTH_WORKER', 'DOCTOR', 'ADMIN'],
+    [REFERRAL_STATES.ACCEPTED]: ['FACILITY_STAFF', 'DOCTOR', 'ADMIN'],
+    [REFERRAL_STATES.APPOINTMENT_BOOKED]: ['FACILITY_STAFF', 'DOCTOR', 'ADMIN'],
+    [REFERRAL_STATES.MISSED_APPOINTMENT]: ['FACILITY_STAFF', 'DOCTOR', 'HEALTH_WORKER', 'ADMIN', 'SYSTEM'],
+    [REFERRAL_STATES.URGENT_ESCALATION]: ['HEALTH_WORKER', 'DOCTOR', 'ADMIN'],
+    [REFERRAL_STATES.FACILITY_ALERTED]: ['HEALTH_WORKER', 'FACILITY_STAFF', 'DOCTOR', 'ADMIN'],
+    [REFERRAL_STATES.PATIENT_IN_TRANSIT]: ['PATIENT', 'CAREGIVER', 'HEALTH_WORKER', 'FACILITY_STAFF', 'ADMIN'],
+    [REFERRAL_STATES.PATIENT_REACHED]: ['FACILITY_STAFF', 'DOCTOR', 'ADMIN'],
+    [REFERRAL_STATES.DOCTOR_ASSIGNED]: ['FACILITY_STAFF', 'DOCTOR', 'ADMIN'],
+    [REFERRAL_STATES.CONSULTATION_COMPLETED]: ['DOCTOR', 'ADMIN'],
+    [REFERRAL_STATES.DIAGNOSTICS_PENDING]: ['DOCTOR', 'ADMIN'],
+    [REFERRAL_STATES.DIAGNOSTICS_COMPLETED]: ['FACILITY_STAFF', 'DOCTOR', 'ADMIN'],
+    [REFERRAL_STATES.TREATMENT_COMPLETED]: ['DOCTOR', 'ADMIN'],
+    [REFERRAL_STATES.FOLLOW_UP_PENDING]: ['DOCTOR', 'ADMIN'],
+    [REFERRAL_STATES.FOLLOW_UP_COMPLETED]: ['HEALTH_WORKER', 'DOCTOR', 'ADMIN'],
+    [REFERRAL_STATES.REROUTING_REQUIRED]: ['FACILITY_STAFF', 'HEALTH_WORKER', 'DOCTOR', 'ADMIN'],
+    [REFERRAL_STATES.FAILED_REFERRAL]: ['FACILITY_STAFF', 'HEALTH_WORKER', 'DOCTOR', 'ADMIN'],
+    [REFERRAL_STATES.CANCELLED]: ['PATIENT', 'CAREGIVER', 'HEALTH_WORKER', 'DOCTOR', 'FACILITY_STAFF', 'ADMIN']
+};
+
+/**
+ * Checks whether a state transition is topologically allowed
  */
 function isValidTransition(fromStatus, toStatus) {
     if (!fromStatus || !toStatus) return false;
     if (fromStatus === toStatus) return true;
-    const allowed = VALID_TRANSITIONS[fromStatus] || [];
+    const allowed = ALLOWED_TRANSITIONS[fromStatus] || [];
     return allowed.includes(toStatus);
+}
+
+/**
+ * Checks whether an actor role is authorized to execute a transition
+ */
+function isActorAuthorized(actorRole, toStatus) {
+    if (!actorRole || !toStatus) return false;
+    const normalizedRole = normalizeRole(actorRole);
+    if (normalizedRole === 'ADMIN') return true;
+    const allowedRoles = TRANSITION_ROLES[toStatus] || [];
+    return allowedRoles.includes(normalizedRole);
 }
 
 /**
@@ -127,6 +183,18 @@ function isValidTransition(fromStatus, toStatus) {
 function computeAuditHash(previousHash, record) {
     const payload = JSON.stringify(record) + (previousHash || 'GENESIS_BLOCK_SWSTHYA_2026');
     return crypto.createHash('sha256').update(payload).digest('hex');
+}
+
+/**
+ * Custom State Machine Transition Error Class
+ */
+class StateMachineError extends Error {
+    constructor(message, code = 'INVALID_TRANSITION', status = 409) {
+        super(message);
+        this.name = 'StateMachineError';
+        this.code = code;
+        this.status = status;
+    }
 }
 
 /**
@@ -141,11 +209,21 @@ async function transitionReferral({
     payload = {}
 }) {
     if (!referralId) {
-        throw new Error('referralId is required for state transition');
+        throw new StateMachineError('referralId is required for state transition', 'VALIDATION_ERROR', 400);
+    }
+
+    // 1. Validate that toStatus is a known valid ReferralState
+    if (!REFERRAL_STATES[toStatus]) {
+        throw new StateMachineError(
+            `Unknown or arbitrary referral status '${toStatus}'. Valid statuses: [${Object.values(REFERRAL_STATES).join(', ')}]`,
+            'VALIDATION_ERROR',
+            400
+        );
     }
 
     const normalizedActorRole = normalizeRole(actorRole);
 
+    // 2. Fetch current referral state from database
     const { data: referral, error: fetchErr } = await supabase
         .from('referrals')
         .select(`
@@ -157,16 +235,43 @@ async function transitionReferral({
         .single();
 
     if (fetchErr || !referral) {
-        throw new Error(`Referral not found: ${referralId} (${fetchErr?.message || 'Unknown'})`);
+        throw new StateMachineError(`Referral not found: ${referralId}`, 'REFERRAL_NOT_FOUND', 404);
     }
 
     const fromStatus = referral.status;
 
+    // 3. Topological Validity Check
     if (!isValidTransition(fromStatus, toStatus)) {
-        const allowed = VALID_TRANSITIONS[fromStatus] || [];
-        throw new Error(`Invalid transition from '${fromStatus}' to '${toStatus}'. Allowed transitions: [${allowed.join(', ')}]`);
+        const allowed = ALLOWED_TRANSITIONS[fromStatus] || [];
+        throw new StateMachineError(
+            `Invalid state transition: Cannot transition referral from '${fromStatus}' to '${toStatus}'. Allowed transitions from '${fromStatus}' are: [${allowed.join(', ')}]`,
+            'INVALID_TRANSITION',
+            409
+        );
     }
 
+    // 4. Role Authorization Check
+    if (!isActorAuthorized(normalizedActorRole, toStatus)) {
+        const allowedRoles = TRANSITION_ROLES[toStatus] || [];
+        throw new StateMachineError(
+            `Access Denied: Role '${normalizedActorRole}' is not authorized to transition referral to '${toStatus}'. Allowed roles: [${allowedRoles.join(', ')}]`,
+            'ACTOR_UNAUTHORIZED',
+            403
+        );
+    }
+
+    // 5. Mandatory Reason Enforcement
+    if (MANDATORY_REASON_STATES.includes(toStatus)) {
+        if (!reason || typeof reason !== 'string' || reason.trim().length < 3) {
+            throw new StateMachineError(
+                `A mandatory, descriptive reason is required to transition referral to '${toStatus}'.`,
+                'VALIDATION_ERROR',
+                400
+            );
+        }
+    }
+
+    // 6. Update Referral in Database
     const updateData = {
         status: toStatus,
         updated_at: new Date().toISOString()
@@ -192,9 +297,10 @@ async function transitionReferral({
         .single();
 
     if (updateErr) {
-        throw new Error(`Database error updating referral state: ${updateErr.message}`);
+        throw new StateMachineError(`Database error updating referral state: ${updateErr.message}`, 'DB_ERROR', 500);
     }
 
+    // 7. Record Immutable Transition Event in referral_events
     const eventRecord = {
         referral_id: referralId,
         from_status: fromStatus,
@@ -215,6 +321,7 @@ async function transitionReferral({
         console.warn(`[REFERRAL_EVENT] Warning appending event log: ${eventErr.message}`);
     }
 
+    // 8. Cryptographic Audit Ledger Chaining
     if (config.enableAuditChain) {
         try {
             const { data: lastBlock } = await supabase
@@ -252,8 +359,13 @@ async function transitionReferral({
 
 module.exports = {
     REFERRAL_STATES,
-    VALID_TRANSITIONS,
+    ALLOWED_TRANSITIONS,
+    VALID_TRANSITIONS: ALLOWED_TRANSITIONS,
+    MANDATORY_REASON_STATES,
+    TRANSITION_ROLES,
+    StateMachineError,
     isValidTransition,
+    isActorAuthorized,
     transitionReferral,
     computeAuditHash
 };

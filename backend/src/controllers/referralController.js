@@ -85,21 +85,14 @@ exports.createReferral = async (req, res, next) => {
         const referring_user_id = req.user?.id || null;
         const referringRole = req.user?.role || 'HEALTH_WORKER';
 
-        // 1. Initial State is ALWAYS TRIAGED per architectural spec
-        let initialStatus = REFERRAL_STATES.TRIAGED;
-
-        // If receiving facility is already selected at creation, target state is FACILITY_SELECTED
-        if (receiving_facility_id) {
-            initialStatus = urgency === 'EMERGENCY' || urgency === 'CRITICAL'
-                ? REFERRAL_STATES.URGENT_ESCALATION
-                : REFERRAL_STATES.FACILITY_SELECTED;
-        }
+        // 1. Initial State is ALWAYS strictly TRIAGED per canonical domain workflow
+        const initialStatus = REFERRAL_STATES.TRIAGED;
 
         const referralPayload = {
             patient_id,
             assessment_id: assessment_id || null,
             referring_user_id,
-            receiving_facility_id: receiving_facility_id || null,
+            receiving_facility_id: null,
             status: initialStatus,
             risk_level,
             urgency,
@@ -107,7 +100,7 @@ exports.createReferral = async (req, res, next) => {
             primary_complaint,
             clinical_summary: clinical_summary || '',
             reason_for_referral: reason_for_referral || '',
-            appointment_slot_time: appointment_slot_time || null,
+            appointment_slot_time: null,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
         };
@@ -137,14 +130,36 @@ exports.createReferral = async (req, res, next) => {
             to_status: initialStatus,
             actor_user_id: referring_user_id,
             actor_role: normalizeRole(referringRole),
-            reason: `Referral initiated at ${initialStatus}`,
+            reason: reason_for_referral || `Referral initiated in ${initialStatus} state`,
             created_at: new Date().toISOString()
         }]);
 
+        let currentReferral = referral;
+
+        // If receiving facility is provided at creation, transition canonically through state machine
+        if (receiving_facility_id) {
+            const nextTargetStatus = (urgency === 'EMERGENCY' || urgency === 'CRITICAL')
+                ? REFERRAL_STATES.URGENT_ESCALATION
+                : REFERRAL_STATES.FACILITY_SELECTED;
+
+            const transitionResult = await transitionReferral({
+                referralId: referral.id,
+                toStatus: nextTargetStatus,
+                actorUserId: referring_user_id,
+                actorRole: referringRole,
+                reason: `Initial facility assignment (${receiving_facility_id})`,
+                payload: {
+                    receiving_facility_id,
+                    appointment_slot_time: appointment_slot_time || null
+                }
+            });
+            currentReferral = transitionResult.referral;
+        }
+
         return res.status(201).json({
             success: true,
-            message: 'Referral created successfully',
-            data: referral
+            message: 'Referral created successfully in TRIAGED lifecycle state',
+            data: currentReferral
         });
     } catch (err) {
         next(err);
@@ -311,14 +326,14 @@ exports.updateStatus = async (req, res, next) => {
         }
 
         const actorUserId = req.user?.id || null;
-        const actorRole = req.user?.role || 'DOCTOR';
+        const actorRole = req.user?.role || 'HEALTH_WORKER';
 
         const result = await transitionReferral({
             referralId: id,
             toStatus: to_status,
             actorUserId,
             actorRole,
-            reason: reason || `Updated by ${actorRole}`,
+            reason: (reason !== undefined && reason !== null) ? reason : '',
             payload: payload || {}
         });
 
@@ -329,10 +344,11 @@ exports.updateStatus = async (req, res, next) => {
             event: result.event
         });
     } catch (err) {
-        return res.status(400).json({
+        const statusCode = err.status || (err.code === 'INVALID_TRANSITION' ? 409 : (err.code === 'ACTOR_UNAUTHORIZED' ? 403 : (err.code === 'REFERRAL_NOT_FOUND' ? 404 : 400)));
+        return res.status(statusCode).json({
             success: false,
             error: err.message,
-            code: 'INVALID_TRANSITION'
+            code: err.code || 'INVALID_TRANSITION'
         });
     }
 };
