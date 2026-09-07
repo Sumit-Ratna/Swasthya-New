@@ -1,7 +1,10 @@
 const supabaseService = require('../services/supabaseService');
-const supabase = require('../config/supabaseClient');
+const offlineSyncService = require('../services/offlineSyncService');
 
 class AshaController {
+    /**
+     * Get ASHA worker overview dashboard
+     */
     async getOverview(req, res, next) {
         try {
             const workerId = req.user?.id || req.query.workerId;
@@ -16,6 +19,9 @@ class AshaController {
         }
     }
 
+    /**
+     * Register a new beneficiary in the community
+     */
     async registerBeneficiary(req, res, next) {
         try {
             const workerId = req.user?.id || null;
@@ -30,6 +36,9 @@ class AshaController {
         }
     }
 
+    /**
+     * Submit vitals & triage assessment
+     */
     async submitVitals(req, res, next) {
         try {
             const result = await supabaseService.recordAshaVitals(req.body);
@@ -44,34 +53,47 @@ class AshaController {
     }
 
     /**
-     * Batch Sync Offline Queue from ASHA mobile device
+     * Batch Sync Offline Queue from ASHA mobile device (Canonical contract)
      */
     async syncOfflineQueue(req, res, next) {
         try {
-            const { items = [] } = req.body;
-            const syncedResults = [];
-            const errors = [];
+            const deviceId = req.body.device_id || req.headers['x-device-id'] || 'ASHA-DEVICE-DEFAULT';
+            const operations = req.body.operations || req.body.items || [];
 
-            for (const item of items) {
-                try {
-                    if (item.type === 'BENEFICIARY') {
-                        const ben = await supabaseService.recordAshaBeneficiary(item.payload);
-                        syncedResults.push({ localId: item.localId, serverId: ben.id, status: 'SYNCED' });
-                    } else if (item.type === 'VITALS' || item.type === 'ASSESSMENT') {
-                        const vitals = await supabaseService.recordAshaVitals(item.payload);
-                        syncedResults.push({ localId: item.localId, serverId: vitals.id, status: 'SYNCED' });
-                    }
-                } catch (itemErr) {
-                    errors.push({ localId: item.localId, error: itemErr.message });
-                }
-            }
+            const syncReport = await offlineSyncService.processSyncBatch({
+                deviceId,
+                workerUser: req.user,
+                operations
+            });
+
+            return res.status(200).json({
+                success: true,
+                message: `Processed ${syncReport.total_operations} offline operations`,
+                data: syncReport
+            });
+        } catch (error) {
+            const status = error.status || (error.code === 'UNAUTHORIZED_SYNC' ? 403 : 400);
+            return res.status(status).json({
+                success: false,
+                error: error.message,
+                code: error.code || 'SYNC_ERROR'
+            });
+        }
+    }
+
+    /**
+     * Download cached facility directory for offline reference (with live_verified: false)
+     */
+    async getOfflineDirectory(req, res, next) {
+        try {
+            const district = req.query.district || req.user?.jurisdiction_district || 'Pune';
+            const directory = await offlineSyncService.getOfflineFacilityDirectory(district);
 
             return res.json({
                 success: true,
-                message: `Processed ${items.length} offline items`,
-                syncedCount: syncedResults.length,
-                syncedResults,
-                errors
+                count: directory.length,
+                district,
+                data: directory
             });
         } catch (error) {
             next(error);

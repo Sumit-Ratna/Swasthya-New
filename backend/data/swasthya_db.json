@@ -752,6 +752,46 @@
       "action": "PROXY_PROXY_ACCESS_REVOKED:SELECTED_RECORDS",
       "created_at": "2026-09-07T08:23:35.821Z",
       "details": "{\"reason\":\"Patient changed caregiver\",\"revokedAt\":\"2026-09-07T08:23:35.462Z\"}"
+    },
+    {
+      "id": "c1a55065-0b46-474f-8609-1003fac5bbed",
+      "event_type": "PROXY_ACCESS_GRANTED",
+      "entity_id": "99999999-9999-9999-9999-999999999999",
+      "actor_id": "99999999-9999-9999-9999-999999999999",
+      "actor_role": "CAREGIVER_PROXY",
+      "action": "PROXY_PROXY_ACCESS_GRANTED:REFERRAL_STATUS",
+      "created_at": "2026-09-07T09:08:18.664Z",
+      "details": "{\"relationshipType\":\"DAUGHTER\",\"scope\":\"REFERRAL_STATUS\"}"
+    },
+    {
+      "id": "40b317ed-d746-4326-b432-226a73768e4d",
+      "event_type": "PROXY_ACCESS_GRANTED",
+      "entity_id": "99999999-9999-9999-9999-999999999999",
+      "actor_id": "99999999-9999-9999-9999-999999999999",
+      "actor_role": "CAREGIVER_PROXY",
+      "action": "PROXY_PROXY_ACCESS_GRANTED:SELECTED_RECORDS",
+      "created_at": "2026-09-07T09:08:20.282Z",
+      "details": "{\"relationshipType\":\"DAUGHTER\",\"scope\":\"SELECTED_RECORDS\"}"
+    },
+    {
+      "id": "10747ff3-7d5f-4310-b736-679e0d864afb",
+      "event_type": "PROXY_CLINICAL_DATA_ACCESSED",
+      "entity_id": "99999999-9999-9999-9999-999999999999",
+      "actor_id": "66666666-6666-6666-6666-666666666666",
+      "actor_role": "CAREGIVER_PROXY",
+      "action": "PROXY_PROXY_CLINICAL_DATA_ACCESSED:SELECTED_RECORDS",
+      "created_at": "2026-09-07T09:08:21.210Z",
+      "details": "{\"dataType\":\"DOCUMENTS\",\"recordCount\":0}"
+    },
+    {
+      "id": "2e8cabdc-d074-41e2-8ea3-4ac37092df43",
+      "event_type": "PROXY_ACCESS_REVOKED",
+      "entity_id": "99999999-9999-9999-9999-999999999999",
+      "actor_id": "99999999-9999-9999-9999-999999999999",
+      "actor_role": "CAREGIVER_PROXY",
+      "action": "PROXY_PROXY_ACCESS_REVOKED:SELECTED_RECORDS",
+      "created_at": "2026-09-07T09:08:22.096Z",
+      "details": "{\"reason\":\"Patient changed caregiver\",\"revokedAt\":\"2026-09-07T09:08:21.807Z\"}"
     }
   ],
   "family_members": [],
@@ -771,7 +811,7 @@
       "relationship_type": "DAUGHTER",
       "permission_scope": "SELECTED_RECORDS",
       "status": "REVOKED",
-      "revoked_at": "2026-09-07T08:23:35.462Z",
+      "revoked_at": "2026-09-07T09:08:21.807Z",
       "created_at": "2026-09-07T08:20:05.146Z"
     },
     {
@@ -824,6 +864,124 @@
       "satisfaction_score": "5/5 Stars",
       "metadata": {},
       "created_at": "2026-09-06T20:58:09.481Z"
+    }
+  ],
+  "idempotency_records": [
+    {
+      "id": "a07ed3ca-a10f-409a-9cc9-3cf3b26d8461",
+      "client_operation_id": "8d60aa36-ece6-4809-9ec2-667d8a75d4bc",
+      "idempotency_key": "IDEM-REG-1788771908953",
+      "device_id": "ASHA-TAB-PUNE-88",
+      "operation_type": "CREATE_PATIENT",
+      "server_id": "29dcffbd-7f19-42d7-a089-b1df18eae57c",
+      "result": {
+        "patient_id": "29dcffbd-7f19-42d7-a089-b1df18eae57c",
+        "phone": "9844433322",
+        "sync_status": "SYNCED"
+      },
+      "processed_at": "2026-09-07T09:05:23.902Z"
+    },
+    {
+      "id": "6e91dd3d-a9db-4486-9e9f-3d3160ebfe2e",
+      "client_operation_id": "aba0a6ce-d2e6-4d4d-a4e2-5be313e29fc3",
+      "idempotency_key": "IDEM-ASS-1788771908953",
+      "device_id": "ASHA-TAB-PUNE-88",
+      "operation_type": "RECORD_ASSESSMENT",
+      "server_id": "08e2157e-a07c-4a17-8bea-9adf0310e966",
+      "result": {
+        "assessment_id": "08e2157e-a07c-4a17-8bea-9adf0310e966",
+        "urgency": "ROUTINE",
+        "triage_guidance": "Assessment recorded",
+        "sync_status": "SYNCED"
+      },
+      "processed_at": "2026-09-07T09:05:23.903Z"
+    },
+    {
+      "id": "443c6f25-e394-4242-bb63-d1ed05d2437b",
+      "client_operation_id": "4463aa3a-40e0-4976-84bf-786c4421e3b1",
+      "idempotency_key": "IDEM-REF-4463aa3a-40e0-4976-84bf-786c4421e3b1",
+      "device_id": "ASHA-TAB-PUNE-88",
+      "operation_type": "CREATE_REFERRAL",
+      "server_id": "d7e156d8-e703-4580-98eb-d5b2dc417910",
+      "result": {
+        "referral_id": "d7e156d8-e703-4580-98eb-d5b2dc417910",
+        "status": "FACILITY_SELECTED",
+        "facility_id": "22222222-2222-2222-2222-222222222222",
+        "sync_status": "SYNCED"
+      },
+      "processed_at": "2026-09-07T09:05:26.270Z"
+    },
+    {
+      "id": "2020b93e-5f8b-4df4-a1f3-9ae9a120fbdb",
+      "client_operation_id": "012c91a2-6353-4488-a903-b02abff1c8a7",
+      "idempotency_key": "IDEM-REG-012c91a2-6353-4488-a903-b02abff1c8a7",
+      "device_id": "ASHA-TAB-PUNE-88",
+      "operation_type": "CREATE_PATIENT",
+      "server_id": "6bceb125-916b-442d-b3bf-efb98c3e718a",
+      "result": {
+        "patient_id": "6bceb125-916b-442d-b3bf-efb98c3e718a",
+        "phone": "9855544433",
+        "sync_status": "SYNCED"
+      },
+      "processed_at": "2026-09-07T09:05:31.221Z"
+    },
+    {
+      "id": "4e7fef72-095b-4433-899d-4135421bb749",
+      "client_operation_id": "98b6a67e-58d1-4ee2-9162-2f98a60b1d41",
+      "idempotency_key": "IDEM-REG-1788772103908",
+      "device_id": "ASHA-TAB-PUNE-88",
+      "operation_type": "CREATE_PATIENT",
+      "server_id": "29dcffbd-7f19-42d7-a089-b1df18eae57c",
+      "result": {
+        "patient_id": "29dcffbd-7f19-42d7-a089-b1df18eae57c",
+        "phone": "9844433322",
+        "sync_status": "SYNCED"
+      },
+      "processed_at": "2026-09-07T09:08:24.379Z"
+    },
+    {
+      "id": "8a5ee76a-5e07-4203-88ac-8a2fa640821e",
+      "client_operation_id": "1f1817a1-c4a3-4de8-b7f1-21c85c5a2361",
+      "idempotency_key": "IDEM-ASS-1788772103908",
+      "device_id": "ASHA-TAB-PUNE-88",
+      "operation_type": "RECORD_ASSESSMENT",
+      "server_id": "c74c89c0-2ea7-4696-b6ac-c632a2c1c309",
+      "result": {
+        "assessment_id": "c74c89c0-2ea7-4696-b6ac-c632a2c1c309",
+        "urgency": "ROUTINE",
+        "triage_guidance": "Assessment recorded",
+        "sync_status": "SYNCED"
+      },
+      "processed_at": "2026-09-07T09:08:24.381Z"
+    },
+    {
+      "id": "ad9cfd5a-b1fa-4887-a07b-25b7840241e1",
+      "client_operation_id": "74eb18dd-2c53-4f3b-b97e-97791d710a62",
+      "idempotency_key": "IDEM-REF-74eb18dd-2c53-4f3b-b97e-97791d710a62",
+      "device_id": "ASHA-TAB-PUNE-88",
+      "operation_type": "CREATE_REFERRAL",
+      "server_id": "bd9dc977-8fd6-4183-9f0f-a301eecbcacb",
+      "result": {
+        "referral_id": "bd9dc977-8fd6-4183-9f0f-a301eecbcacb",
+        "status": "FACILITY_SELECTED",
+        "facility_id": "22222222-2222-2222-2222-222222222222",
+        "sync_status": "SYNCED"
+      },
+      "processed_at": "2026-09-07T09:08:26.316Z"
+    },
+    {
+      "id": "de7f55a9-6fc7-48cd-89e6-68b82b6fa6d1",
+      "client_operation_id": "b0de86b4-6eb7-4f1c-9c7e-87f2074a481b",
+      "idempotency_key": "IDEM-REG-b0de86b4-6eb7-4f1c-9c7e-87f2074a481b",
+      "device_id": "ASHA-TAB-PUNE-88",
+      "operation_type": "CREATE_PATIENT",
+      "server_id": "6bceb125-916b-442d-b3bf-efb98c3e718a",
+      "result": {
+        "patient_id": "6bceb125-916b-442d-b3bf-efb98c3e718a",
+        "phone": "9855544433",
+        "sync_status": "SYNCED"
+      },
+      "processed_at": "2026-09-07T09:08:30.573Z"
     }
   ]
 }
