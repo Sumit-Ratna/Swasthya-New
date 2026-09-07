@@ -131,12 +131,34 @@ class SupabaseService {
             if (userData.emergency_contact && String(userData.emergency_contact).replace(/\D/g, '').length >= 10) {
                 phone = String(userData.emergency_contact).replace(/\D/g, '').slice(-10);
             } else {
-                const seed = (userData.email || validUserId || 'swasthya-user') + (userData.name || '');
+                const seed = (userData.email || validUserId || 'swasthya-user') + (userData.name || '') + Date.now();
                 const hash = crypto.createHash('md5').update(seed).digest('hex');
                 const digits = hash.replace(/\D/g, '').padEnd(9, '8').slice(0, 9);
                 phone = '9' + digits;
             }
         }
+
+        // Proactively check if phone is already taken by another user with different ID
+        if (phone) {
+            try {
+                const { data: existingPhoneUser } = await supabase
+                    .from('users')
+                    .select('id, email')
+                    .eq('phone', phone)
+                    .maybeSingle();
+
+                if (existingPhoneUser && existingPhoneUser.id !== validUserId) {
+                    if (userData.email && (!existingPhoneUser.email || existingPhoneUser.email !== userData.email.trim().toLowerCase())) {
+                        const seed = userData.email + validUserId + Date.now() + Math.random();
+                        const hash = crypto.createHash('md5').update(seed).digest('hex');
+                        phone = '9' + hash.replace(/\D/g, '').padEnd(9, '7').slice(0, 9);
+                    }
+                }
+            } catch (pCheckErr) {
+                console.warn('[SUPABASE] phone lookup check notice:', pCheckErr.message);
+            }
+        }
+
         const fullName = userData.name || userData.full_name;
 
         if (!fullName || !fullName.trim()) {
@@ -162,15 +184,29 @@ class SupabaseService {
         userPayload.password_hash = userData.password_hash || '$2a$10$wE8wY0B9KqjX5Z5yXhB6EeNn3nI5sF7aF1b3.a8c8.e8.g8.i8.k';
 
         try {
-            const { data, error } = await supabase
+            let res = await supabase
                 .from('users')
                 .upsert(userPayload)
                 .select()
                 .single();
 
-            if (error) {
-                console.warn('[SUPABASE] user upsert error:', error.message);
-                throw error;
+            if (res.error) {
+                if (res.error.message && (res.error.message.includes('users_phone_key') || res.error.message.includes('duplicate key'))) {
+                    console.warn('[SUPABASE] Phone key collision detected. Generating unique virtual phone and retrying...');
+                    const seed = (userData.email || validUserId) + Date.now() + Math.random();
+                    const hash = crypto.createHash('md5').update(seed).digest('hex');
+                    userPayload.phone = '9' + hash.replace(/\D/g, '').padEnd(9, '6').slice(0, 9);
+                    phone = userPayload.phone;
+                    res = await supabase
+                        .from('users')
+                        .upsert(userPayload)
+                        .select()
+                        .single();
+                }
+                if (res.error) {
+                    console.warn('[SUPABASE] user upsert error:', res.error.message);
+                    throw res.error;
+                }
             }
 
             let unified = { ...userPayload, name: fullName.trim(), role: role.toLowerCase() };
@@ -181,8 +217,8 @@ class SupabaseService {
                     await supabase
                         .from('asha_workers')
                         .upsert({
-                            user_id: userId,
-                            worker_id: userData.worker_id || `ASHA-${phone.slice(-4)}`,
+                            user_id: validUserId,
+                            worker_id: userData.worker_id || `ASHA-${phone.slice(-4)}-${validUserId.slice(0, 4).toUpperCase()}`,
                             full_name: fullName.trim(),
                             phone: phone,
                             email: userPayload.email,

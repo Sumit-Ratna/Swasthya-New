@@ -486,7 +486,13 @@ const Login = () => {
                         }}>
                             <button
                                 type="button"
-                                onClick={() => { setAuthMode('login'); setStep(1); setLoginError(''); }}
+                                onClick={() => {
+                                    setAuthMode('login');
+                                    setStep(1);
+                                    setLoginError('');
+                                    const cur = rolesConfig.find(r => r.id === selectedRole);
+                                    if (cur) setPhoneNumber(cur.demoPhone.replace('+91', ''));
+                                }}
                                 style={{
                                     flex: 1,
                                     padding: '9px 12px',
@@ -509,7 +515,12 @@ const Login = () => {
                             </button>
                             <button
                                 type="button"
-                                onClick={() => { setAuthMode('register'); setStep(1); setLoginError(''); }}
+                                onClick={() => {
+                                    setAuthMode('register');
+                                    setStep(1);
+                                    setLoginError('');
+                                    setPhoneNumber('');
+                                }}
                                 style={{
                                     flex: 1,
                                     padding: '9px 12px',
@@ -546,7 +557,9 @@ const Login = () => {
                                             type="button"
                                             onClick={() => {
                                                 setSelectedRole(r.id);
-                                                setPhoneNumber(r.demoPhone.replace('+91', ''));
+                                                if (authMode === 'login') {
+                                                    setPhoneNumber(r.demoPhone.replace('+91', ''));
+                                                }
                                             }}
                                             style={{
                                                 padding: '10px 4px',
