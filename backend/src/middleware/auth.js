@@ -4,7 +4,7 @@ const supabase = require('../config/supabaseClient');
 
 /**
  * Normalize role strings into canonical system roles:
- * PATIENT, HEALTH_WORKER, DOCTOR, FACILITY_STAFF, CAREGIVER, ADMIN
+ * PATIENT, CAREGIVER, HEALTH_WORKER, DOCTOR, FACILITY_STAFF, ADMIN
  */
 function normalizeRole(rawRole) {
     if (!rawRole) return 'PATIENT';
@@ -18,75 +18,118 @@ function normalizeRole(rawRole) {
 }
 
 module.exports = async (req, res, next) => {
-    // 1. Check Authorization header
+    // 1. Extract token from Authorization header
     const authHeader = req.header('Authorization');
     const token = authHeader?.replace('Bearer ', '');
 
-    // 2. Allow fallback header for offline/sync testing if enabled
-    const directUserId = req.header('x-user-id');
-    const directRole = req.header('x-user-role');
-
-    if (!token && directUserId) {
-        req.user = {
-            id: directUserId,
-            role: normalizeRole(directRole),
-            phone: req.header('x-user-phone') || '9999999999',
-            email: req.header('x-user-email') || null,
-            facility_id: req.header('x-facility-id') || null
-        };
-        return next();
-    }
-
     if (!token) {
+        // Only in non-production unit testing allow explicit test mock if dev secret header matches
+        const directUserId = req.header('x-user-id');
+        if (process.env.NODE_ENV === 'test' && directUserId) {
+            req.user = {
+                id: directUserId,
+                role: normalizeRole(req.header('x-user-role') || 'PATIENT'),
+                phone: req.header('x-user-phone') || '9999999999',
+                assigned_facility_id: req.header('x-facility-id') || null,
+                jurisdiction_district: req.header('x-district') || null
+            };
+            return next();
+        }
+
         return res.status(401).json({
             success: false,
-            error: "Access Denied. No authorization token provided.",
             code: "UNAUTHORIZED",
+            message: "Access Denied. Authorization token required.",
+            error: "Access Denied. Authorization token required.",
+            requestId: req.id,
             timestamp: new Date().toISOString()
         });
     }
 
     try {
-        // 1. Try verifying local application JWT
+        let authenticatedUserId = null;
+        let tokenRoleHint = null;
+
+        // 1. First try verifying local application JWT
         try {
             const decoded = jwt.verify(token, config.jwtSecret);
-            req.user = {
-                id: decoded.id || decoded.userId || decoded.sub,
-                phone: decoded.phone,
-                email: decoded.email,
-                role: normalizeRole(decoded.role),
-                facility_id: decoded.facility_id || decoded.facilityId || null
-            };
-            return next();
+            authenticatedUserId = decoded.id || decoded.userId || decoded.sub;
+            tokenRoleHint = decoded.role;
         } catch (localJwtErr) {
-            // Local token verify failed, attempt Supabase auth token
+            if (localJwtErr.name === 'TokenExpiredError') {
+                return res.status(401).json({
+                    success: false,
+                    code: "TOKEN_EXPIRED",
+                    message: "Authentication token has expired. Please log in again.",
+                    error: "Token expired",
+                    requestId: req.id,
+                    timestamp: new Date().toISOString()
+                });
+            }
+            // If local JWT fails for another reason, fallback to checking Supabase Auth Token
         }
 
-        // 2. Check Supabase Auth Token
-        const { data: { user }, error } = await supabase.auth.getUser(token);
-        if (error || !user) {
-            return res.status(401).json({
+        // 2. Check Supabase Auth Token if not resolved by local JWT
+        if (!authenticatedUserId) {
+            const { data: { user }, error: supaAuthErr } = await supabase.auth.getUser(token);
+            if (supaAuthErr || !user) {
+                return res.status(401).json({
+                    success: false,
+                    code: "INVALID_TOKEN",
+                    message: "Invalid or expired session token.",
+                    error: "Invalid token",
+                    requestId: req.id,
+                    timestamp: new Date().toISOString()
+                });
+            }
+            authenticatedUserId = user.id;
+            tokenRoleHint = user.user_metadata?.role;
+        }
+
+        // 3. Load authoritative server-side user record from `users` table
+        const { data: dbUser, error: dbErr } = await supabase
+            .from('users')
+            .select('id, phone, full_name, email, role, assigned_facility_id, jurisdiction_district, status')
+            .eq('id', authenticatedUserId)
+            .maybeSingle();
+
+        if (dbErr) {
+            console.warn('[AUTH] Error looking up user from DB:', dbErr.message);
+        }
+
+        if (dbUser && dbUser.status === 'SUSPENDED') {
+            return res.status(403).json({
                 success: false,
-                error: "Session expired or invalid token.",
-                code: "INVALID_TOKEN",
+                code: "ACCOUNT_SUSPENDED",
+                message: "This account has been suspended.",
+                requestId: req.id,
                 timestamp: new Date().toISOString()
             });
         }
 
+        // Server-side role is AUTHORITATIVE (rejects client role spoofing)
+        const effectiveRole = normalizeRole(dbUser?.role || tokenRoleHint || 'PATIENT');
+
         req.user = {
-            id: user.id,
-            phone: user.phone || user.user_metadata?.phone,
-            email: user.email,
-            role: normalizeRole(user.user_metadata?.role),
-            facility_id: user.user_metadata?.facility_id || null
+            id: authenticatedUserId,
+            phone: dbUser?.phone || null,
+            name: dbUser?.full_name || 'User',
+            email: dbUser?.email || null,
+            role: effectiveRole,
+            assigned_facility_id: dbUser?.assigned_facility_id || null,
+            jurisdiction_district: dbUser?.jurisdiction_district || null,
+            status: dbUser?.status || 'ACTIVE'
         };
-        return next();
+
+        next();
     } catch (err) {
-        console.error('[AUTH] Token Verification Failed:', err.message);
+        console.error(`[AUTH] [ReqID: ${req.id}] Verification Failed:`, err.message);
         return res.status(401).json({
             success: false,
-            error: "Authentication failed",
             code: "AUTH_FAILED",
+            message: "Authentication failed",
+            error: err.message,
+            requestId: req.id,
             timestamp: new Date().toISOString()
         });
     }
