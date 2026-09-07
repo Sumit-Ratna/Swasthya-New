@@ -91,22 +91,38 @@ app.use(cors({
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 
-// 4. Sanitized Diagnostic Request Logger (no passwords / tokens / medical payloads dumped)
+// 4. Sanitized Diagnostic & Structured Request Latency Logger (no PHI, tokens, passwords dumped)
 app.use((req, res, next) => {
+    const startTime = Date.now();
     const origin = req.headers.origin || 'mobile/direct';
-    console.log(`[HTTP ${req.method}] ${req.originalUrl} | ReqID: ${req.id} | From: ${origin}`);
+
+    res.on('finish', () => {
+        const durationMs = Date.now() - startTime;
+        const logPayload = {
+            timestamp: new Date().toISOString(),
+            method: req.method,
+            route: req.originalUrl.split('?')[0],
+            status: res.statusCode,
+            durationMs,
+            requestId: req.id,
+            origin,
+            ip: req.ip || req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '127.0.0.1'
+        };
+        console.log(`[HTTP_AUDIT] ${JSON.stringify(logPayload)}`);
+    });
+
     next();
 });
 
 // Static uploads directory
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// 5. Root & Health check with Real Lightweight Supabase Probe
+// 5. Root & Health/Readiness checks with Supabase Probe
 app.get('/', (req, res) => {
     res.json({
         name: 'SwasthyaSetu Unified Healthcare API',
         version: '2.0.0',
-        message: 'API is running with Supabase PostgreSQL and Canonical Closed-Loop Referral State Engine',
+        message: 'API is running with Supabase PostgreSQL and Canonical 21-State Closed-Loop Referral Engine',
         swagger_docs: '/api-docs',
         status: 'healthy',
         requestId: req.id,
@@ -114,7 +130,7 @@ app.get('/', (req, res) => {
     });
 });
 
-app.get('/api/health', async (req, res) => {
+app.get(['/api/health', '/health'], async (req, res) => {
     const startTime = Date.now();
     let dbStatus = 'healthy';
     let dbLatencyMs = 0;
@@ -131,18 +147,42 @@ app.get('/api/health', async (req, res) => {
     }
 
     const overallHealthy = !dbStatus.startsWith('unreachable');
+    const memoryUsage = process.memoryUsage();
+
     res.status(overallHealthy ? 200 : 503).json({
         status: overallHealthy ? 'healthy' : 'unhealthy',
+        service: 'swasthya-backend',
+        version: '2.0.0',
         environment: config.env,
         database: {
             status: dbStatus,
             latencyMs: dbLatencyMs,
             engine: 'Supabase PostgreSQL'
         },
+        memory: {
+            rssMb: Math.round(memoryUsage.rss / 1024 / 1024),
+            heapUsedMb: Math.round(memoryUsage.heapUsed / 1024 / 1024),
+            heapTotalMb: Math.round(memoryUsage.heapTotal / 1024 / 1024)
+        },
+        nodeVersion: process.version,
         uptimeSeconds: Math.floor(process.uptime()),
         requestId: req.id,
         timestamp: new Date().toISOString()
     });
+});
+
+// Dedicated Readiness Probe for Cloud Container Orchestration (Render / K8s / Vercel)
+app.get('/api/health/ready', async (req, res) => {
+    const startTime = Date.now();
+    try {
+        const { error } = await supabase.from('facilities').select('id').limit(1);
+        if (error) {
+            return res.status(503).json({ ready: false, reason: error.message, latencyMs: Date.now() - startTime });
+        }
+        return res.status(200).json({ ready: true, latencyMs: Date.now() - startTime, timestamp: new Date().toISOString() });
+    } catch (err) {
+        return res.status(503).json({ ready: false, reason: err.message, latencyMs: Date.now() - startTime });
+    }
 });
 
 // API Routes

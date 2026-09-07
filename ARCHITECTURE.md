@@ -54,9 +54,9 @@ availability.
 
 ``` mermaid
 graph TD
-    P[Patient / Caregiver] -->|HTTPS| API[Spring Boot Modular Monolith]
-    HW[Health Worker Flutter App] -->|HTTPS / Sync| API
-    D[Doctor Flutter/Web Experience] -->|HTTPS| API
+    P[Patient / Caregiver] -->|HTTPS| API[Node.js / Express Modular Backend]
+    HW[Health Worker App] -->|HTTPS / Sync| API
+    D[Doctor Web / App Experience] -->|HTTPS| API
     FS[Facility Operations] -->|HTTPS| API
     AD[Admin Web Dashboard] -->|HTTPS| API
 

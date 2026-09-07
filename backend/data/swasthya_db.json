@@ -429,6 +429,15 @@
       "operational_status": "OPEN",
       "current_load": 30,
       "verified_at": "2026-09-07T05:49:19.127Z"
+    },
+    {
+      "id": "74af5952-e5ac-481c-9079-ead5a1d3dc8d",
+      "name": "Rural Clinic Old Telemetry",
+      "tier": "PRIMARY_HEALTH_CENTRE",
+      "district": "Pune",
+      "operational_status": "OPEN",
+      "current_load": 30,
+      "verified_at": "2026-09-07T05:58:12.100Z"
     }
   ],
   "doctors": [
@@ -1281,6 +1290,133 @@
       "status": "TREATMENT_COMPLETED",
       "created_at": "2026-09-07T10:00:24.184Z",
       "updated_at": "2026-09-07T10:00:29.522Z"
+    },
+    {
+      "id": "dc9d1e43-f506-4a03-a7af-60c43fadb503",
+      "patient_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "receiving_facility_id": "22222222-2222-2222-2222-222222222222",
+      "status": "APPOINTMENT_BOOKED",
+      "risk_level": "HIGH",
+      "urgency": "URGENT",
+      "created_at": "2026-09-07T10:08:04.508Z",
+      "updated_at": "2026-09-07T10:08:04.922Z"
+    },
+    {
+      "id": "28ee9a03-4e35-4ff1-9437-97d6d75d9b51",
+      "patient_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "receiving_facility_id": "22222222-2222-2222-2222-222222222222",
+      "status": "PATIENT_IN_TRANSIT",
+      "risk_level": "HIGH",
+      "urgency": "URGENT",
+      "created_at": "2026-09-07T10:08:06.580Z",
+      "updated_at": "2026-09-07T10:08:06.959Z"
+    },
+    {
+      "id": "499429c4-18b3-4fbe-858e-0ab51114982a",
+      "status": "COMPLETED",
+      "created_at": "2026-09-07T08:08:11.371Z",
+      "updated_at": "2026-09-07T10:08:11.371Z"
+    },
+    {
+      "id": "b339f7ef-333d-40b5-b1f1-b6b8219c4517",
+      "status": "FOLLOW_UP_COMPLETED",
+      "created_at": "2026-09-07T09:08:11.371Z",
+      "updated_at": "2026-09-07T10:08:11.371Z"
+    },
+    {
+      "id": "f528b61b-f6e1-4d37-8100-4896dc15d04f",
+      "status": "MISSED_APPOINTMENT",
+      "created_at": "2026-09-07T10:08:11.371Z"
+    },
+    {
+      "id": "da49b124-86f4-4d4b-8031-d684d4dc7bcb",
+      "status": "REROUTING_REQUIRED",
+      "created_at": "2026-09-07T10:08:11.371Z"
+    },
+    {
+      "id": "da6ac652-b9dc-4759-8689-45e5cbb36353",
+      "status": "FAILED_REFERRAL",
+      "created_at": "2026-09-07T10:08:11.371Z"
+    },
+    {
+      "id": "f943f3f5-7447-4ba3-b326-a86879fb07db",
+      "patient_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "receiving_facility_id": "22222222-2222-2222-2222-222222222222",
+      "status": "PATIENT_IN_TRANSIT",
+      "risk_level": "HIGH",
+      "urgency": "PRIORITY",
+      "created_at": "2026-09-07T10:08:15.263Z",
+      "updated_at": "2026-09-07T10:08:15.661Z"
+    },
+    {
+      "id": "705b3708-5cc2-433d-9b79-c4514f928f9e",
+      "patient_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "receiving_facility_id": "22222222-2222-2222-2222-222222222222",
+      "status": "DOCTOR_ASSIGNED",
+      "specialty": "CARDIOLOGY",
+      "created_at": "2026-09-07T10:08:17.148Z",
+      "updated_at": "2026-09-07T10:08:17.886Z",
+      "assigned_doctor_id": "9bd4ece4-1da3-42be-8340-bcb36aae144a"
+    },
+    {
+      "id": "8d577abe-8482-46c5-964a-15c772b5d49b",
+      "patient_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "receiving_facility_id": "22222222-2222-2222-2222-222222222222",
+      "status": "FACILITY_SELECTED",
+      "created_at": "2026-09-07T10:08:19.403Z",
+      "updated_at": "2026-09-07T10:08:21.294Z"
+    },
+    {
+      "id": "12388c20-5382-4214-9384-9c515bc9880e",
+      "patient_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "receiving_facility_id": "11111111-1111-1111-1111-111111111111",
+      "status": "FOLLOW_UP_COMPLETED",
+      "risk_level": "MODERATE",
+      "urgency": "ROUTINE",
+      "created_at": "2026-09-07T10:08:39.790Z",
+      "updated_at": "2026-09-07T10:08:52.433Z"
+    },
+    {
+      "id": "e66b6b67-cad9-4e57-82fb-2fe594598940",
+      "patient_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "receiving_facility_id": "11111111-1111-1111-1111-111111111111",
+      "status": "TREATMENT_COMPLETED",
+      "risk_level": "CRITICAL",
+      "urgency": "EMERGENCY",
+      "created_at": "2026-09-07T10:08:53.668Z",
+      "updated_at": "2026-09-07T10:09:01.853Z"
+    },
+    {
+      "id": "b477490a-a445-418c-9c8c-18fb058a9d41",
+      "patient_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "receiving_facility_id": "11111111-1111-1111-1111-111111111111",
+      "status": "ACCEPTED",
+      "created_at": "2026-09-07T10:09:03.353Z",
+      "updated_at": "2026-09-07T10:09:06.685Z"
+    },
+    {
+      "id": "70d1d661-78fc-47e7-ae52-0229d7ecbb57",
+      "patient_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "receiving_facility_id": "11111111-1111-1111-1111-111111111111",
+      "status": "CANCELLED",
+      "created_at": "2026-09-07T10:09:07.911Z",
+      "updated_at": "2026-09-07T10:09:08.205Z"
+    },
+    {
+      "id": "222dd502-5e2a-43d3-a893-0c1419a8c0f4",
+      "patient_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "receiving_facility_id": "11111111-1111-1111-1111-111111111111",
+      "status": "APPOINTMENT_BOOKED",
+      "created_at": "2026-09-07T10:09:09.447Z",
+      "updated_at": "2026-09-07T10:09:11.325Z"
+    },
+    {
+      "id": "4e52b1ed-1cfc-4242-a373-a48dd27cc0f4",
+      "patient_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "receiving_facility_id": "11111111-1111-1111-1111-111111111111",
+      "status": "TREATMENT_COMPLETED",
+      "created_at": "2026-09-07T10:09:12.683Z",
+      "updated_at": "2026-09-07T10:09:17.724Z"
     }
   ],
   "referral_events": [
@@ -11764,6 +11900,2193 @@
       },
       "details": "{\"from_status\":\"DIAGNOSTICS_COMPLETED\",\"to_status\":\"TREATMENT_COMPLETED\",\"transition_reason\":\"Prescribed medication based on ultrasound\"}",
       "created_at": "2026-09-07T10:00:30.144Z"
+    },
+    {
+      "id": "48ffdc49-c92c-4f76-87c9-a826a3e1eefa",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "4dd8caac-f338-4fa8-936b-43ecb1b630dc",
+      "entity_id": "4dd8caac-f338-4fa8-936b-43ecb1b630dc",
+      "actor_id": "77777777-7777-7777-7777-777777777777",
+      "actor_role": "HEALTH_WORKER",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "03588efc4a361ffb6c78e99a50f6f833f82e8006a9213a68bd587c715061e9fd",
+      "hash": "80cc679a9e56decbdc3301572db5abd929b09c4fb33932ac5dcc18829f315678",
+      "metadata": {
+        "from_status": "TRIAGED",
+        "to_status": "FACILITY_SELECTED",
+        "transition_reason": "Facility selected: District Hospital"
+      },
+      "details": "{\"from_status\":\"TRIAGED\",\"to_status\":\"FACILITY_SELECTED\",\"transition_reason\":\"Facility selected: District Hospital\"}",
+      "created_at": "2026-09-07T10:06:08.892Z"
+    },
+    {
+      "id": "fb4b2c04-4564-4016-8b1d-afbb53f4d08d",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "d44f1ca3-eaf3-4312-b644-3c9935d67b43",
+      "entity_id": "d44f1ca3-eaf3-4312-b644-3c9935d67b43",
+      "actor_id": "77777777-7777-7777-7777-777777777777",
+      "actor_role": "HEALTH_WORKER",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "80cc679a9e56decbdc3301572db5abd929b09c4fb33932ac5dcc18829f315678",
+      "hash": "5bea08934a940edef68499203ca2f7d2a26b981364123f3742f8ef89967818e2",
+      "metadata": {
+        "from_status": "TRIAGED",
+        "to_status": "CANCELLED",
+        "transition_reason": "Patient symptoms resolved after medication; in-person referral no longer necessary."
+      },
+      "details": "{\"from_status\":\"TRIAGED\",\"to_status\":\"CANCELLED\",\"transition_reason\":\"Patient symptoms resolved after medication; in-person referral no longer necessary.\"}",
+      "created_at": "2026-09-07T10:06:11.819Z"
+    },
+    {
+      "id": "48db8b43-103d-49de-94b3-ba899a513b85",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "4dd8caac-f338-4fa8-936b-43ecb1b630dc",
+      "entity_id": "4dd8caac-f338-4fa8-936b-43ecb1b630dc",
+      "actor_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "5bea08934a940edef68499203ca2f7d2a26b981364123f3742f8ef89967818e2",
+      "hash": "ef97616c8d72e04d0438d4f47b105cea52dbfabda0af15715bdd1d27a579c9e6",
+      "metadata": {
+        "from_status": "FACILITY_SELECTED",
+        "to_status": "ACCEPTED",
+        "transition_reason": "Facility bed and OBGYN consultant available"
+      },
+      "details": "{\"from_status\":\"FACILITY_SELECTED\",\"to_status\":\"ACCEPTED\",\"transition_reason\":\"Facility bed and OBGYN consultant available\"}",
+      "created_at": "2026-09-07T10:06:13.394Z"
+    },
+    {
+      "id": "bdca509e-bde9-437e-9ce0-f79149431e15",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "4dd8caac-f338-4fa8-936b-43ecb1b630dc",
+      "entity_id": "4dd8caac-f338-4fa8-936b-43ecb1b630dc",
+      "actor_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "ef97616c8d72e04d0438d4f47b105cea52dbfabda0af15715bdd1d27a579c9e6",
+      "hash": "416a7f0cea40c67dd49cbffbebb4898b16d2ee78078be597651541db7c0ed165",
+      "metadata": {
+        "from_status": "ACCEPTED",
+        "to_status": "APPOINTMENT_BOOKED",
+        "transition_reason": "Token slot allocated for tomorrow 10:00 AM"
+      },
+      "details": "{\"from_status\":\"ACCEPTED\",\"to_status\":\"APPOINTMENT_BOOKED\",\"transition_reason\":\"Token slot allocated for tomorrow 10:00 AM\"}",
+      "created_at": "2026-09-07T10:06:14.898Z"
+    },
+    {
+      "id": "76b2523b-52af-41ee-99a3-818868d47b60",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "4dd8caac-f338-4fa8-936b-43ecb1b630dc",
+      "entity_id": "4dd8caac-f338-4fa8-936b-43ecb1b630dc",
+      "actor_id": "99999999-9999-9999-9999-999999999999",
+      "actor_role": "PATIENT",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "416a7f0cea40c67dd49cbffbebb4898b16d2ee78078be597651541db7c0ed165",
+      "hash": "f75161fabaffd9940aff04b90a3eeb6e07298ff8cb9c1687116a8e014f1821b4",
+      "metadata": {
+        "from_status": "APPOINTMENT_BOOKED",
+        "to_status": "PATIENT_IN_TRANSIT",
+        "transition_reason": "Patient boarded 108 ambulance"
+      },
+      "details": "{\"from_status\":\"APPOINTMENT_BOOKED\",\"to_status\":\"PATIENT_IN_TRANSIT\",\"transition_reason\":\"Patient boarded 108 ambulance\"}",
+      "created_at": "2026-09-07T10:06:16.331Z"
+    },
+    {
+      "id": "022a195b-ac34-4b10-a975-0fea2f437913",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "4dd8caac-f338-4fa8-936b-43ecb1b630dc",
+      "entity_id": "4dd8caac-f338-4fa8-936b-43ecb1b630dc",
+      "actor_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "f75161fabaffd9940aff04b90a3eeb6e07298ff8cb9c1687116a8e014f1821b4",
+      "hash": "8c58e0811bffed778267cbb4d1cc71c34ea8aaf0cd390aa691db4564a33c15a3",
+      "metadata": {
+        "from_status": "PATIENT_IN_TRANSIT",
+        "to_status": "PATIENT_REACHED",
+        "transition_reason": "Patient arrived at hospital triage reception"
+      },
+      "details": "{\"from_status\":\"PATIENT_IN_TRANSIT\",\"to_status\":\"PATIENT_REACHED\",\"transition_reason\":\"Patient arrived at hospital triage reception\"}",
+      "created_at": "2026-09-07T10:06:17.884Z"
+    },
+    {
+      "id": "8174be99-b6cb-4de1-9de8-059309d0e9db",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "4dd8caac-f338-4fa8-936b-43ecb1b630dc",
+      "entity_id": "4dd8caac-f338-4fa8-936b-43ecb1b630dc",
+      "actor_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "8c58e0811bffed778267cbb4d1cc71c34ea8aaf0cd390aa691db4564a33c15a3",
+      "hash": "df66a20d9a5be9916c08019fbb4f1c4717540d4a3c5f9c6eeade058f0e342bc2",
+      "metadata": {
+        "from_status": "PATIENT_REACHED",
+        "to_status": "DOCTOR_ASSIGNED",
+        "transition_reason": "Assigned to Dr. Anand Deshmukh"
+      },
+      "details": "{\"from_status\":\"PATIENT_REACHED\",\"to_status\":\"DOCTOR_ASSIGNED\",\"transition_reason\":\"Assigned to Dr. Anand Deshmukh\"}",
+      "created_at": "2026-09-07T10:06:19.397Z"
+    },
+    {
+      "id": "2e0ce838-4ae6-40c9-b9c2-eb9f0b2ab43f",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "2695a682-fe7d-4692-8e52-4d0771b3155b",
+      "entity_id": "2695a682-fe7d-4692-8e52-4d0771b3155b",
+      "actor_id": "77777777-7777-7777-7777-777777777777",
+      "actor_role": "HEALTH_WORKER",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "df66a20d9a5be9916c08019fbb4f1c4717540d4a3c5f9c6eeade058f0e342bc2",
+      "hash": "df934bcca3e7a3561bae003e435700404407a352bf60da2bd30172e86e0aa6db",
+      "metadata": {
+        "from_status": "TRIAGED",
+        "to_status": "FACILITY_SELECTED",
+        "transition_reason": "Initial facility assignment (22222222-2222-2222-2222-222222222222)"
+      },
+      "details": "{\"from_status\":\"TRIAGED\",\"to_status\":\"FACILITY_SELECTED\",\"transition_reason\":\"Initial facility assignment (22222222-2222-2222-2222-222222222222)\"}",
+      "created_at": "2026-09-07T10:06:24.843Z"
+    },
+    {
+      "id": "fc002745-ac44-4ad1-8ff5-c4feb1cd4ad1",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "2695a682-fe7d-4692-8e52-4d0771b3155b",
+      "entity_id": "2695a682-fe7d-4692-8e52-4d0771b3155b",
+      "actor_id": "66666666-6666-6666-6666-666666666666",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "df934bcca3e7a3561bae003e435700404407a352bf60da2bd30172e86e0aa6db",
+      "hash": "012efe14db1a13f27c0fa4a2e51b28b25d3a476a1e6efd4c8d2594560e39dcfc",
+      "metadata": {
+        "from_status": "FACILITY_SELECTED",
+        "to_status": "ACCEPTED",
+        "transition_reason": "Facility has bed and OPD capacity"
+      },
+      "details": "{\"from_status\":\"FACILITY_SELECTED\",\"to_status\":\"ACCEPTED\",\"transition_reason\":\"Facility has bed and OPD capacity\"}",
+      "created_at": "2026-09-07T10:06:26.389Z"
+    },
+    {
+      "id": "d9fa4f60-f3f2-488c-96a0-d19a9f20fc49",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "2695a682-fe7d-4692-8e52-4d0771b3155b",
+      "entity_id": "2695a682-fe7d-4692-8e52-4d0771b3155b",
+      "actor_id": "77777777-7777-7777-7777-777777777777",
+      "actor_role": "HEALTH_WORKER",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "012efe14db1a13f27c0fa4a2e51b28b25d3a476a1e6efd4c8d2594560e39dcfc",
+      "hash": "da7c2d2844fbf163c80afa719a57dae9937c98f75f63462bfc180cb922b64418",
+      "metadata": {
+        "from_status": "ACCEPTED",
+        "to_status": "APPOINTMENT_BOOKED",
+        "transition_reason": "Appointment confirmed for 2027-02-01 (RefSlot-89450). Slot token allocated."
+      },
+      "details": "{\"from_status\":\"ACCEPTED\",\"to_status\":\"APPOINTMENT_BOOKED\",\"transition_reason\":\"Appointment confirmed for 2027-02-01 (RefSlot-89450). Slot token allocated.\"}",
+      "created_at": "2026-09-07T10:06:28.783Z"
+    },
+    {
+      "id": "59669f06-1632-4638-9597-9a0a4360fa25",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "2695a682-fe7d-4692-8e52-4d0771b3155b",
+      "entity_id": "2695a682-fe7d-4692-8e52-4d0771b3155b",
+      "actor_id": "77777777-7777-7777-7777-777777777777",
+      "actor_role": "HEALTH_WORKER",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "da7c2d2844fbf163c80afa719a57dae9937c98f75f63462bfc180cb922b64418",
+      "hash": "08e779c06be0272140ac233a5ccc7deeddf2c1fd82c062422b3acf2e52555449",
+      "metadata": {
+        "from_status": "APPOINTMENT_BOOKED",
+        "to_status": "PATIENT_IN_TRANSIT",
+        "transition_reason": "Ambulance / travel initiated"
+      },
+      "details": "{\"from_status\":\"APPOINTMENT_BOOKED\",\"to_status\":\"PATIENT_IN_TRANSIT\",\"transition_reason\":\"Ambulance / travel initiated\"}",
+      "created_at": "2026-09-07T10:06:32.279Z"
+    },
+    {
+      "id": "3f8fccb7-8763-4855-98d5-21cf8de15ac5",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "2695a682-fe7d-4692-8e52-4d0771b3155b",
+      "entity_id": "2695a682-fe7d-4692-8e52-4d0771b3155b",
+      "actor_id": "66666666-6666-6666-6666-666666666666",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "08e779c06be0272140ac233a5ccc7deeddf2c1fd82c062422b3acf2e52555449",
+      "hash": "a6c087fc7b6cabd13f7a356eaf5117d040ca6f46d197cf6cac0f9adb415db27d",
+      "metadata": {
+        "from_status": "PATIENT_IN_TRANSIT",
+        "to_status": "PATIENT_REACHED",
+        "transition_reason": "Patient arrived at triage counter"
+      },
+      "details": "{\"from_status\":\"PATIENT_IN_TRANSIT\",\"to_status\":\"PATIENT_REACHED\",\"transition_reason\":\"Patient arrived at triage counter\"}",
+      "created_at": "2026-09-07T10:06:33.990Z"
+    },
+    {
+      "id": "a1604529-2bd2-4385-a7f2-b5b55ea31c3e",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "a65fd5d9-67cb-4620-a898-42f67e532459",
+      "entity_id": "a65fd5d9-67cb-4620-a898-42f67e532459",
+      "actor_id": "77777777-7777-7777-7777-777777777777",
+      "actor_role": "HEALTH_WORKER",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "a6c087fc7b6cabd13f7a356eaf5117d040ca6f46d197cf6cac0f9adb415db27d",
+      "hash": "22d1498c83ef17f77e3a2e050414b955115b7b6f3a3beaaadd2a4a93d1b91a2e",
+      "metadata": {
+        "from_status": "TRIAGED",
+        "to_status": "FACILITY_SELECTED",
+        "transition_reason": "Initial facility assignment (22222222-2222-2222-2222-222222222222)"
+      },
+      "details": "{\"from_status\":\"TRIAGED\",\"to_status\":\"FACILITY_SELECTED\",\"transition_reason\":\"Initial facility assignment (22222222-2222-2222-2222-222222222222)\"}",
+      "created_at": "2026-09-07T10:06:36.306Z"
+    },
+    {
+      "id": "94d0fe82-f172-4039-81ea-98245ff1487e",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "a65fd5d9-67cb-4620-a898-42f67e532459",
+      "entity_id": "a65fd5d9-67cb-4620-a898-42f67e532459",
+      "actor_id": "66666666-6666-6666-6666-666666666666",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "22d1498c83ef17f77e3a2e050414b955115b7b6f3a3beaaadd2a4a93d1b91a2e",
+      "hash": "038caa8b4ef210551fb2dd339198619939960dad1a41153764322c456d45ca9d",
+      "metadata": {
+        "from_status": "FACILITY_SELECTED",
+        "to_status": "ACCEPTED",
+        "transition_reason": "Accepted"
+      },
+      "details": "{\"from_status\":\"FACILITY_SELECTED\",\"to_status\":\"ACCEPTED\",\"transition_reason\":\"Accepted\"}",
+      "created_at": "2026-09-07T10:06:37.849Z"
+    },
+    {
+      "id": "d62a2b43-715f-477b-8697-8daed4a71fc9",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "a65fd5d9-67cb-4620-a898-42f67e532459",
+      "entity_id": "a65fd5d9-67cb-4620-a898-42f67e532459",
+      "actor_id": "77777777-7777-7777-7777-777777777777",
+      "actor_role": "HEALTH_WORKER",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "038caa8b4ef210551fb2dd339198619939960dad1a41153764322c456d45ca9d",
+      "hash": "2f93bf0d94494436c564e74f766b5d75d021c7c9f3c373ac7b0fa3663d95b4cd",
+      "metadata": {
+        "from_status": "ACCEPTED",
+        "to_status": "APPOINTMENT_BOOKED",
+        "transition_reason": "Appointment confirmed for 2027-04-01 (MissSlot-89450). Slot token allocated."
+      },
+      "details": "{\"from_status\":\"ACCEPTED\",\"to_status\":\"APPOINTMENT_BOOKED\",\"transition_reason\":\"Appointment confirmed for 2027-04-01 (MissSlot-89450). Slot token allocated.\"}",
+      "created_at": "2026-09-07T10:06:40.437Z"
+    },
+    {
+      "id": "ea23b6fe-b491-4891-9728-36b2cc86b82c",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "a65fd5d9-67cb-4620-a898-42f67e532459",
+      "entity_id": "a65fd5d9-67cb-4620-a898-42f67e532459",
+      "actor_id": "66666666-6666-6666-6666-666666666666",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "2f93bf0d94494436c564e74f766b5d75d021c7c9f3c373ac7b0fa3663d95b4cd",
+      "hash": "c8baaf4f03d8546cf8a5cd992774e77ab28fc308a8ac199d4ded8391fb3a9971",
+      "metadata": {
+        "from_status": "APPOINTMENT_BOOKED",
+        "to_status": "MISSED_APPOINTMENT",
+        "transition_reason": "Patient was unable to arrange transport"
+      },
+      "details": "{\"from_status\":\"APPOINTMENT_BOOKED\",\"to_status\":\"MISSED_APPOINTMENT\",\"transition_reason\":\"Patient was unable to arrange transport\"}",
+      "created_at": "2026-09-07T10:06:42.918Z"
+    },
+    {
+      "id": "92f17dd7-b050-4cc6-886c-1839402ffd85",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "a65fd5d9-67cb-4620-a898-42f67e532459",
+      "entity_id": "a65fd5d9-67cb-4620-a898-42f67e532459",
+      "actor_id": "77777777-7777-7777-7777-777777777777",
+      "actor_role": "HEALTH_WORKER",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "c8baaf4f03d8546cf8a5cd992774e77ab28fc308a8ac199d4ded8391fb3a9971",
+      "hash": "5d81eae5a0bd71fb04a0d5e6f95b7b5c54beb3f15e737b6ed252e519d71f99a6",
+      "metadata": {
+        "from_status": "MISSED_APPOINTMENT",
+        "to_status": "APPOINTMENT_BOOKED",
+        "transition_reason": "Appointment confirmed for 2027-04-02 (RebookSlot-89450). Slot token allocated."
+      },
+      "details": "{\"from_status\":\"MISSED_APPOINTMENT\",\"to_status\":\"APPOINTMENT_BOOKED\",\"transition_reason\":\"Appointment confirmed for 2027-04-02 (RebookSlot-89450). Slot token allocated.\"}",
+      "created_at": "2026-09-07T10:06:45.550Z"
+    },
+    {
+      "id": "57a3322b-69cc-48b2-9952-889016b7f525",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "a5f6b236-aa10-46d8-b817-a008a0e941ca",
+      "entity_id": "a5f6b236-aa10-46d8-b817-a008a0e941ca",
+      "actor_id": "77777777-7777-7777-7777-777777777777",
+      "actor_role": "HEALTH_WORKER",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "5d81eae5a0bd71fb04a0d5e6f95b7b5c54beb3f15e737b6ed252e519d71f99a6",
+      "hash": "6b80123ff1c42e4eff82034f9f1ccb4b0dd7a6bdaeb20cea4ff021a3d22dfa34",
+      "metadata": {
+        "from_status": "TRIAGED",
+        "to_status": "FACILITY_SELECTED",
+        "transition_reason": "Initial facility assignment (22222222-2222-2222-2222-222222222222)"
+      },
+      "details": "{\"from_status\":\"TRIAGED\",\"to_status\":\"FACILITY_SELECTED\",\"transition_reason\":\"Initial facility assignment (22222222-2222-2222-2222-222222222222)\"}",
+      "created_at": "2026-09-07T10:06:51.898Z"
+    },
+    {
+      "id": "c1f85e73-3ac5-47ba-b410-14940de78434",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "a5f6b236-aa10-46d8-b817-a008a0e941ca",
+      "entity_id": "a5f6b236-aa10-46d8-b817-a008a0e941ca",
+      "actor_id": "66666666-6666-6666-6666-666666666666",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "6b80123ff1c42e4eff82034f9f1ccb4b0dd7a6bdaeb20cea4ff021a3d22dfa34",
+      "hash": "2e130bf706b9dc4294c4950513d389a8be45ce848e907227a5fe6b5052d3b783",
+      "metadata": {
+        "from_status": "FACILITY_SELECTED",
+        "to_status": "ACCEPTED",
+        "transition_reason": "Accepted"
+      },
+      "details": "{\"from_status\":\"FACILITY_SELECTED\",\"to_status\":\"ACCEPTED\",\"transition_reason\":\"Accepted\"}",
+      "created_at": "2026-09-07T10:06:53.739Z"
+    },
+    {
+      "id": "afb1ae3a-574e-4a0e-ad1e-9fbf6b2e2ca5",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "a5f6b236-aa10-46d8-b817-a008a0e941ca",
+      "entity_id": "a5f6b236-aa10-46d8-b817-a008a0e941ca",
+      "actor_id": "66666666-6666-6666-6666-666666666666",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "2e130bf706b9dc4294c4950513d389a8be45ce848e907227a5fe6b5052d3b783",
+      "hash": "ba318d7ef7463306aa2e23e353798d204104ec13518b3bd5ef0e97bcdc132cb4",
+      "metadata": {
+        "from_status": "ACCEPTED",
+        "to_status": "APPOINTMENT_BOOKED",
+        "transition_reason": "Booked"
+      },
+      "details": "{\"from_status\":\"ACCEPTED\",\"to_status\":\"APPOINTMENT_BOOKED\",\"transition_reason\":\"Booked\"}",
+      "created_at": "2026-09-07T10:06:55.380Z"
+    },
+    {
+      "id": "b64111d1-44a8-4302-87df-8ab18f89bb9f",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "a5f6b236-aa10-46d8-b817-a008a0e941ca",
+      "entity_id": "a5f6b236-aa10-46d8-b817-a008a0e941ca",
+      "actor_id": "77777777-7777-7777-7777-777777777777",
+      "actor_role": "HEALTH_WORKER",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "ba318d7ef7463306aa2e23e353798d204104ec13518b3bd5ef0e97bcdc132cb4",
+      "hash": "d8125918f5fd24033e39338da77862956931cdac23d918f515f1ad284d5d0ae7",
+      "metadata": {
+        "from_status": "APPOINTMENT_BOOKED",
+        "to_status": "PATIENT_IN_TRANSIT",
+        "transition_reason": "Transit started"
+      },
+      "details": "{\"from_status\":\"APPOINTMENT_BOOKED\",\"to_status\":\"PATIENT_IN_TRANSIT\",\"transition_reason\":\"Transit started\"}",
+      "created_at": "2026-09-07T10:06:57.016Z"
+    },
+    {
+      "id": "e7f2c2a0-2abc-4039-a507-a405801c823f",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "a5f6b236-aa10-46d8-b817-a008a0e941ca",
+      "entity_id": "a5f6b236-aa10-46d8-b817-a008a0e941ca",
+      "actor_id": "66666666-6666-6666-6666-666666666666",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "d8125918f5fd24033e39338da77862956931cdac23d918f515f1ad284d5d0ae7",
+      "hash": "62e330dde42f5196e319a13d12e03ec61dbde8b2cdc172124026e83c66873eb2",
+      "metadata": {
+        "from_status": "PATIENT_IN_TRANSIT",
+        "to_status": "PATIENT_REACHED",
+        "transition_reason": "Patient arrived at triage desk"
+      },
+      "details": "{\"from_status\":\"PATIENT_IN_TRANSIT\",\"to_status\":\"PATIENT_REACHED\",\"transition_reason\":\"Patient arrived at triage desk\"}",
+      "created_at": "2026-09-07T10:06:58.600Z"
+    },
+    {
+      "id": "1126e042-ba9b-47b6-bd6a-23361a20a5fa",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "a5f6b236-aa10-46d8-b817-a008a0e941ca",
+      "entity_id": "a5f6b236-aa10-46d8-b817-a008a0e941ca",
+      "actor_id": "66666666-6666-6666-6666-666666666666",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "62e330dde42f5196e319a13d12e03ec61dbde8b2cdc172124026e83c66873eb2",
+      "hash": "6bb080e883f8e9def0a586f295703355da2441212ea888f2000bec93511e43ab",
+      "metadata": {
+        "from_status": "PATIENT_REACHED",
+        "to_status": "DOCTOR_ASSIGNED",
+        "transition_reason": "Patient ready for cardiac consult"
+      },
+      "details": "{\"from_status\":\"PATIENT_REACHED\",\"to_status\":\"DOCTOR_ASSIGNED\",\"transition_reason\":\"Patient ready for cardiac consult\"}",
+      "created_at": "2026-09-07T10:07:01.634Z"
+    },
+    {
+      "id": "1e4c6cd0-d181-4b68-9ac1-ff58c580e971",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "3487cd0b-da18-4245-bf49-cd5f72067be2",
+      "entity_id": "3487cd0b-da18-4245-bf49-cd5f72067be2",
+      "actor_id": "77777777-7777-7777-7777-777777777777",
+      "actor_role": "HEALTH_WORKER",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "6bb080e883f8e9def0a586f295703355da2441212ea888f2000bec93511e43ab",
+      "hash": "c3f4d56c21c4283038f4d96a91a4d10c9de096c4469741a3440e2da93bfeed0b",
+      "metadata": {
+        "from_status": "TRIAGED",
+        "to_status": "URGENT_ESCALATION",
+        "transition_reason": "Initial facility assignment (11111111-1111-1111-1111-111111111111)"
+      },
+      "details": "{\"from_status\":\"TRIAGED\",\"to_status\":\"URGENT_ESCALATION\",\"transition_reason\":\"Initial facility assignment (11111111-1111-1111-1111-111111111111)\"}",
+      "created_at": "2026-09-07T10:07:04.275Z"
+    },
+    {
+      "id": "a23cc763-9742-4a95-907b-79859e6e8c0c",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "3487cd0b-da18-4245-bf49-cd5f72067be2",
+      "entity_id": "3487cd0b-da18-4245-bf49-cd5f72067be2",
+      "actor_id": "77777777-7777-7777-7777-777777777777",
+      "actor_role": "HEALTH_WORKER",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "c3f4d56c21c4283038f4d96a91a4d10c9de096c4469741a3440e2da93bfeed0b",
+      "hash": "97d54590dd8d07796f69f9f4f9744ef9fb159c6e01cc8299bcd662c56c921875",
+      "metadata": {
+        "from_status": "URGENT_ESCALATION",
+        "to_status": "PATIENT_IN_TRANSIT",
+        "transition_reason": "Emergency ambulance dispatch"
+      },
+      "details": "{\"from_status\":\"URGENT_ESCALATION\",\"to_status\":\"PATIENT_IN_TRANSIT\",\"transition_reason\":\"Emergency ambulance dispatch\"}",
+      "created_at": "2026-09-07T10:07:05.771Z"
+    },
+    {
+      "id": "47759547-8c68-401e-b76c-d9e53df993a4",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "3487cd0b-da18-4245-bf49-cd5f72067be2",
+      "entity_id": "3487cd0b-da18-4245-bf49-cd5f72067be2",
+      "actor_id": "66666666-6666-6666-6666-666666666666",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "97d54590dd8d07796f69f9f4f9744ef9fb159c6e01cc8299bcd662c56c921875",
+      "hash": "c97d680c24dc1491bc1e0a484aae24518db297d4be5dfffe1f40c81ec9a9cc8d",
+      "metadata": {
+        "from_status": "PATIENT_IN_TRANSIT",
+        "to_status": "PATIENT_REACHED",
+        "transition_reason": "Ambulance reached Facility A triage"
+      },
+      "details": "{\"from_status\":\"PATIENT_IN_TRANSIT\",\"to_status\":\"PATIENT_REACHED\",\"transition_reason\":\"Ambulance reached Facility A triage\"}",
+      "created_at": "2026-09-07T10:07:07.256Z"
+    },
+    {
+      "id": "5927657e-7680-42d3-8163-8dbd771d1ebd",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "3487cd0b-da18-4245-bf49-cd5f72067be2",
+      "entity_id": "3487cd0b-da18-4245-bf49-cd5f72067be2",
+      "actor_id": "66666666-6666-6666-6666-666666666666",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "c97d680c24dc1491bc1e0a484aae24518db297d4be5dfffe1f40c81ec9a9cc8d",
+      "hash": "6776a5c825012b18b4760ed3bfc0ef63e28c8855cbdb1e90b3cb426505a0ab52",
+      "metadata": {
+        "from_status": "PATIENT_REACHED",
+        "to_status": "REROUTING_REQUIRED",
+        "transition_reason": "No eligible, active, or available doctor for specialty 'NEUROSURGERY' found at facility 11111111-1111-1111-1111-111111111111. Controlled rerouting required."
+      },
+      "details": "{\"from_status\":\"PATIENT_REACHED\",\"to_status\":\"REROUTING_REQUIRED\",\"transition_reason\":\"No eligible, active, or available doctor for specialty 'NEUROSURGERY' found at facility 11111111-1111-1111-1111-111111111111. Controlled rerouting required.\"}",
+      "created_at": "2026-09-07T10:07:09.500Z"
+    },
+    {
+      "id": "ace81a11-3d38-44b1-9398-d8c053bea765",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "40299669-b6f8-44bb-a645-4775c25a80eb",
+      "entity_id": "40299669-b6f8-44bb-a645-4775c25a80eb",
+      "actor_id": "77777777-7777-7777-7777-777777777777",
+      "actor_role": "HEALTH_WORKER",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "6776a5c825012b18b4760ed3bfc0ef63e28c8855cbdb1e90b3cb426505a0ab52",
+      "hash": "4b590651bb16e77f8b34e3f1a91535d0af4f59e60f0ee48adab064af2ba4a6d1",
+      "metadata": {
+        "from_status": "TRIAGED",
+        "to_status": "FACILITY_SELECTED",
+        "transition_reason": "Initial facility assignment (22222222-2222-2222-2222-222222222222)"
+      },
+      "details": "{\"from_status\":\"TRIAGED\",\"to_status\":\"FACILITY_SELECTED\",\"transition_reason\":\"Initial facility assignment (22222222-2222-2222-2222-222222222222)\"}",
+      "created_at": "2026-09-07T10:07:13.756Z"
+    },
+    {
+      "id": "b9322993-9fbe-403e-b2a5-5fc1c0943e4a",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "40299669-b6f8-44bb-a645-4775c25a80eb",
+      "entity_id": "40299669-b6f8-44bb-a645-4775c25a80eb",
+      "actor_id": "66666666-6666-6666-6666-666666666666",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "4b590651bb16e77f8b34e3f1a91535d0af4f59e60f0ee48adab064af2ba4a6d1",
+      "hash": "94cb0c6821e405330836c082153ae2ed68fc7bec9ae078471395dfd6edaa0aec",
+      "metadata": {
+        "from_status": "FACILITY_SELECTED",
+        "to_status": "ACCEPTED",
+        "transition_reason": "Accepted"
+      },
+      "details": "{\"from_status\":\"FACILITY_SELECTED\",\"to_status\":\"ACCEPTED\",\"transition_reason\":\"Accepted\"}",
+      "created_at": "2026-09-07T10:07:15.569Z"
+    },
+    {
+      "id": "269d23bf-a8f9-4cdb-ada5-b76b220b9358",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "40299669-b6f8-44bb-a645-4775c25a80eb",
+      "entity_id": "40299669-b6f8-44bb-a645-4775c25a80eb",
+      "actor_id": "66666666-6666-6666-6666-666666666666",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "94cb0c6821e405330836c082153ae2ed68fc7bec9ae078471395dfd6edaa0aec",
+      "hash": "9cc544e3e3ff01200478abb69c44fdc76f8d3cce1247ae17e1b0c5796302b7b3",
+      "metadata": {
+        "from_status": "ACCEPTED",
+        "to_status": "APPOINTMENT_BOOKED",
+        "transition_reason": "Booked"
+      },
+      "details": "{\"from_status\":\"ACCEPTED\",\"to_status\":\"APPOINTMENT_BOOKED\",\"transition_reason\":\"Booked\"}",
+      "created_at": "2026-09-07T10:07:17.069Z"
+    },
+    {
+      "id": "f865d262-e721-41a4-8c59-2a86904ba76f",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "40299669-b6f8-44bb-a645-4775c25a80eb",
+      "entity_id": "40299669-b6f8-44bb-a645-4775c25a80eb",
+      "actor_id": "77777777-7777-7777-7777-777777777777",
+      "actor_role": "HEALTH_WORKER",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "9cc544e3e3ff01200478abb69c44fdc76f8d3cce1247ae17e1b0c5796302b7b3",
+      "hash": "97ccaf2a3ee3cc08a79dbe09b2cb1738b7326e816644fb2297a88dee304b132f",
+      "metadata": {
+        "from_status": "APPOINTMENT_BOOKED",
+        "to_status": "PATIENT_IN_TRANSIT",
+        "transition_reason": "Transit started"
+      },
+      "details": "{\"from_status\":\"APPOINTMENT_BOOKED\",\"to_status\":\"PATIENT_IN_TRANSIT\",\"transition_reason\":\"Transit started\"}",
+      "created_at": "2026-09-07T10:07:18.626Z"
+    },
+    {
+      "id": "305a2264-4df0-4084-b252-498e4e9b4b70",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "40299669-b6f8-44bb-a645-4775c25a80eb",
+      "entity_id": "40299669-b6f8-44bb-a645-4775c25a80eb",
+      "actor_id": "66666666-6666-6666-6666-666666666666",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "97ccaf2a3ee3cc08a79dbe09b2cb1738b7326e816644fb2297a88dee304b132f",
+      "hash": "e4a44e4b0afce199e6f9cdadd82fae6b84b8e4f37e5eaf9c020fc92ac2c9fdfe",
+      "metadata": {
+        "from_status": "PATIENT_IN_TRANSIT",
+        "to_status": "PATIENT_REACHED",
+        "transition_reason": "Arrived at facility"
+      },
+      "details": "{\"from_status\":\"PATIENT_IN_TRANSIT\",\"to_status\":\"PATIENT_REACHED\",\"transition_reason\":\"Arrived at facility\"}",
+      "created_at": "2026-09-07T10:07:20.223Z"
+    },
+    {
+      "id": "3ecc9612-06d7-4508-9cf4-7faf122181a7",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "40299669-b6f8-44bb-a645-4775c25a80eb",
+      "entity_id": "40299669-b6f8-44bb-a645-4775c25a80eb",
+      "actor_id": "66666666-6666-6666-6666-666666666666",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "e4a44e4b0afce199e6f9cdadd82fae6b84b8e4f37e5eaf9c020fc92ac2c9fdfe",
+      "hash": "bdf47aaec58231784f57e2ab9de2bf0335c8aeb587e9a27aa2b30874fffd1de1",
+      "metadata": {
+        "from_status": "PATIENT_REACHED",
+        "to_status": "DOCTOR_ASSIGNED",
+        "transition_reason": "Assigned to Dr. Anand Deshmukh"
+      },
+      "details": "{\"from_status\":\"PATIENT_REACHED\",\"to_status\":\"DOCTOR_ASSIGNED\",\"transition_reason\":\"Assigned to Dr. Anand Deshmukh\"}",
+      "created_at": "2026-09-07T10:07:21.821Z"
+    },
+    {
+      "id": "b5fec6a4-3a4f-40b7-81c3-39f14fd27845",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "40299669-b6f8-44bb-a645-4775c25a80eb",
+      "entity_id": "40299669-b6f8-44bb-a645-4775c25a80eb",
+      "actor_id": "44444444-4444-4444-4444-444444444444",
+      "actor_role": "DOCTOR",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "bdf47aaec58231784f57e2ab9de2bf0335c8aeb587e9a27aa2b30874fffd1de1",
+      "hash": "6601e512840e5d29e8559432b5c626f07aab6a24664e1d0d0f73b2a2406d8b2d",
+      "metadata": {
+        "from_status": "DOCTOR_ASSIGNED",
+        "to_status": "CONSULTATION_COMPLETED",
+        "transition_reason": "Diagnosis: Gestational Hypertension (Stabilized). Prescription generated."
+      },
+      "details": "{\"from_status\":\"DOCTOR_ASSIGNED\",\"to_status\":\"CONSULTATION_COMPLETED\",\"transition_reason\":\"Diagnosis: Gestational Hypertension (Stabilized). Prescription generated.\"}",
+      "created_at": "2026-09-07T10:07:25.087Z"
+    },
+    {
+      "id": "5fc7b7f8-45db-4810-9b96-aa4100f7a5a5",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "40299669-b6f8-44bb-a645-4775c25a80eb",
+      "entity_id": "40299669-b6f8-44bb-a645-4775c25a80eb",
+      "actor_id": "44444444-4444-4444-4444-444444444444",
+      "actor_role": "DOCTOR",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "6601e512840e5d29e8559432b5c626f07aab6a24664e1d0d0f73b2a2406d8b2d",
+      "hash": "69513a04177863cc8f356939db5360ef8b08b501d2e83721581c852e588536f1",
+      "metadata": {
+        "from_status": "CONSULTATION_COMPLETED",
+        "to_status": "TREATMENT_COMPLETED",
+        "transition_reason": "Treatment plan finalized, ready for follow-up"
+      },
+      "details": "{\"from_status\":\"CONSULTATION_COMPLETED\",\"to_status\":\"TREATMENT_COMPLETED\",\"transition_reason\":\"Treatment plan finalized, ready for follow-up\"}",
+      "created_at": "2026-09-07T10:07:26.580Z"
+    },
+    {
+      "id": "99ead43d-5b7e-4e00-a347-bf1afe0cd73a",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "8704ad97-f42e-4b17-bb08-5dd61606a628",
+      "entity_id": "8704ad97-f42e-4b17-bb08-5dd61606a628",
+      "actor_id": "77777777-7777-7777-7777-777777777777",
+      "actor_role": "HEALTH_WORKER",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "69513a04177863cc8f356939db5360ef8b08b501d2e83721581c852e588536f1",
+      "hash": "f0e7c082ecd5610a7770c37b3cd924b186c29f30ff7baff60bd151a83e51ec89",
+      "metadata": {
+        "from_status": "TRIAGED",
+        "to_status": "FACILITY_SELECTED",
+        "transition_reason": "Initial facility assignment (22222222-2222-2222-2222-222222222222)"
+      },
+      "details": "{\"from_status\":\"TRIAGED\",\"to_status\":\"FACILITY_SELECTED\",\"transition_reason\":\"Initial facility assignment (22222222-2222-2222-2222-222222222222)\"}",
+      "created_at": "2026-09-07T10:07:28.837Z"
+    },
+    {
+      "id": "2719c06b-00ea-436b-b50b-8777e2612d7c",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "8704ad97-f42e-4b17-bb08-5dd61606a628",
+      "entity_id": "8704ad97-f42e-4b17-bb08-5dd61606a628",
+      "actor_id": "66666666-6666-6666-6666-666666666666",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "f0e7c082ecd5610a7770c37b3cd924b186c29f30ff7baff60bd151a83e51ec89",
+      "hash": "49d0cce0d0f549850c7819415a9151a37d8585fb3db77f11f3175646b26f2543",
+      "metadata": {
+        "from_status": "FACILITY_SELECTED",
+        "to_status": "ACCEPTED",
+        "transition_reason": "Accepted"
+      },
+      "details": "{\"from_status\":\"FACILITY_SELECTED\",\"to_status\":\"ACCEPTED\",\"transition_reason\":\"Accepted\"}",
+      "created_at": "2026-09-07T10:07:30.533Z"
+    },
+    {
+      "id": "e08c32fd-999f-46d7-974d-39c67f53f796",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "8704ad97-f42e-4b17-bb08-5dd61606a628",
+      "entity_id": "8704ad97-f42e-4b17-bb08-5dd61606a628",
+      "actor_id": "66666666-6666-6666-6666-666666666666",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "49d0cce0d0f549850c7819415a9151a37d8585fb3db77f11f3175646b26f2543",
+      "hash": "b095b4f3e7a81d521aa752977954abbcd13e83f315dd200193457d8584aef2a5",
+      "metadata": {
+        "from_status": "ACCEPTED",
+        "to_status": "APPOINTMENT_BOOKED",
+        "transition_reason": "Booked"
+      },
+      "details": "{\"from_status\":\"ACCEPTED\",\"to_status\":\"APPOINTMENT_BOOKED\",\"transition_reason\":\"Booked\"}",
+      "created_at": "2026-09-07T10:07:32.455Z"
+    },
+    {
+      "id": "afe99126-ba3e-4b35-95d8-60cc1fd1905c",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "8704ad97-f42e-4b17-bb08-5dd61606a628",
+      "entity_id": "8704ad97-f42e-4b17-bb08-5dd61606a628",
+      "actor_id": "77777777-7777-7777-7777-777777777777",
+      "actor_role": "HEALTH_WORKER",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "b095b4f3e7a81d521aa752977954abbcd13e83f315dd200193457d8584aef2a5",
+      "hash": "44b7367bd3b0ac7a5667c22bb207cb150da15a83fe6e447185981fc5e5a28dd6",
+      "metadata": {
+        "from_status": "APPOINTMENT_BOOKED",
+        "to_status": "PATIENT_IN_TRANSIT",
+        "transition_reason": "Transit"
+      },
+      "details": "{\"from_status\":\"APPOINTMENT_BOOKED\",\"to_status\":\"PATIENT_IN_TRANSIT\",\"transition_reason\":\"Transit\"}",
+      "created_at": "2026-09-07T10:07:34.061Z"
+    },
+    {
+      "id": "b9989003-df8d-49e1-8098-6f0ddd3fee25",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "8704ad97-f42e-4b17-bb08-5dd61606a628",
+      "entity_id": "8704ad97-f42e-4b17-bb08-5dd61606a628",
+      "actor_id": "66666666-6666-6666-6666-666666666666",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "44b7367bd3b0ac7a5667c22bb207cb150da15a83fe6e447185981fc5e5a28dd6",
+      "hash": "bfc0951c020765c8aad7e46221b0f121eba5fb106f16c648e4577952cf9a3b6f",
+      "metadata": {
+        "from_status": "PATIENT_IN_TRANSIT",
+        "to_status": "PATIENT_REACHED",
+        "transition_reason": "Reached"
+      },
+      "details": "{\"from_status\":\"PATIENT_IN_TRANSIT\",\"to_status\":\"PATIENT_REACHED\",\"transition_reason\":\"Reached\"}",
+      "created_at": "2026-09-07T10:07:35.564Z"
+    },
+    {
+      "id": "d841696d-cdbd-4239-a1f8-29670837843c",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "8704ad97-f42e-4b17-bb08-5dd61606a628",
+      "entity_id": "8704ad97-f42e-4b17-bb08-5dd61606a628",
+      "actor_id": "66666666-6666-6666-6666-666666666666",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "bfc0951c020765c8aad7e46221b0f121eba5fb106f16c648e4577952cf9a3b6f",
+      "hash": "e6f823aa6767eabc62ca9b4f7c4d80cb6ee4719b60f6ffb98ba4ddb0b6d8c3fe",
+      "metadata": {
+        "from_status": "PATIENT_REACHED",
+        "to_status": "DOCTOR_ASSIGNED",
+        "transition_reason": "Assigned"
+      },
+      "details": "{\"from_status\":\"PATIENT_REACHED\",\"to_status\":\"DOCTOR_ASSIGNED\",\"transition_reason\":\"Assigned\"}",
+      "created_at": "2026-09-07T10:07:37.085Z"
+    },
+    {
+      "id": "c4fa836c-b6ff-4402-8256-ab2f098d49bb",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "8704ad97-f42e-4b17-bb08-5dd61606a628",
+      "entity_id": "8704ad97-f42e-4b17-bb08-5dd61606a628",
+      "actor_id": "44444444-4444-4444-4444-444444444444",
+      "actor_role": "DOCTOR",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "e6f823aa6767eabc62ca9b4f7c4d80cb6ee4719b60f6ffb98ba4ddb0b6d8c3fe",
+      "hash": "807dbf2167811e529820c19f43809af8170e1869b4be2811a336b38478d3e378",
+      "metadata": {
+        "from_status": "DOCTOR_ASSIGNED",
+        "to_status": "CONSULTATION_COMPLETED",
+        "transition_reason": "Diagnosis: Suspected Appendicitis. Prescription generated."
+      },
+      "details": "{\"from_status\":\"DOCTOR_ASSIGNED\",\"to_status\":\"CONSULTATION_COMPLETED\",\"transition_reason\":\"Diagnosis: Suspected Appendicitis. Prescription generated.\"}",
+      "created_at": "2026-09-07T10:07:39.927Z"
+    },
+    {
+      "id": "7038ebb9-3ab6-4d53-abd7-41a86729f2d2",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "8704ad97-f42e-4b17-bb08-5dd61606a628",
+      "entity_id": "8704ad97-f42e-4b17-bb08-5dd61606a628",
+      "actor_id": "44444444-4444-4444-4444-444444444444",
+      "actor_role": "DOCTOR",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "807dbf2167811e529820c19f43809af8170e1869b4be2811a336b38478d3e378",
+      "hash": "9eff8b0e267eab198fce3421b93e869cc5c4b461453bcfc453994951733d1b9b",
+      "metadata": {
+        "from_status": "CONSULTATION_COMPLETED",
+        "to_status": "DIAGNOSTICS_PENDING",
+        "transition_reason": "Diagnostic tests ordered: Abdominal Ultrasound, CBC, CRP"
+      },
+      "details": "{\"from_status\":\"CONSULTATION_COMPLETED\",\"to_status\":\"DIAGNOSTICS_PENDING\",\"transition_reason\":\"Diagnostic tests ordered: Abdominal Ultrasound, CBC, CRP\"}",
+      "created_at": "2026-09-07T10:07:41.428Z"
+    },
+    {
+      "id": "b7f546ff-ee85-4a0b-9a6d-593f54f70021",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "8704ad97-f42e-4b17-bb08-5dd61606a628",
+      "entity_id": "8704ad97-f42e-4b17-bb08-5dd61606a628",
+      "actor_id": "66666666-6666-6666-6666-666666666666",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "9eff8b0e267eab198fce3421b93e869cc5c4b461453bcfc453994951733d1b9b",
+      "hash": "dc4e39645c0ff54e6e03a192c37327a730d289aae44a2dc17792f936198e87de",
+      "metadata": {
+        "from_status": "DIAGNOSTICS_PENDING",
+        "to_status": "DIAGNOSTICS_COMPLETED",
+        "transition_reason": "Ultrasound confirmed mild appendicitis without perforation"
+      },
+      "details": "{\"from_status\":\"DIAGNOSTICS_PENDING\",\"to_status\":\"DIAGNOSTICS_COMPLETED\",\"transition_reason\":\"Ultrasound confirmed mild appendicitis without perforation\"}",
+      "created_at": "2026-09-07T10:07:43.407Z"
+    },
+    {
+      "id": "0f3f1bb9-2ddf-4718-881b-e5dfae6a708b",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "8704ad97-f42e-4b17-bb08-5dd61606a628",
+      "entity_id": "8704ad97-f42e-4b17-bb08-5dd61606a628",
+      "actor_id": "66666666-6666-6666-6666-666666666666",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "dc4e39645c0ff54e6e03a192c37327a730d289aae44a2dc17792f936198e87de",
+      "hash": "9650d4967415d85b28b2006de690f18308d6a43cd7f49311c80d29668ec8c879",
+      "metadata": {
+        "from_status": "DIAGNOSTICS_COMPLETED",
+        "to_status": "TREATMENT_COMPLETED",
+        "transition_reason": "Diagnostics evaluated by clinical team, treatment finalized"
+      },
+      "details": "{\"from_status\":\"DIAGNOSTICS_COMPLETED\",\"to_status\":\"TREATMENT_COMPLETED\",\"transition_reason\":\"Diagnostics evaluated by clinical team, treatment finalized\"}",
+      "created_at": "2026-09-07T10:07:45.154Z"
+    },
+    {
+      "id": "4e048d3c-ed92-4875-8721-92d9b8c379c7",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "40299669-b6f8-44bb-a645-4775c25a80eb",
+      "entity_id": "40299669-b6f8-44bb-a645-4775c25a80eb",
+      "actor_id": "44444444-4444-4444-4444-444444444444",
+      "actor_role": "DOCTOR",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "9650d4967415d85b28b2006de690f18308d6a43cd7f49311c80d29668ec8c879",
+      "hash": "b28ac67ed197cfc73a46ba14346760a663e73cf2333f4c7c6ed4f0720cc56286",
+      "metadata": {
+        "from_status": "TREATMENT_COMPLETED",
+        "to_status": "FOLLOW_UP_PENDING",
+        "transition_reason": "Follow-up scheduled in 7 days: Measure blood pressure at home, check for headache/blurring"
+      },
+      "details": "{\"from_status\":\"TREATMENT_COMPLETED\",\"to_status\":\"FOLLOW_UP_PENDING\",\"transition_reason\":\"Follow-up scheduled in 7 days: Measure blood pressure at home, check for headache/blurring\"}",
+      "created_at": "2026-09-07T10:07:46.988Z"
+    },
+    {
+      "id": "746490e9-31f0-479d-87bc-00fe16d634a0",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "40299669-b6f8-44bb-a645-4775c25a80eb",
+      "entity_id": "40299669-b6f8-44bb-a645-4775c25a80eb",
+      "actor_id": "77777777-7777-7777-7777-777777777777",
+      "actor_role": "HEALTH_WORKER",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "b28ac67ed197cfc73a46ba14346760a663e73cf2333f4c7c6ed4f0720cc56286",
+      "hash": "ab4dd061a1cfdde460485fb5e34c8aec2647b9ecf249b2f935d0511371880b41",
+      "metadata": {
+        "from_status": "FOLLOW_UP_PENDING",
+        "to_status": "FOLLOW_UP_COMPLETED",
+        "transition_reason": "Community follow-up completed: Day 7 home visit conducted. BP is 122/82 mmHg. Patient symptom-free and compliant with medications. (Patient Status: RECOVERED)"
+      },
+      "details": "{\"from_status\":\"FOLLOW_UP_PENDING\",\"to_status\":\"FOLLOW_UP_COMPLETED\",\"transition_reason\":\"Community follow-up completed: Day 7 home visit conducted. BP is 122/82 mmHg. Patient symptom-free and compliant with medications. (Patient Status: RECOVERED)\"}",
+      "created_at": "2026-09-07T10:07:49.036Z"
+    },
+    {
+      "id": "761e9f80-42c6-4ca3-9b4d-b5617abe6816",
+      "event_type": "PROXY_PROXY_ACCESS_GRANTED",
+      "action_type": "PROXY_PROXY_ACCESS_GRANTED",
+      "resource_type": "CAREGIVER_PROXY",
+      "resource_id": "99999999-9999-9999-9999-999999999999",
+      "entity_id": "99999999-9999-9999-9999-999999999999",
+      "actor_id": "99999999-9999-9999-9999-999999999999",
+      "actor_role": "CAREGIVER_PROXY",
+      "action": "PROXY_PROXY_ACCESS_GRANTED:CAREGIVER_PROXY",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "ab4dd061a1cfdde460485fb5e34c8aec2647b9ecf249b2f935d0511371880b41",
+      "hash": "de1ef446fe3ad925e577a7b53cf54f81a38037a0b1b2e061180620b5e14cd6d8",
+      "metadata": {
+        "scope": "REFERRAL_STATUS",
+        "caregiver_user_id": "66666666-6666-6666-6666-666666666666",
+        "relationshipType": "DAUGHTER"
+      },
+      "details": "{\"scope\":\"REFERRAL_STATUS\",\"caregiver_user_id\":\"66666666-6666-6666-6666-666666666666\",\"relationshipType\":\"DAUGHTER\"}",
+      "created_at": "2026-09-07T10:07:51.692Z"
+    },
+    {
+      "id": "a4729f19-8fbd-4660-a5f8-edd89670ed5a",
+      "event_type": "PROXY_PROXY_ACCESS_GRANTED",
+      "action_type": "PROXY_PROXY_ACCESS_GRANTED",
+      "resource_type": "CAREGIVER_PROXY",
+      "resource_id": "99999999-9999-9999-9999-999999999999",
+      "entity_id": "99999999-9999-9999-9999-999999999999",
+      "actor_id": "99999999-9999-9999-9999-999999999999",
+      "actor_role": "CAREGIVER_PROXY",
+      "action": "PROXY_PROXY_ACCESS_GRANTED:CAREGIVER_PROXY",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "de1ef446fe3ad925e577a7b53cf54f81a38037a0b1b2e061180620b5e14cd6d8",
+      "hash": "f94b6beb1919c2878de63d7e4209745557f6cfcb4625fa82e45f7d9a7bff5fd0",
+      "metadata": {
+        "scope": "SELECTED_RECORDS",
+        "caregiver_user_id": "66666666-6666-6666-6666-666666666666",
+        "relationshipType": "DAUGHTER"
+      },
+      "details": "{\"scope\":\"SELECTED_RECORDS\",\"caregiver_user_id\":\"66666666-6666-6666-6666-666666666666\",\"relationshipType\":\"DAUGHTER\"}",
+      "created_at": "2026-09-07T10:07:53.634Z"
+    },
+    {
+      "id": "c07654c0-6cbf-479c-b14d-0c5735ef0238",
+      "event_type": "PROXY_PROXY_CLINICAL_DATA_ACCESSED",
+      "action_type": "PROXY_PROXY_CLINICAL_DATA_ACCESSED",
+      "resource_type": "CAREGIVER_PROXY",
+      "resource_id": "99999999-9999-9999-9999-999999999999",
+      "entity_id": "99999999-9999-9999-9999-999999999999",
+      "actor_id": "66666666-6666-6666-6666-666666666666",
+      "actor_role": "CAREGIVER_PROXY",
+      "action": "PROXY_PROXY_CLINICAL_DATA_ACCESSED:CAREGIVER_PROXY",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "f94b6beb1919c2878de63d7e4209745557f6cfcb4625fa82e45f7d9a7bff5fd0",
+      "hash": "27b789804c4fa8ce520765fb026e7a09196fda2f367addf30b5c8866331f1cba",
+      "metadata": {
+        "scope": "SELECTED_RECORDS",
+        "caregiver_user_id": "66666666-6666-6666-6666-666666666666",
+        "dataType": "DOCUMENTS",
+        "recordCount": 0
+      },
+      "details": "{\"scope\":\"SELECTED_RECORDS\",\"caregiver_user_id\":\"66666666-6666-6666-6666-666666666666\",\"dataType\":\"DOCUMENTS\",\"recordCount\":0}",
+      "created_at": "2026-09-07T10:07:54.653Z"
+    },
+    {
+      "id": "d451169a-76cf-49b2-aca3-f06dd490be04",
+      "event_type": "PROXY_PROXY_ACCESS_REVOKED",
+      "action_type": "PROXY_PROXY_ACCESS_REVOKED",
+      "resource_type": "CAREGIVER_PROXY",
+      "resource_id": "99999999-9999-9999-9999-999999999999",
+      "entity_id": "99999999-9999-9999-9999-999999999999",
+      "actor_id": "99999999-9999-9999-9999-999999999999",
+      "actor_role": "CAREGIVER_PROXY",
+      "action": "PROXY_PROXY_ACCESS_REVOKED:CAREGIVER_PROXY",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "27b789804c4fa8ce520765fb026e7a09196fda2f367addf30b5c8866331f1cba",
+      "hash": "2d1c2f14b2798a1a857b9bb244c34c373112a5bea9e676319ac218e4c380e1e5",
+      "metadata": {
+        "scope": "SELECTED_RECORDS",
+        "caregiver_user_id": "66666666-6666-6666-6666-666666666666",
+        "reason": "Patient changed caregiver",
+        "revokedAt": "2026-09-07T10:07:55.236Z"
+      },
+      "details": "{\"scope\":\"SELECTED_RECORDS\",\"caregiver_user_id\":\"66666666-6666-6666-6666-666666666666\",\"reason\":\"Patient changed caregiver\",\"revokedAt\":\"2026-09-07T10:07:55.236Z\"}",
+      "created_at": "2026-09-07T10:07:55.540Z"
+    },
+    {
+      "id": "9f971654-f016-415f-a0d8-e80aaf406fd7",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "2ac96266-dc3b-4c8d-9c42-7125f7a02a6b",
+      "entity_id": "2ac96266-dc3b-4c8d-9c42-7125f7a02a6b",
+      "actor_id": "77777777-7777-7777-7777-777777777777",
+      "actor_role": "HEALTH_WORKER",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "2d1c2f14b2798a1a857b9bb244c34c373112a5bea9e676319ac218e4c380e1e5",
+      "hash": "bb29a6873ade346a53be5fad8f2d44bdb584797f1076ab1b83d4320c9be48c7b",
+      "metadata": {
+        "from_status": "TRIAGED",
+        "to_status": "FACILITY_SELECTED",
+        "transition_reason": "Offline facility selection synchronized"
+      },
+      "details": "{\"from_status\":\"TRIAGED\",\"to_status\":\"FACILITY_SELECTED\",\"transition_reason\":\"Offline facility selection synchronized\"}",
+      "created_at": "2026-09-07T10:07:59.303Z"
+    },
+    {
+      "id": "71c20e5e-9922-4018-a988-2627b1b9b0db",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "2ac96266-dc3b-4c8d-9c42-7125f7a02a6b",
+      "entity_id": "2ac96266-dc3b-4c8d-9c42-7125f7a02a6b",
+      "actor_id": "66666666-6666-6666-6666-666666666666",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "bb29a6873ade346a53be5fad8f2d44bdb584797f1076ab1b83d4320c9be48c7b",
+      "hash": "4855a7f8dbe34b0be593e055500f2dc179a94a987e5e3dde95a06cd8112cd8a6",
+      "metadata": {
+        "from_status": "FACILITY_SELECTED",
+        "to_status": "ACCEPTED",
+        "transition_reason": "Facility accepted"
+      },
+      "details": "{\"from_status\":\"FACILITY_SELECTED\",\"to_status\":\"ACCEPTED\",\"transition_reason\":\"Facility accepted\"}",
+      "created_at": "2026-09-07T10:08:00.806Z"
+    },
+    {
+      "id": "187b208a-d62f-4cb5-b676-4d31ed8069b8",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "2ac96266-dc3b-4c8d-9c42-7125f7a02a6b",
+      "entity_id": "2ac96266-dc3b-4c8d-9c42-7125f7a02a6b",
+      "actor_id": "66666666-6666-6666-6666-666666666666",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "4855a7f8dbe34b0be593e055500f2dc179a94a987e5e3dde95a06cd8112cd8a6",
+      "hash": "bbf3d0805b32467bfd7f5321ecf6cb4cf7946e9b6ee9310e892b8aee26834af3",
+      "metadata": {
+        "from_status": "ACCEPTED",
+        "to_status": "APPOINTMENT_BOOKED",
+        "transition_reason": "Slot booked"
+      },
+      "details": "{\"from_status\":\"ACCEPTED\",\"to_status\":\"APPOINTMENT_BOOKED\",\"transition_reason\":\"Slot booked\"}",
+      "created_at": "2026-09-07T10:08:02.316Z"
+    },
+    {
+      "id": "42c622b5-b8bc-4501-ab0f-9fcf3c2bbfd1",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "dc9d1e43-f506-4a03-a7af-60c43fadb503",
+      "entity_id": "dc9d1e43-f506-4a03-a7af-60c43fadb503",
+      "actor_id": "staff-user-1",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "bbf3d0805b32467bfd7f5321ecf6cb4cf7946e9b6ee9310e892b8aee26834af3",
+      "hash": "f57464a7806d676d1b01632b4a6497941f04554d6ad24a43a4c475884fb40076",
+      "metadata": {
+        "from_status": "ACCEPTED",
+        "to_status": "APPOINTMENT_BOOKED",
+        "transition_reason": "Appointment confirmed with token #T-101"
+      },
+      "details": "{\"from_status\":\"ACCEPTED\",\"to_status\":\"APPOINTMENT_BOOKED\",\"transition_reason\":\"Appointment confirmed with token #T-101\"}",
+      "created_at": "2026-09-07T10:08:05.635Z"
+    },
+    {
+      "id": "d9b3aaea-4c7e-4a4d-82bc-6c5d471f6e8e",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "28ee9a03-4e35-4ff1-9437-97d6d75d9b51",
+      "entity_id": "28ee9a03-4e35-4ff1-9437-97d6d75d9b51",
+      "actor_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "actor_role": "PATIENT",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "f57464a7806d676d1b01632b4a6497941f04554d6ad24a43a4c475884fb40076",
+      "hash": "e7be9b9cc4f5a4060d88d15eea94f5532e45f9d46a6c80d08580099be7c2eaf9",
+      "metadata": {
+        "from_status": "APPOINTMENT_BOOKED",
+        "to_status": "PATIENT_IN_TRANSIT",
+        "transition_reason": "Patient departed home towards facility"
+      },
+      "details": "{\"from_status\":\"APPOINTMENT_BOOKED\",\"to_status\":\"PATIENT_IN_TRANSIT\",\"transition_reason\":\"Patient departed home towards facility\"}",
+      "created_at": "2026-09-07T10:08:07.562Z"
+    },
+    {
+      "id": "1f508fec-67c8-4912-92b7-48a73120a969",
+      "event_type": "PRESCRIPTION_ISSUED",
+      "action_type": "PRESCRIPTION_ISSUED",
+      "resource_type": "PRESCRIPTION",
+      "resource_id": "rx-test-999",
+      "entity_id": "rx-test-999",
+      "actor_id": "44444444-4444-4444-4444-444444444444",
+      "actor_role": "DOCTOR",
+      "action": "PRESCRIPTION_ISSUED:PRESCRIPTION",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "e7be9b9cc4f5a4060d88d15eea94f5532e45f9d46a6c80d08580099be7c2eaf9",
+      "hash": "d308755907139a607caee1539785a90c92c832827386fecc72cc940f1745898f",
+      "metadata": {
+        "dosage_instructions": "Tab Labetalol 100mg BD",
+        "password": "[REDACTED_PRIVACY_PROTECTED]",
+        "clinical_notes": "[REDACTED_PRIVACY_PROTECTED]"
+      },
+      "details": "{\"dosage_instructions\":\"Tab Labetalol 100mg BD\",\"password\":\"[REDACTED_PRIVACY_PROTECTED]\",\"clinical_notes\":\"[REDACTED_PRIVACY_PROTECTED]\"}",
+      "created_at": "2026-09-07T10:08:11.056Z"
+    },
+    {
+      "id": "6c4b318b-8b16-44f4-b78a-de707fb7d931",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "f943f3f5-7447-4ba3-b326-a86879fb07db",
+      "entity_id": "f943f3f5-7447-4ba3-b326-a86879fb07db",
+      "actor_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "actor_role": "PATIENT",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "d308755907139a607caee1539785a90c92c832827386fecc72cc940f1745898f",
+      "hash": "cbf16671772d19a90aa3fabdfa596bb4259fba9c922300515cb69fde3070438d",
+      "metadata": {
+        "from_status": "APPOINTMENT_BOOKED",
+        "to_status": "PATIENT_IN_TRANSIT",
+        "transition_reason": "Patient departed towards facility"
+      },
+      "details": "{\"from_status\":\"APPOINTMENT_BOOKED\",\"to_status\":\"PATIENT_IN_TRANSIT\",\"transition_reason\":\"Patient departed towards facility\"}",
+      "created_at": "2026-09-07T10:08:16.268Z"
+    },
+    {
+      "id": "444cd23a-bf86-41e3-9e4a-6a82454dba7d",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "705b3708-5cc2-433d-9b79-c4514f928f9e",
+      "entity_id": "705b3708-5cc2-433d-9b79-c4514f928f9e",
+      "actor_id": "SYSTEM",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "cbf16671772d19a90aa3fabdfa596bb4259fba9c922300515cb69fde3070438d",
+      "hash": "f158cfac7c4d32518563545bdfe1cb85e55e488f4e902e7d3074e4ef2e04af6b",
+      "metadata": {
+        "from_status": "PATIENT_REACHED",
+        "to_status": "DOCTOR_ASSIGNED",
+        "transition_reason": "Doctor Dr. Priya Available (CARDIOLOGY) assigned to arrived patient"
+      },
+      "details": "{\"from_status\":\"PATIENT_REACHED\",\"to_status\":\"DOCTOR_ASSIGNED\",\"transition_reason\":\"Doctor Dr. Priya Available (CARDIOLOGY) assigned to arrived patient\"}",
+      "created_at": "2026-09-07T10:08:18.498Z"
+    },
+    {
+      "id": "9fb25fbb-52de-4fa0-adcc-3a34d62c0189",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "8d577abe-8482-46c5-964a-15c772b5d49b",
+      "entity_id": "8d577abe-8482-46c5-964a-15c772b5d49b",
+      "actor_id": "staff-1",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "f158cfac7c4d32518563545bdfe1cb85e55e488f4e902e7d3074e4ef2e04af6b",
+      "hash": "bb4c97e10a21c4a166a810bd4ec925a363db2254706867016bfd58f6a681452d",
+      "metadata": {
+        "from_status": "FACILITY_CONFIRMATION_PENDING",
+        "to_status": "REROUTING_REQUIRED",
+        "transition_reason": "Facility ICU capacity full due to local disaster diversion"
+      },
+      "details": "{\"from_status\":\"FACILITY_CONFIRMATION_PENDING\",\"to_status\":\"REROUTING_REQUIRED\",\"transition_reason\":\"Facility ICU capacity full due to local disaster diversion\"}",
+      "created_at": "2026-09-07T10:08:20.359Z"
+    },
+    {
+      "id": "53c75a1a-daca-4bad-94cb-08622ddab7de",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "8d577abe-8482-46c5-964a-15c772b5d49b",
+      "entity_id": "8d577abe-8482-46c5-964a-15c772b5d49b",
+      "actor_id": "worker-1",
+      "actor_role": "HEALTH_WORKER",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "bb4c97e10a21c4a166a810bd4ec925a363db2254706867016bfd58f6a681452d",
+      "hash": "81731c65fd38c5ab14d4ac9d2a85459a475d5a6abed8e045804e9867bc7c3ba3",
+      "metadata": {
+        "from_status": "REROUTING_REQUIRED",
+        "to_status": "FACILITY_SELECTED",
+        "transition_reason": "Rerouted to secondary facility 11111111-1111-1111-1111-111111111111"
+      },
+      "details": "{\"from_status\":\"REROUTING_REQUIRED\",\"to_status\":\"FACILITY_SELECTED\",\"transition_reason\":\"Rerouted to secondary facility 11111111-1111-1111-1111-111111111111\"}",
+      "created_at": "2026-09-07T10:08:21.724Z"
+    },
+    {
+      "id": "8bc4a880-bfcc-46c0-a978-756abe5f492f",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "67f36144-37c7-4c75-8c96-84baa6006059",
+      "entity_id": "67f36144-37c7-4c75-8c96-84baa6006059",
+      "actor_id": "SYSTEM",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "81731c65fd38c5ab14d4ac9d2a85459a475d5a6abed8e045804e9867bc7c3ba3",
+      "hash": "accd5f34082de33b99144827d87b28b74f85e6d28b8141447768f9f1532fd199",
+      "metadata": {
+        "from_status": "FACILITY_SELECTED",
+        "to_status": "ACCEPTED",
+        "transition_reason": "Facility confirmed specialty & bed availability"
+      },
+      "details": "{\"from_status\":\"FACILITY_SELECTED\",\"to_status\":\"ACCEPTED\",\"transition_reason\":\"Facility confirmed specialty & bed availability\"}",
+      "created_at": "2026-09-07T10:08:26.173Z"
+    },
+    {
+      "id": "596f7839-191c-43ff-9289-006288ddfb41",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "67f36144-37c7-4c75-8c96-84baa6006059",
+      "entity_id": "67f36144-37c7-4c75-8c96-84baa6006059",
+      "actor_id": "SYSTEM",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "accd5f34082de33b99144827d87b28b74f85e6d28b8141447768f9f1532fd199",
+      "hash": "123f843ac6bb415c191cc415a08448f6a0d46051e2fc3aa4341c5d3e0f916cd3",
+      "metadata": {
+        "from_status": "ACCEPTED",
+        "to_status": "APPOINTMENT_BOOKED",
+        "transition_reason": "Slot confirmed for tomorrow 10:00 AM"
+      },
+      "details": "{\"from_status\":\"ACCEPTED\",\"to_status\":\"APPOINTMENT_BOOKED\",\"transition_reason\":\"Slot confirmed for tomorrow 10:00 AM\"}",
+      "created_at": "2026-09-07T10:08:27.660Z"
+    },
+    {
+      "id": "f4e9ecc0-07dd-4eee-a247-c43385cc5e6c",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "67f36144-37c7-4c75-8c96-84baa6006059",
+      "entity_id": "67f36144-37c7-4c75-8c96-84baa6006059",
+      "actor_id": "SYSTEM",
+      "actor_role": "PATIENT",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "123f843ac6bb415c191cc415a08448f6a0d46051e2fc3aa4341c5d3e0f916cd3",
+      "hash": "f23a079dddff4770c05d3ee309c72863d514d0a24434a61ca5c61dbc0b4922c1",
+      "metadata": {
+        "from_status": "APPOINTMENT_BOOKED",
+        "to_status": "PATIENT_IN_TRANSIT",
+        "transition_reason": "Patient departed towards facility"
+      },
+      "details": "{\"from_status\":\"APPOINTMENT_BOOKED\",\"to_status\":\"PATIENT_IN_TRANSIT\",\"transition_reason\":\"Patient departed towards facility\"}",
+      "created_at": "2026-09-07T10:08:29.274Z"
+    },
+    {
+      "id": "59bf2d8e-b374-49c6-a4f2-94f8334b8d86",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "67f36144-37c7-4c75-8c96-84baa6006059",
+      "entity_id": "67f36144-37c7-4c75-8c96-84baa6006059",
+      "actor_id": "SYSTEM",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "f23a079dddff4770c05d3ee309c72863d514d0a24434a61ca5c61dbc0b4922c1",
+      "hash": "ed5dfc40b6615828c388804ffe3011c9efae5dbcc0fd7d0b556d662f4fd0c3f6",
+      "metadata": {
+        "from_status": "PATIENT_IN_TRANSIT",
+        "to_status": "PATIENT_REACHED",
+        "transition_reason": "Patient arrived at hospital triage desk"
+      },
+      "details": "{\"from_status\":\"PATIENT_IN_TRANSIT\",\"to_status\":\"PATIENT_REACHED\",\"transition_reason\":\"Patient arrived at hospital triage desk\"}",
+      "created_at": "2026-09-07T10:08:30.831Z"
+    },
+    {
+      "id": "553302ad-d668-411a-9609-5243d0e66044",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "67f36144-37c7-4c75-8c96-84baa6006059",
+      "entity_id": "67f36144-37c7-4c75-8c96-84baa6006059",
+      "actor_id": "SYSTEM",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "ed5dfc40b6615828c388804ffe3011c9efae5dbcc0fd7d0b556d662f4fd0c3f6",
+      "hash": "2b9b400c7d4a39be8815771dac6e113c3ec5010a967f326a5c4d7d171a01c75a",
+      "metadata": {
+        "from_status": "PATIENT_REACHED",
+        "to_status": "DOCTOR_ASSIGNED",
+        "transition_reason": "Assigned to Dr. Rajesh Kulkarni"
+      },
+      "details": "{\"from_status\":\"PATIENT_REACHED\",\"to_status\":\"DOCTOR_ASSIGNED\",\"transition_reason\":\"Assigned to Dr. Rajesh Kulkarni\"}",
+      "created_at": "2026-09-07T10:08:32.333Z"
+    },
+    {
+      "id": "664f562e-b995-4ee9-b4ce-731c2a1ac7f2",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "67f36144-37c7-4c75-8c96-84baa6006059",
+      "entity_id": "67f36144-37c7-4c75-8c96-84baa6006059",
+      "actor_id": "SYSTEM",
+      "actor_role": "DOCTOR",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "2b9b400c7d4a39be8815771dac6e113c3ec5010a967f326a5c4d7d171a01c75a",
+      "hash": "c2a2ed71401bfb969a18428c55d984b90e63ef1f4408c120531c217a123bddf9",
+      "metadata": {
+        "from_status": "DOCTOR_ASSIGNED",
+        "to_status": "CONSULTATION_COMPLETED",
+        "transition_reason": "Administered labetalol, ultrasound normal, continuous fetal monitoring"
+      },
+      "details": "{\"from_status\":\"DOCTOR_ASSIGNED\",\"to_status\":\"CONSULTATION_COMPLETED\",\"transition_reason\":\"Administered labetalol, ultrasound normal, continuous fetal monitoring\"}",
+      "created_at": "2026-09-07T10:08:33.849Z"
+    },
+    {
+      "id": "0bbe2e1b-6bed-4516-9d45-660f7da0f80b",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "67f36144-37c7-4c75-8c96-84baa6006059",
+      "entity_id": "67f36144-37c7-4c75-8c96-84baa6006059",
+      "actor_id": "SYSTEM",
+      "actor_role": "DOCTOR",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "c2a2ed71401bfb969a18428c55d984b90e63ef1f4408c120531c217a123bddf9",
+      "hash": "c1a7f5645bb37e619b692be3602a45d046b936f39707eac36be054c5a1f7ea22",
+      "metadata": {
+        "from_status": "CONSULTATION_COMPLETED",
+        "to_status": "TREATMENT_COMPLETED",
+        "transition_reason": "Patient stabilized, oral antihypertensives prescribed"
+      },
+      "details": "{\"from_status\":\"CONSULTATION_COMPLETED\",\"to_status\":\"TREATMENT_COMPLETED\",\"transition_reason\":\"Patient stabilized, oral antihypertensives prescribed\"}",
+      "created_at": "2026-09-07T10:08:35.337Z"
+    },
+    {
+      "id": "c606c55d-614d-4501-afd8-40c87784efa8",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "67f36144-37c7-4c75-8c96-84baa6006059",
+      "entity_id": "67f36144-37c7-4c75-8c96-84baa6006059",
+      "actor_id": "SYSTEM",
+      "actor_role": "DOCTOR",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "c1a7f5645bb37e619b692be3602a45d046b936f39707eac36be054c5a1f7ea22",
+      "hash": "899a9c9da53b9842a12e7f05d685779443ad0a2f5a6df64ea8818694456d89ac",
+      "metadata": {
+        "from_status": "TREATMENT_COMPLETED",
+        "to_status": "FOLLOW_UP_PENDING",
+        "transition_reason": "7-day BP check scheduled with local ASHA"
+      },
+      "details": "{\"from_status\":\"TREATMENT_COMPLETED\",\"to_status\":\"FOLLOW_UP_PENDING\",\"transition_reason\":\"7-day BP check scheduled with local ASHA\"}",
+      "created_at": "2026-09-07T10:08:36.834Z"
+    },
+    {
+      "id": "02f82f99-fb6c-4cd8-b040-9c7c769d2ee3",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "67f36144-37c7-4c75-8c96-84baa6006059",
+      "entity_id": "67f36144-37c7-4c75-8c96-84baa6006059",
+      "actor_id": "SYSTEM",
+      "actor_role": "HEALTH_WORKER",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "899a9c9da53b9842a12e7f05d685779443ad0a2f5a6df64ea8818694456d89ac",
+      "hash": "5d3bb76686bbbb25ba79844951b464f99151f7a423e423cdc53f37835aa762e4",
+      "metadata": {
+        "from_status": "FOLLOW_UP_PENDING",
+        "to_status": "FOLLOW_UP_COMPLETED",
+        "transition_reason": "Day 7 home visit completed. BP 120/80, no danger signs."
+      },
+      "details": "{\"from_status\":\"FOLLOW_UP_PENDING\",\"to_status\":\"FOLLOW_UP_COMPLETED\",\"transition_reason\":\"Day 7 home visit completed. BP 120/80, no danger signs.\"}",
+      "created_at": "2026-09-07T10:08:38.380Z"
+    },
+    {
+      "id": "cf6163de-feb1-46a5-ad36-4fd6f4f4ce55",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "12388c20-5382-4214-9384-9c515bc9880e",
+      "entity_id": "12388c20-5382-4214-9384-9c515bc9880e",
+      "actor_id": "staff-1",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "5d3bb76686bbbb25ba79844951b464f99151f7a423e423cdc53f37835aa762e4",
+      "hash": "5cfc205d411a63bfd21b503dd2893de0716cf64896962fa9f27923ab40bddb5e",
+      "metadata": {
+        "from_status": "FACILITY_SELECTED",
+        "to_status": "ACCEPTED",
+        "transition_reason": "Normal clinical progression"
+      },
+      "details": "{\"from_status\":\"FACILITY_SELECTED\",\"to_status\":\"ACCEPTED\",\"transition_reason\":\"Normal clinical progression\"}",
+      "created_at": "2026-09-07T10:08:40.847Z"
+    },
+    {
+      "id": "d9278d21-8530-4ce2-a5ad-cd9062dea75f",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "12388c20-5382-4214-9384-9c515bc9880e",
+      "entity_id": "12388c20-5382-4214-9384-9c515bc9880e",
+      "actor_id": "staff-1",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "5cfc205d411a63bfd21b503dd2893de0716cf64896962fa9f27923ab40bddb5e",
+      "hash": "1db714fbe68ca48520a3ef36de7757bc33255b139fef5bcb89eede14e2190138",
+      "metadata": {
+        "from_status": "ACCEPTED",
+        "to_status": "APPOINTMENT_BOOKED",
+        "transition_reason": "Slot #42 booked"
+      },
+      "details": "{\"from_status\":\"ACCEPTED\",\"to_status\":\"APPOINTMENT_BOOKED\",\"transition_reason\":\"Slot #42 booked\"}",
+      "created_at": "2026-09-07T10:08:42.366Z"
+    },
+    {
+      "id": "768ee889-9019-4e6d-9ca3-2a8e8056ca6c",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "12388c20-5382-4214-9384-9c515bc9880e",
+      "entity_id": "12388c20-5382-4214-9384-9c515bc9880e",
+      "actor_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "actor_role": "PATIENT",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "1db714fbe68ca48520a3ef36de7757bc33255b139fef5bcb89eede14e2190138",
+      "hash": "08ca473dae7b4cad2624791e021869a2050cf726b6b0e78bec8a5ce299ba5c01",
+      "metadata": {
+        "from_status": "APPOINTMENT_BOOKED",
+        "to_status": "PATIENT_IN_TRANSIT",
+        "transition_reason": "Normal clinical progression"
+      },
+      "details": "{\"from_status\":\"APPOINTMENT_BOOKED\",\"to_status\":\"PATIENT_IN_TRANSIT\",\"transition_reason\":\"Normal clinical progression\"}",
+      "created_at": "2026-09-07T10:08:43.883Z"
+    },
+    {
+      "id": "f5b5326a-e3b2-43fb-8889-c6cd7ee01ef6",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "12388c20-5382-4214-9384-9c515bc9880e",
+      "entity_id": "12388c20-5382-4214-9384-9c515bc9880e",
+      "actor_id": "staff-1",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "08ca473dae7b4cad2624791e021869a2050cf726b6b0e78bec8a5ce299ba5c01",
+      "hash": "10406166ab403d783ccc08479d7011eee1e02fcef0d257de36467614b7b877fc",
+      "metadata": {
+        "from_status": "PATIENT_IN_TRANSIT",
+        "to_status": "PATIENT_REACHED",
+        "transition_reason": "Normal clinical progression"
+      },
+      "details": "{\"from_status\":\"PATIENT_IN_TRANSIT\",\"to_status\":\"PATIENT_REACHED\",\"transition_reason\":\"Normal clinical progression\"}",
+      "created_at": "2026-09-07T10:08:45.408Z"
+    },
+    {
+      "id": "774c53d3-8a5d-4c67-904e-c750a1082f85",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "12388c20-5382-4214-9384-9c515bc9880e",
+      "entity_id": "12388c20-5382-4214-9384-9c515bc9880e",
+      "actor_id": "staff-1",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "10406166ab403d783ccc08479d7011eee1e02fcef0d257de36467614b7b877fc",
+      "hash": "16d0d1450dabc64ab09b5f1c9e1d8814802b7134f0836b7a27b5deb3db8554ca",
+      "metadata": {
+        "from_status": "PATIENT_REACHED",
+        "to_status": "DOCTOR_ASSIGNED",
+        "transition_reason": "Normal clinical progression"
+      },
+      "details": "{\"from_status\":\"PATIENT_REACHED\",\"to_status\":\"DOCTOR_ASSIGNED\",\"transition_reason\":\"Normal clinical progression\"}",
+      "created_at": "2026-09-07T10:08:46.909Z"
+    },
+    {
+      "id": "ce7264a9-7f3f-4860-9fa8-f72de9dd1d39",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "12388c20-5382-4214-9384-9c515bc9880e",
+      "entity_id": "12388c20-5382-4214-9384-9c515bc9880e",
+      "actor_id": "44444444-4444-4444-4444-444444444444",
+      "actor_role": "DOCTOR",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "16d0d1450dabc64ab09b5f1c9e1d8814802b7134f0836b7a27b5deb3db8554ca",
+      "hash": "53c514d4cc42850cbe2e42d9b14392412da1dd5903c2f542aacba17d3bf9bad0",
+      "metadata": {
+        "from_status": "DOCTOR_ASSIGNED",
+        "to_status": "CONSULTATION_COMPLETED",
+        "transition_reason": "Initial consult complete"
+      },
+      "details": "{\"from_status\":\"DOCTOR_ASSIGNED\",\"to_status\":\"CONSULTATION_COMPLETED\",\"transition_reason\":\"Initial consult complete\"}",
+      "created_at": "2026-09-07T10:08:48.422Z"
+    },
+    {
+      "id": "24a2b63c-1497-4392-bbea-6782005a2311",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "12388c20-5382-4214-9384-9c515bc9880e",
+      "entity_id": "12388c20-5382-4214-9384-9c515bc9880e",
+      "actor_id": "44444444-4444-4444-4444-444444444444",
+      "actor_role": "DOCTOR",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "53c514d4cc42850cbe2e42d9b14392412da1dd5903c2f542aacba17d3bf9bad0",
+      "hash": "e398cbc3ac9c678e2385bcb37d6c632bb9d159612e63ace81830f9401a0bc245",
+      "metadata": {
+        "from_status": "CONSULTATION_COMPLETED",
+        "to_status": "TREATMENT_COMPLETED",
+        "transition_reason": "Treatment prescribed"
+      },
+      "details": "{\"from_status\":\"CONSULTATION_COMPLETED\",\"to_status\":\"TREATMENT_COMPLETED\",\"transition_reason\":\"Treatment prescribed\"}",
+      "created_at": "2026-09-07T10:08:49.972Z"
+    },
+    {
+      "id": "5d8f4664-f786-42db-9de4-1ca4682fe4fe",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "12388c20-5382-4214-9384-9c515bc9880e",
+      "entity_id": "12388c20-5382-4214-9384-9c515bc9880e",
+      "actor_id": "44444444-4444-4444-4444-444444444444",
+      "actor_role": "DOCTOR",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "e398cbc3ac9c678e2385bcb37d6c632bb9d159612e63ace81830f9401a0bc245",
+      "hash": "4860ade34b7f7425c1b7ef8c4440ad12c2faad50a193faa71f2eaa8ed02a04cc",
+      "metadata": {
+        "from_status": "TREATMENT_COMPLETED",
+        "to_status": "FOLLOW_UP_PENDING",
+        "transition_reason": "ASHA follow up needed in 7 days"
+      },
+      "details": "{\"from_status\":\"TREATMENT_COMPLETED\",\"to_status\":\"FOLLOW_UP_PENDING\",\"transition_reason\":\"ASHA follow up needed in 7 days\"}",
+      "created_at": "2026-09-07T10:08:51.517Z"
+    },
+    {
+      "id": "6fadd2cd-119b-494b-a130-1e89268e6cf2",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "12388c20-5382-4214-9384-9c515bc9880e",
+      "entity_id": "12388c20-5382-4214-9384-9c515bc9880e",
+      "actor_id": "worker-1",
+      "actor_role": "HEALTH_WORKER",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "4860ade34b7f7425c1b7ef8c4440ad12c2faad50a193faa71f2eaa8ed02a04cc",
+      "hash": "6d911a0f6bdf1368022e57156701f0547e743183228e74239195211e6a1393be",
+      "metadata": {
+        "from_status": "FOLLOW_UP_PENDING",
+        "to_status": "FOLLOW_UP_COMPLETED",
+        "transition_reason": "Vitals stable on day 7 visit"
+      },
+      "details": "{\"from_status\":\"FOLLOW_UP_PENDING\",\"to_status\":\"FOLLOW_UP_COMPLETED\",\"transition_reason\":\"Vitals stable on day 7 visit\"}",
+      "created_at": "2026-09-07T10:08:53.071Z"
+    },
+    {
+      "id": "030f0f8d-2a95-418c-a452-7697bb99a20b",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "e66b6b67-cad9-4e57-82fb-2fe594598940",
+      "entity_id": "e66b6b67-cad9-4e57-82fb-2fe594598940",
+      "actor_id": "staff-1",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "6d911a0f6bdf1368022e57156701f0547e743183228e74239195211e6a1393be",
+      "hash": "efee8ed830659c0f24912e9ac8c804d732a70812f25e5c347f4428768170db10",
+      "metadata": {
+        "from_status": "FACILITY_SELECTED",
+        "to_status": "ACCEPTED",
+        "transition_reason": "Normal clinical progression"
+      },
+      "details": "{\"from_status\":\"FACILITY_SELECTED\",\"to_status\":\"ACCEPTED\",\"transition_reason\":\"Normal clinical progression\"}",
+      "created_at": "2026-09-07T10:08:54.629Z"
+    },
+    {
+      "id": "ed3a1862-9807-492d-86d5-9f660292fac4",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "e66b6b67-cad9-4e57-82fb-2fe594598940",
+      "entity_id": "e66b6b67-cad9-4e57-82fb-2fe594598940",
+      "actor_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "actor_role": "PATIENT",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "efee8ed830659c0f24912e9ac8c804d732a70812f25e5c347f4428768170db10",
+      "hash": "07a80eedaa8a5ce645ccc523799e6cafd7428269ed5b98708c808873bf68bee7",
+      "metadata": {
+        "from_status": "ACCEPTED",
+        "to_status": "PATIENT_IN_TRANSIT",
+        "transition_reason": "Emergency 108 ambulance transit"
+      },
+      "details": "{\"from_status\":\"ACCEPTED\",\"to_status\":\"PATIENT_IN_TRANSIT\",\"transition_reason\":\"Emergency 108 ambulance transit\"}",
+      "created_at": "2026-09-07T10:08:56.141Z"
+    },
+    {
+      "id": "13246b33-478d-47df-a0b1-9f57bf266924",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "e66b6b67-cad9-4e57-82fb-2fe594598940",
+      "entity_id": "e66b6b67-cad9-4e57-82fb-2fe594598940",
+      "actor_id": "staff-1",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "07a80eedaa8a5ce645ccc523799e6cafd7428269ed5b98708c808873bf68bee7",
+      "hash": "e6c715ead3d88ae17b0ea384a521378b54e779ab1720b37b0c81cafc7afeccb1",
+      "metadata": {
+        "from_status": "PATIENT_IN_TRANSIT",
+        "to_status": "PATIENT_REACHED",
+        "transition_reason": "Emergency ambulance arrival"
+      },
+      "details": "{\"from_status\":\"PATIENT_IN_TRANSIT\",\"to_status\":\"PATIENT_REACHED\",\"transition_reason\":\"Emergency ambulance arrival\"}",
+      "created_at": "2026-09-07T10:08:57.696Z"
+    },
+    {
+      "id": "e3b89090-360d-4d5a-b3b5-42f807676988",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "e66b6b67-cad9-4e57-82fb-2fe594598940",
+      "entity_id": "e66b6b67-cad9-4e57-82fb-2fe594598940",
+      "actor_id": "staff-1",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "e6c715ead3d88ae17b0ea384a521378b54e779ab1720b37b0c81cafc7afeccb1",
+      "hash": "0cfee3b2a460a9386b7dd20ebbae32a2a3586f2cff5520fdcd95b91b15fac5d2",
+      "metadata": {
+        "from_status": "PATIENT_REACHED",
+        "to_status": "DOCTOR_ASSIGNED",
+        "transition_reason": "Normal clinical progression"
+      },
+      "details": "{\"from_status\":\"PATIENT_REACHED\",\"to_status\":\"DOCTOR_ASSIGNED\",\"transition_reason\":\"Normal clinical progression\"}",
+      "created_at": "2026-09-07T10:08:59.427Z"
+    },
+    {
+      "id": "703f48da-c302-46e4-b5de-1705f54869c2",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "e66b6b67-cad9-4e57-82fb-2fe594598940",
+      "entity_id": "e66b6b67-cad9-4e57-82fb-2fe594598940",
+      "actor_id": "44444444-4444-4444-4444-444444444444",
+      "actor_role": "DOCTOR",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "0cfee3b2a460a9386b7dd20ebbae32a2a3586f2cff5520fdcd95b91b15fac5d2",
+      "hash": "642d9c4897abf60af2274ea2a641460713a68eb68304d7e3fb943129d66dfce9",
+      "metadata": {
+        "from_status": "DOCTOR_ASSIGNED",
+        "to_status": "CONSULTATION_COMPLETED",
+        "transition_reason": "Emergency physician examination complete"
+      },
+      "details": "{\"from_status\":\"DOCTOR_ASSIGNED\",\"to_status\":\"CONSULTATION_COMPLETED\",\"transition_reason\":\"Emergency physician examination complete\"}",
+      "created_at": "2026-09-07T10:09:00.911Z"
+    },
+    {
+      "id": "e9773439-8921-4616-83da-bb8e12811c5c",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "e66b6b67-cad9-4e57-82fb-2fe594598940",
+      "entity_id": "e66b6b67-cad9-4e57-82fb-2fe594598940",
+      "actor_id": "44444444-4444-4444-4444-444444444444",
+      "actor_role": "DOCTOR",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "642d9c4897abf60af2274ea2a641460713a68eb68304d7e3fb943129d66dfce9",
+      "hash": "e1ceed7d5381c03ca8c8225cac0d98fb75108bc16be1917669cddb5eb49829c1",
+      "metadata": {
+        "from_status": "CONSULTATION_COMPLETED",
+        "to_status": "TREATMENT_COMPLETED",
+        "transition_reason": "Emergency resuscitation & stabilization successful"
+      },
+      "details": "{\"from_status\":\"CONSULTATION_COMPLETED\",\"to_status\":\"TREATMENT_COMPLETED\",\"transition_reason\":\"Emergency resuscitation & stabilization successful\"}",
+      "created_at": "2026-09-07T10:09:02.463Z"
+    },
+    {
+      "id": "93d65d26-fed0-4656-8764-97b2ace5d742",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "b477490a-a445-418c-9c8c-18fb058a9d41",
+      "entity_id": "b477490a-a445-418c-9c8c-18fb058a9d41",
+      "actor_id": "staff-1",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "e1ceed7d5381c03ca8c8225cac0d98fb75108bc16be1917669cddb5eb49829c1",
+      "hash": "414d2cb575165c7dccebbb8e11eae4bcf4c32d45ed2eb6bb27aeaf153879c13c",
+      "metadata": {
+        "from_status": "FACILITY_CONFIRMATION_PENDING",
+        "to_status": "REROUTING_REQUIRED",
+        "transition_reason": "Facility A ICU at full capacity"
+      },
+      "details": "{\"from_status\":\"FACILITY_CONFIRMATION_PENDING\",\"to_status\":\"REROUTING_REQUIRED\",\"transition_reason\":\"Facility A ICU at full capacity\"}",
+      "created_at": "2026-09-07T10:09:04.271Z"
+    },
+    {
+      "id": "63efab47-abf0-4a11-bc3f-dc6ef933cf9e",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "b477490a-a445-418c-9c8c-18fb058a9d41",
+      "entity_id": "b477490a-a445-418c-9c8c-18fb058a9d41",
+      "actor_id": "worker-1",
+      "actor_role": "HEALTH_WORKER",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "414d2cb575165c7dccebbb8e11eae4bcf4c32d45ed2eb6bb27aeaf153879c13c",
+      "hash": "002e64505f08800eb56becf1717fe0ddd5af0bcca8a03e3fe694005e5d9c0e89",
+      "metadata": {
+        "from_status": "REROUTING_REQUIRED",
+        "to_status": "FACILITY_SELECTED",
+        "transition_reason": "Transfer to 22222222-2222-2222-2222-222222222222"
+      },
+      "details": "{\"from_status\":\"REROUTING_REQUIRED\",\"to_status\":\"FACILITY_SELECTED\",\"transition_reason\":\"Transfer to 22222222-2222-2222-2222-222222222222\"}",
+      "created_at": "2026-09-07T10:09:05.785Z"
+    },
+    {
+      "id": "809b1f1a-f1fe-44da-8757-6aa35841c3f4",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "b477490a-a445-418c-9c8c-18fb058a9d41",
+      "entity_id": "b477490a-a445-418c-9c8c-18fb058a9d41",
+      "actor_id": "staff-2",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "002e64505f08800eb56becf1717fe0ddd5af0bcca8a03e3fe694005e5d9c0e89",
+      "hash": "d2457de29fbae8dd08f30b209e0a1064d09ad18779cce780c66ec0dcb2971704",
+      "metadata": {
+        "from_status": "FACILITY_SELECTED",
+        "to_status": "ACCEPTED",
+        "transition_reason": "Normal clinical progression"
+      },
+      "details": "{\"from_status\":\"FACILITY_SELECTED\",\"to_status\":\"ACCEPTED\",\"transition_reason\":\"Normal clinical progression\"}",
+      "created_at": "2026-09-07T10:09:07.298Z"
+    },
+    {
+      "id": "bb35bd51-1e9f-4aa3-9bb0-c8597e50d686",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "70d1d661-78fc-47e7-ae52-0229d7ecbb57",
+      "entity_id": "70d1d661-78fc-47e7-ae52-0229d7ecbb57",
+      "actor_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "actor_role": "PATIENT",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "d2457de29fbae8dd08f30b209e0a1064d09ad18779cce780c66ec0dcb2971704",
+      "hash": "d4c84cf0d66ba32f9062d41333182c7eeb91a5dc94c906d99a7770d6297bd04a",
+      "metadata": {
+        "from_status": "APPOINTMENT_BOOKED",
+        "to_status": "CANCELLED",
+        "transition_reason": "Patient symptoms resolved, unable to travel"
+      },
+      "details": "{\"from_status\":\"APPOINTMENT_BOOKED\",\"to_status\":\"CANCELLED\",\"transition_reason\":\"Patient symptoms resolved, unable to travel\"}",
+      "created_at": "2026-09-07T10:09:08.827Z"
+    },
+    {
+      "id": "a45a044a-cd89-41d3-82e8-178cebb523d8",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "222dd502-5e2a-43d3-a893-0c1419a8c0f4",
+      "entity_id": "222dd502-5e2a-43d3-a893-0c1419a8c0f4",
+      "actor_id": "staff-1",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "d4c84cf0d66ba32f9062d41333182c7eeb91a5dc94c906d99a7770d6297bd04a",
+      "hash": "1c0986919433ecfe6607e11cb1de05417fed508c8be10e66df2e9f35a8c0841b",
+      "metadata": {
+        "from_status": "APPOINTMENT_BOOKED",
+        "to_status": "MISSED_APPOINTMENT",
+        "transition_reason": "Patient did not arrive within 4-hour window"
+      },
+      "details": "{\"from_status\":\"APPOINTMENT_BOOKED\",\"to_status\":\"MISSED_APPOINTMENT\",\"transition_reason\":\"Patient did not arrive within 4-hour window\"}",
+      "created_at": "2026-09-07T10:09:10.349Z"
+    },
+    {
+      "id": "7519c438-a832-43e1-9341-55a9e8803d6f",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "222dd502-5e2a-43d3-a893-0c1419a8c0f4",
+      "entity_id": "222dd502-5e2a-43d3-a893-0c1419a8c0f4",
+      "actor_id": "staff-1",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "1c0986919433ecfe6607e11cb1de05417fed508c8be10e66df2e9f35a8c0841b",
+      "hash": "23d6a39cd7dfe0ca9f5e16ca1e4270f380e2252655ee59c55856257490cd85ed",
+      "metadata": {
+        "from_status": "MISSED_APPOINTMENT",
+        "to_status": "APPOINTMENT_BOOKED",
+        "transition_reason": "Rebooked for next Tuesday 11:00 AM"
+      },
+      "details": "{\"from_status\":\"MISSED_APPOINTMENT\",\"to_status\":\"APPOINTMENT_BOOKED\",\"transition_reason\":\"Rebooked for next Tuesday 11:00 AM\"}",
+      "created_at": "2026-09-07T10:09:12.071Z"
+    },
+    {
+      "id": "e3bf030f-fabf-47e2-a239-855fa0fec01c",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "4e52b1ed-1cfc-4242-a373-a48dd27cc0f4",
+      "entity_id": "4e52b1ed-1cfc-4242-a373-a48dd27cc0f4",
+      "actor_id": "44444444-4444-4444-4444-444444444444",
+      "actor_role": "DOCTOR",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "23d6a39cd7dfe0ca9f5e16ca1e4270f380e2252655ee59c55856257490cd85ed",
+      "hash": "659df83712b4be247d23fde9f49f9d3cd07c58827a21e5bf6b7ddda8142f4e40",
+      "metadata": {
+        "from_status": "DOCTOR_ASSIGNED",
+        "to_status": "CONSULTATION_COMPLETED",
+        "transition_reason": "Normal clinical progression"
+      },
+      "details": "{\"from_status\":\"DOCTOR_ASSIGNED\",\"to_status\":\"CONSULTATION_COMPLETED\",\"transition_reason\":\"Normal clinical progression\"}",
+      "created_at": "2026-09-07T10:09:13.587Z"
+    },
+    {
+      "id": "d2dd5774-ed4c-4283-8d2b-8a7b2194e8f9",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "4e52b1ed-1cfc-4242-a373-a48dd27cc0f4",
+      "entity_id": "4e52b1ed-1cfc-4242-a373-a48dd27cc0f4",
+      "actor_id": "44444444-4444-4444-4444-444444444444",
+      "actor_role": "DOCTOR",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "659df83712b4be247d23fde9f49f9d3cd07c58827a21e5bf6b7ddda8142f4e40",
+      "hash": "2d0a1aab296ebf6997c7061c0fe9a82472fbbda5384bbec67358b59df422e430",
+      "metadata": {
+        "from_status": "CONSULTATION_COMPLETED",
+        "to_status": "DIAGNOSTICS_PENDING",
+        "transition_reason": "Ordered Ultrasound & CBC"
+      },
+      "details": "{\"from_status\":\"CONSULTATION_COMPLETED\",\"to_status\":\"DIAGNOSTICS_PENDING\",\"transition_reason\":\"Ordered Ultrasound & CBC\"}",
+      "created_at": "2026-09-07T10:09:15.119Z"
+    },
+    {
+      "id": "f88162e6-502f-4c3c-8101-035e5c0fb618",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "4e52b1ed-1cfc-4242-a373-a48dd27cc0f4",
+      "entity_id": "4e52b1ed-1cfc-4242-a373-a48dd27cc0f4",
+      "actor_id": "lab-tech-1",
+      "actor_role": "FACILITY_STAFF",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "2d0a1aab296ebf6997c7061c0fe9a82472fbbda5384bbec67358b59df422e430",
+      "hash": "6180f887bcaf5dd69529d378598b1ab5fb19a5057fa590a4e2b74e838800d2a3",
+      "metadata": {
+        "from_status": "DIAGNOSTICS_PENDING",
+        "to_status": "DIAGNOSTICS_COMPLETED",
+        "transition_reason": "Ultrasound report attached"
+      },
+      "details": "{\"from_status\":\"DIAGNOSTICS_PENDING\",\"to_status\":\"DIAGNOSTICS_COMPLETED\",\"transition_reason\":\"Ultrasound report attached\"}",
+      "created_at": "2026-09-07T10:09:16.660Z"
+    },
+    {
+      "id": "c744248f-0037-4e01-96fc-7e1a868b69d7",
+      "event_type": "STATE_TRANSITION",
+      "action_type": "STATE_TRANSITION",
+      "resource_type": "REFERRAL",
+      "resource_id": "4e52b1ed-1cfc-4242-a373-a48dd27cc0f4",
+      "entity_id": "4e52b1ed-1cfc-4242-a373-a48dd27cc0f4",
+      "actor_id": "44444444-4444-4444-4444-444444444444",
+      "actor_role": "DOCTOR",
+      "action": "STATE_TRANSITION:REFERRAL",
+      "result": "SUCCESS",
+      "status": "SUCCESS",
+      "request_id": null,
+      "previous_hash": "6180f887bcaf5dd69529d378598b1ab5fb19a5057fa590a4e2b74e838800d2a3",
+      "hash": "96d7645a5dff6fa6aab22fd18ca2bfa59d0cf0a5849dac3ba6adf122fe664a2d",
+      "metadata": {
+        "from_status": "DIAGNOSTICS_COMPLETED",
+        "to_status": "TREATMENT_COMPLETED",
+        "transition_reason": "Prescribed medication based on ultrasound"
+      },
+      "details": "{\"from_status\":\"DIAGNOSTICS_COMPLETED\",\"to_status\":\"TREATMENT_COMPLETED\",\"transition_reason\":\"Prescribed medication based on ultrasound\"}",
+      "created_at": "2026-09-07T10:09:18.406Z"
     }
   ],
   "family_members": [],
@@ -11783,7 +14106,7 @@
       "relationship_type": "DAUGHTER",
       "permission_scope": "SELECTED_RECORDS",
       "status": "REVOKED",
-      "revoked_at": "2026-09-07T09:59:02.868Z",
+      "revoked_at": "2026-09-07T10:07:55.236Z",
       "created_at": "2026-09-07T08:20:05.146Z"
     },
     {
@@ -12358,6 +14681,78 @@
         "sync_status": "SYNCED"
       },
       "processed_at": "2026-09-07T09:59:11.174Z"
+    },
+    {
+      "id": "64bc13c3-c8af-49d9-bfe6-966a16b1db90",
+      "client_operation_id": "op-dedup-1788775546730",
+      "idempotency_key": "BEN-700460eb-e1b0-4ba1-a0dd-8ef7ba7040bf",
+      "device_id": "device-unit-test-99",
+      "operation_type": "CREATE_PATIENT",
+      "server_id": "700460eb-e1b0-4ba1-a0dd-8ef7ba7040bf",
+      "result": {
+        "patient_id": "700460eb-e1b0-4ba1-a0dd-8ef7ba7040bf",
+        "phone": "9877700011",
+        "sync_status": "SYNCED"
+      },
+      "processed_at": "2026-09-07T10:05:47.739Z"
+    },
+    {
+      "id": "c9e4e94b-099b-4225-bac1-ce3a2fc301b0",
+      "client_operation_id": "22521e14-144e-49ef-9dca-a84fa20953d9",
+      "idempotency_key": "IDEM-REG-1788775677444",
+      "device_id": "ASHA-TAB-PUNE-88",
+      "operation_type": "CREATE_PATIENT",
+      "server_id": "29dcffbd-7f19-42d7-a089-b1df18eae57c",
+      "result": {
+        "patient_id": "29dcffbd-7f19-42d7-a089-b1df18eae57c",
+        "phone": "9844433322",
+        "sync_status": "SYNCED"
+      },
+      "processed_at": "2026-09-07T10:07:58.056Z"
+    },
+    {
+      "id": "c2832418-94ee-4a6b-aafb-1c05f59f9100",
+      "client_operation_id": "187dc0f3-0890-47e1-bc52-860ce0d5bcc8",
+      "idempotency_key": "IDEM-ASS-1788775677444",
+      "device_id": "ASHA-TAB-PUNE-88",
+      "operation_type": "RECORD_ASSESSMENT",
+      "server_id": "8e2d359e-0923-4b27-b4ab-34c0fb324360",
+      "result": {
+        "assessment_id": "8e2d359e-0923-4b27-b4ab-34c0fb324360",
+        "urgency": "ROUTINE",
+        "triage_guidance": "Assessment recorded",
+        "sync_status": "SYNCED"
+      },
+      "processed_at": "2026-09-07T10:07:58.068Z"
+    },
+    {
+      "id": "b1273a41-59a4-4af0-8785-a090edbfe26b",
+      "client_operation_id": "aff710d9-5eca-4691-a3f2-2b8be35439b5",
+      "idempotency_key": "IDEM-REF-aff710d9-5eca-4691-a3f2-2b8be35439b5",
+      "device_id": "ASHA-TAB-PUNE-88",
+      "operation_type": "CREATE_REFERRAL",
+      "server_id": "2ac96266-dc3b-4c8d-9c42-7125f7a02a6b",
+      "result": {
+        "referral_id": "2ac96266-dc3b-4c8d-9c42-7125f7a02a6b",
+        "status": "FACILITY_SELECTED",
+        "facility_id": "22222222-2222-2222-2222-222222222222",
+        "sync_status": "SYNCED"
+      },
+      "processed_at": "2026-09-07T10:07:59.919Z"
+    },
+    {
+      "id": "b6f74eb9-e2d7-44d3-b5c9-4c1c57d4b4dc",
+      "client_operation_id": "592e23ac-555d-4254-ad32-78ebea6372a2",
+      "idempotency_key": "IDEM-REG-592e23ac-555d-4254-ad32-78ebea6372a2",
+      "device_id": "ASHA-TAB-PUNE-88",
+      "operation_type": "CREATE_PATIENT",
+      "server_id": "6bceb125-916b-442d-b3bf-efb98c3e718a",
+      "result": {
+        "patient_id": "6bceb125-916b-442d-b3bf-efb98c3e718a",
+        "phone": "9855544433",
+        "sync_status": "SYNCED"
+      },
+      "processed_at": "2026-09-07T10:08:03.987Z"
     }
   ],
   "notifications": [
@@ -19810,6 +22205,1615 @@
         "actor_role": "DOCTOR"
       },
       "created_at": "2026-09-07T10:00:30.450Z"
+    },
+    {
+      "id": "dc13609a-ccbe-446e-8647-728ad4427227",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Facility Confirmed for Referral",
+      "message": "Your referral has been matched to District Hospital Nashik.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "4dd8caac-f338-4fa8-936b-43ecb1b630dc",
+        "previous_state": "TRIAGED",
+        "new_state": "FACILITY_SELECTED",
+        "actor_id": "77777777-7777-7777-7777-777777777777",
+        "actor_role": "HEALTH_WORKER"
+      },
+      "created_at": "2026-09-07T10:06:09.195Z"
+    },
+    {
+      "id": "2cef9b36-a3c4-4c62-9fbd-fc9bb4d796e9",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Referral Cancelled",
+      "message": "Referral has been cancelled. Reason: Administrative/Patient request.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "d44f1ca3-eaf3-4312-b644-3c9935d67b43",
+        "previous_state": "TRIAGED",
+        "new_state": "CANCELLED",
+        "actor_id": "77777777-7777-7777-7777-777777777777",
+        "actor_role": "HEALTH_WORKER"
+      },
+      "created_at": "2026-09-07T10:06:12.127Z"
+    },
+    {
+      "id": "dc7b5b1b-e457-44c3-8d46-3e2c11e43cf0",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Referral Status Update",
+      "message": "Referral transitioned from FACILITY_SELECTED to ACCEPTED.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "4dd8caac-f338-4fa8-936b-43ecb1b630dc",
+        "previous_state": "FACILITY_SELECTED",
+        "new_state": "ACCEPTED",
+        "actor_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:06:13.686Z"
+    },
+    {
+      "id": "cc25a621-219a-421d-a349-ee5b6947ea17",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Appointment Slot Confirmed",
+      "message": "Your appointment is confirmed for the requested date. Slot token: TOKEN-NASHIK-99.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "4dd8caac-f338-4fa8-936b-43ecb1b630dc",
+        "previous_state": "ACCEPTED",
+        "new_state": "APPOINTMENT_BOOKED",
+        "actor_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:06:15.195Z"
+    },
+    {
+      "id": "bc2703ed-f823-4907-bcd0-eb1c156575b2",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Referral Status Update",
+      "message": "Referral transitioned from APPOINTMENT_BOOKED to PATIENT_IN_TRANSIT.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "4dd8caac-f338-4fa8-936b-43ecb1b630dc",
+        "previous_state": "APPOINTMENT_BOOKED",
+        "new_state": "PATIENT_IN_TRANSIT",
+        "actor_id": "99999999-9999-9999-9999-999999999999",
+        "actor_role": "PATIENT"
+      },
+      "created_at": "2026-09-07T10:06:16.678Z"
+    },
+    {
+      "id": "b0c7d7ce-8560-4fb9-b94f-65a50ceaadc5",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Patient Arrival Verified",
+      "message": "Patient check-in recorded at hospital desk.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "4dd8caac-f338-4fa8-936b-43ecb1b630dc",
+        "previous_state": "PATIENT_IN_TRANSIT",
+        "new_state": "PATIENT_REACHED",
+        "actor_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:06:18.185Z"
+    },
+    {
+      "id": "6965c3c2-402b-4be7-8803-1938cf83811d",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Specialist Doctor Assigned",
+      "message": "You have been assigned to Dr. Anand Deshmukh.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "4dd8caac-f338-4fa8-936b-43ecb1b630dc",
+        "previous_state": "PATIENT_REACHED",
+        "new_state": "DOCTOR_ASSIGNED",
+        "actor_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:06:19.744Z"
+    },
+    {
+      "id": "aca79377-d0f2-44cd-8583-3bdf49113cf2",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Appointment Confirmed",
+      "message": "Your OPD appointment on 2026-09-07 (Today Walk-in / Emergency Triage) is confirmed.",
+      "type": "ALERT",
+      "is_read": false,
+      "read": false,
+      "metadata": {},
+      "created_at": "2026-09-07T10:06:21.540Z"
+    },
+    {
+      "id": "3f3882cd-812e-4e77-af98-9c7a2252a3c8",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Appointment Confirmed",
+      "message": "Your OPD appointment on 2027-01-01 (Slot-89450) is confirmed.",
+      "type": "ALERT",
+      "is_read": false,
+      "read": false,
+      "metadata": {},
+      "created_at": "2026-09-07T10:06:22.523Z"
+    },
+    {
+      "id": "32a7241c-df60-48cf-a46b-ff33a6345f5f",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Facility Confirmed for Referral",
+      "message": "Your referral has been matched to District Hospital Nashik.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "2695a682-fe7d-4692-8e52-4d0771b3155b",
+        "previous_state": "TRIAGED",
+        "new_state": "FACILITY_SELECTED",
+        "actor_id": "77777777-7777-7777-7777-777777777777",
+        "actor_role": "HEALTH_WORKER"
+      },
+      "created_at": "2026-09-07T10:06:25.169Z"
+    },
+    {
+      "id": "ce4d2116-a28a-4199-91d6-66750e323a26",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Referral Status Update",
+      "message": "Referral transitioned from FACILITY_SELECTED to ACCEPTED.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "2695a682-fe7d-4692-8e52-4d0771b3155b",
+        "previous_state": "FACILITY_SELECTED",
+        "new_state": "ACCEPTED",
+        "actor_id": "66666666-6666-6666-6666-666666666666",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:06:26.686Z"
+    },
+    {
+      "id": "14f3360e-37a0-49ba-a2c9-a50bc37632ba",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Appointment Slot Confirmed",
+      "message": "Your appointment is confirmed for the requested date. Slot token: TOKEN-2222-116.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "2695a682-fe7d-4692-8e52-4d0771b3155b",
+        "previous_state": "ACCEPTED",
+        "new_state": "APPOINTMENT_BOOKED",
+        "actor_id": "77777777-7777-7777-7777-777777777777",
+        "actor_role": "HEALTH_WORKER"
+      },
+      "created_at": "2026-09-07T10:06:29.080Z"
+    },
+    {
+      "id": "bdd58331-3998-4c5d-82c2-0b492dff5cba",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Appointment Confirmed",
+      "message": "Your SPECIALIST appointment on 2027-02-01 (RefSlot-89450) is confirmed.",
+      "type": "ALERT",
+      "is_read": false,
+      "read": false,
+      "metadata": {},
+      "created_at": "2026-09-07T10:06:29.381Z"
+    },
+    {
+      "id": "2aab9e5d-d05d-4e9e-8669-ec40a1a300c8",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Referral Status Update",
+      "message": "Referral transitioned from APPOINTMENT_BOOKED to PATIENT_IN_TRANSIT.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "2695a682-fe7d-4692-8e52-4d0771b3155b",
+        "previous_state": "APPOINTMENT_BOOKED",
+        "new_state": "PATIENT_IN_TRANSIT",
+        "actor_id": "77777777-7777-7777-7777-777777777777",
+        "actor_role": "HEALTH_WORKER"
+      },
+      "created_at": "2026-09-07T10:06:32.572Z"
+    },
+    {
+      "id": "99b76979-b41d-48c7-8eaa-e59269fb0976",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Patient Arrival Verified",
+      "message": "Patient check-in recorded at hospital desk.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "2695a682-fe7d-4692-8e52-4d0771b3155b",
+        "previous_state": "PATIENT_IN_TRANSIT",
+        "new_state": "PATIENT_REACHED",
+        "actor_id": "66666666-6666-6666-6666-666666666666",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:06:34.293Z"
+    },
+    {
+      "id": "cd1dde01-d9bb-4860-a145-73b4e7745ad1",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Facility Confirmed for Referral",
+      "message": "Your referral has been matched to District Hospital Nashik.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "a65fd5d9-67cb-4620-a898-42f67e532459",
+        "previous_state": "TRIAGED",
+        "new_state": "FACILITY_SELECTED",
+        "actor_id": "77777777-7777-7777-7777-777777777777",
+        "actor_role": "HEALTH_WORKER"
+      },
+      "created_at": "2026-09-07T10:06:36.602Z"
+    },
+    {
+      "id": "3b448a57-bcb5-4a1d-8bd6-8ae288fb01be",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Referral Status Update",
+      "message": "Referral transitioned from FACILITY_SELECTED to ACCEPTED.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "a65fd5d9-67cb-4620-a898-42f67e532459",
+        "previous_state": "FACILITY_SELECTED",
+        "new_state": "ACCEPTED",
+        "actor_id": "66666666-6666-6666-6666-666666666666",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:06:38.180Z"
+    },
+    {
+      "id": "1e9ea4eb-3eb3-4115-a0ff-e6a0e23fb462",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Appointment Slot Confirmed",
+      "message": "Your appointment is confirmed for the requested date. Slot token: TOKEN-2222-227.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "a65fd5d9-67cb-4620-a898-42f67e532459",
+        "previous_state": "ACCEPTED",
+        "new_state": "APPOINTMENT_BOOKED",
+        "actor_id": "77777777-7777-7777-7777-777777777777",
+        "actor_role": "HEALTH_WORKER"
+      },
+      "created_at": "2026-09-07T10:06:40.789Z"
+    },
+    {
+      "id": "ca2b5bb6-cede-4df3-99e9-4cf51e4b9ccd",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Appointment Confirmed",
+      "message": "Your OPD appointment on 2027-04-01 (MissSlot-89450) is confirmed.",
+      "type": "ALERT",
+      "is_read": false,
+      "read": false,
+      "metadata": {},
+      "created_at": "2026-09-07T10:06:41.145Z"
+    },
+    {
+      "id": "c8aa9505-2dc0-49e0-ba8e-695a1fc24d14",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Missed Appointment Notification",
+      "message": "Scheduled appointment was missed. Please contact your health worker to reschedule.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "a65fd5d9-67cb-4620-a898-42f67e532459",
+        "previous_state": "APPOINTMENT_BOOKED",
+        "new_state": "MISSED_APPOINTMENT",
+        "actor_id": "66666666-6666-6666-6666-666666666666",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:06:43.231Z"
+    },
+    {
+      "id": "c08aa47c-d8a3-4eba-bd62-987034d195c5",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Appointment Slot Confirmed",
+      "message": "Your appointment is confirmed for the requested date. Slot token: TOKEN-2222-183.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "a65fd5d9-67cb-4620-a898-42f67e532459",
+        "previous_state": "MISSED_APPOINTMENT",
+        "new_state": "APPOINTMENT_BOOKED",
+        "actor_id": "77777777-7777-7777-7777-777777777777",
+        "actor_role": "HEALTH_WORKER"
+      },
+      "created_at": "2026-09-07T10:06:45.860Z"
+    },
+    {
+      "id": "190f31c4-9815-4193-8a22-68364dd9f8cd",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Appointment Confirmed",
+      "message": "Your OPD appointment on 2027-04-02 (RebookSlot-89450) is confirmed.",
+      "type": "ALERT",
+      "is_read": false,
+      "read": false,
+      "metadata": {},
+      "created_at": "2026-09-07T10:06:46.163Z"
+    },
+    {
+      "id": "782ecfc3-f015-4ef6-ad7a-e822886427f0",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Appointment Confirmed",
+      "message": "Your OPD appointment on 2027-05-01 (SchedSlot1-89450) is confirmed.",
+      "type": "ALERT",
+      "is_read": false,
+      "read": false,
+      "metadata": {},
+      "created_at": "2026-09-07T10:06:47.070Z"
+    },
+    {
+      "id": "966089a8-105d-4da0-b625-1df971b296ce",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Facility Confirmed for Referral",
+      "message": "Your referral has been matched to District Hospital Nashik.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "a5f6b236-aa10-46d8-b817-a008a0e941ca",
+        "previous_state": "TRIAGED",
+        "new_state": "FACILITY_SELECTED",
+        "actor_id": "77777777-7777-7777-7777-777777777777",
+        "actor_role": "HEALTH_WORKER"
+      },
+      "created_at": "2026-09-07T10:06:52.199Z"
+    },
+    {
+      "id": "121c9307-e1c7-4118-82cf-209c1c3e413d",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Referral Status Update",
+      "message": "Referral transitioned from FACILITY_SELECTED to ACCEPTED.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "a5f6b236-aa10-46d8-b817-a008a0e941ca",
+        "previous_state": "FACILITY_SELECTED",
+        "new_state": "ACCEPTED",
+        "actor_id": "66666666-6666-6666-6666-666666666666",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:06:54.051Z"
+    },
+    {
+      "id": "4b92f309-d146-4610-8c10-f9189b41dab7",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Appointment Slot Confirmed",
+      "message": "Your appointment is confirmed for the requested date. Slot token: Assigned.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "a5f6b236-aa10-46d8-b817-a008a0e941ca",
+        "previous_state": "ACCEPTED",
+        "new_state": "APPOINTMENT_BOOKED",
+        "actor_id": "66666666-6666-6666-6666-666666666666",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:06:55.683Z"
+    },
+    {
+      "id": "0a280cde-eabd-43de-ade3-9eae5a5cd505",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Referral Status Update",
+      "message": "Referral transitioned from APPOINTMENT_BOOKED to PATIENT_IN_TRANSIT.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "a5f6b236-aa10-46d8-b817-a008a0e941ca",
+        "previous_state": "APPOINTMENT_BOOKED",
+        "new_state": "PATIENT_IN_TRANSIT",
+        "actor_id": "77777777-7777-7777-7777-777777777777",
+        "actor_role": "HEALTH_WORKER"
+      },
+      "created_at": "2026-09-07T10:06:57.308Z"
+    },
+    {
+      "id": "bf2199b3-0e37-416e-afb7-5169e6373912",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Patient Arrival Verified",
+      "message": "Patient check-in recorded at hospital desk.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "a5f6b236-aa10-46d8-b817-a008a0e941ca",
+        "previous_state": "PATIENT_IN_TRANSIT",
+        "new_state": "PATIENT_REACHED",
+        "actor_id": "66666666-6666-6666-6666-666666666666",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:06:58.890Z"
+    },
+    {
+      "id": "5ed8c393-aa49-4d86-89b2-303cae2fc5be",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Specialist Doctor Assigned",
+      "message": "You have been assigned to Dr. Priya Available.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "a5f6b236-aa10-46d8-b817-a008a0e941ca",
+        "previous_state": "PATIENT_REACHED",
+        "new_state": "DOCTOR_ASSIGNED",
+        "actor_id": "66666666-6666-6666-6666-666666666666",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:07:01.928Z"
+    },
+    {
+      "id": "85fb1093-8ca4-45ce-a642-0ba91f913596",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Referral Status Update",
+      "message": "Referral transitioned from TRIAGED to URGENT_ESCALATION.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "3487cd0b-da18-4245-bf49-cd5f72067be2",
+        "previous_state": "TRIAGED",
+        "new_state": "URGENT_ESCALATION",
+        "actor_id": "77777777-7777-7777-7777-777777777777",
+        "actor_role": "HEALTH_WORKER"
+      },
+      "created_at": "2026-09-07T10:07:04.569Z"
+    },
+    {
+      "id": "68b3c37e-acfd-448d-98e0-142d10824b7e",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Referral Status Update",
+      "message": "Referral transitioned from URGENT_ESCALATION to PATIENT_IN_TRANSIT.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "3487cd0b-da18-4245-bf49-cd5f72067be2",
+        "previous_state": "URGENT_ESCALATION",
+        "new_state": "PATIENT_IN_TRANSIT",
+        "actor_id": "77777777-7777-7777-7777-777777777777",
+        "actor_role": "HEALTH_WORKER"
+      },
+      "created_at": "2026-09-07T10:07:06.067Z"
+    },
+    {
+      "id": "bc51bfc8-2774-4412-a678-898c9c681f27",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Patient Arrival Verified",
+      "message": "Patient check-in recorded at hospital desk.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "3487cd0b-da18-4245-bf49-cd5f72067be2",
+        "previous_state": "PATIENT_IN_TRANSIT",
+        "new_state": "PATIENT_REACHED",
+        "actor_id": "66666666-6666-6666-6666-666666666666",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:07:07.565Z"
+    },
+    {
+      "id": "790f2fa3-b88c-4bad-b928-5f7eac0d6541",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Referral Rerouting Initiated",
+      "message": "Facility requested transfer or specialist unavailable. Rerouting to next capability match.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "3487cd0b-da18-4245-bf49-cd5f72067be2",
+        "previous_state": "PATIENT_REACHED",
+        "new_state": "REROUTING_REQUIRED",
+        "actor_id": "66666666-6666-6666-6666-666666666666",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:07:09.824Z"
+    },
+    {
+      "id": "65b89041-f079-4feb-8f52-97fb4e528603",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Facility Confirmed for Referral",
+      "message": "Your referral has been matched to District Hospital Nashik.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "40299669-b6f8-44bb-a645-4775c25a80eb",
+        "previous_state": "TRIAGED",
+        "new_state": "FACILITY_SELECTED",
+        "actor_id": "77777777-7777-7777-7777-777777777777",
+        "actor_role": "HEALTH_WORKER"
+      },
+      "created_at": "2026-09-07T10:07:14.053Z"
+    },
+    {
+      "id": "8b2201fb-8b39-4ea7-b24e-c8cde3b60f3a",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Referral Status Update",
+      "message": "Referral transitioned from FACILITY_SELECTED to ACCEPTED.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "40299669-b6f8-44bb-a645-4775c25a80eb",
+        "previous_state": "FACILITY_SELECTED",
+        "new_state": "ACCEPTED",
+        "actor_id": "66666666-6666-6666-6666-666666666666",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:07:15.860Z"
+    },
+    {
+      "id": "1dc84c5f-1c60-4a40-8be3-c5bd36b029a0",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Appointment Slot Confirmed",
+      "message": "Your appointment is confirmed for the requested date. Slot token: Assigned.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "40299669-b6f8-44bb-a645-4775c25a80eb",
+        "previous_state": "ACCEPTED",
+        "new_state": "APPOINTMENT_BOOKED",
+        "actor_id": "66666666-6666-6666-6666-666666666666",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:07:17.400Z"
+    },
+    {
+      "id": "0eb77d8d-410d-42a1-be45-708f5ad1c310",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Referral Status Update",
+      "message": "Referral transitioned from APPOINTMENT_BOOKED to PATIENT_IN_TRANSIT.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "40299669-b6f8-44bb-a645-4775c25a80eb",
+        "previous_state": "APPOINTMENT_BOOKED",
+        "new_state": "PATIENT_IN_TRANSIT",
+        "actor_id": "77777777-7777-7777-7777-777777777777",
+        "actor_role": "HEALTH_WORKER"
+      },
+      "created_at": "2026-09-07T10:07:18.937Z"
+    },
+    {
+      "id": "aba987e9-8c10-4757-abf7-447b2fa7e82a",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Patient Arrival Verified",
+      "message": "Patient check-in recorded at hospital desk.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "40299669-b6f8-44bb-a645-4775c25a80eb",
+        "previous_state": "PATIENT_IN_TRANSIT",
+        "new_state": "PATIENT_REACHED",
+        "actor_id": "66666666-6666-6666-6666-666666666666",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:07:20.532Z"
+    },
+    {
+      "id": "cef58048-1d8d-46bb-9800-1974601b1bcc",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Specialist Doctor Assigned",
+      "message": "You have been assigned to the attending specialist.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "40299669-b6f8-44bb-a645-4775c25a80eb",
+        "previous_state": "PATIENT_REACHED",
+        "new_state": "DOCTOR_ASSIGNED",
+        "actor_id": "66666666-6666-6666-6666-666666666666",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:07:22.144Z"
+    },
+    {
+      "id": "23857db7-738c-47b1-8c41-5b03b648e217",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Clinical Consultation Completed",
+      "message": "Doctor has completed your consultation and recorded clinical findings.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "40299669-b6f8-44bb-a645-4775c25a80eb",
+        "previous_state": "DOCTOR_ASSIGNED",
+        "new_state": "CONSULTATION_COMPLETED",
+        "actor_id": "44444444-4444-4444-4444-444444444444",
+        "actor_role": "DOCTOR"
+      },
+      "created_at": "2026-09-07T10:07:25.387Z"
+    },
+    {
+      "id": "e6703dfb-7e06-471f-9ef2-eebfb0a7d75d",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Treatment Stage Completed",
+      "message": "Your care cycle treatment is complete. Follow-up plan has been registered.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "40299669-b6f8-44bb-a645-4775c25a80eb",
+        "previous_state": "CONSULTATION_COMPLETED",
+        "new_state": "TREATMENT_COMPLETED",
+        "actor_id": "44444444-4444-4444-4444-444444444444",
+        "actor_role": "DOCTOR"
+      },
+      "created_at": "2026-09-07T10:07:26.891Z"
+    },
+    {
+      "id": "43b567c2-0bfb-4a96-baac-4ca50998fad6",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Facility Confirmed for Referral",
+      "message": "Your referral has been matched to District Hospital Nashik.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "8704ad97-f42e-4b17-bb08-5dd61606a628",
+        "previous_state": "TRIAGED",
+        "new_state": "FACILITY_SELECTED",
+        "actor_id": "77777777-7777-7777-7777-777777777777",
+        "actor_role": "HEALTH_WORKER"
+      },
+      "created_at": "2026-09-07T10:07:29.147Z"
+    },
+    {
+      "id": "13b1cd98-fbef-42c9-be80-ebe49ab39535",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Referral Status Update",
+      "message": "Referral transitioned from FACILITY_SELECTED to ACCEPTED.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "8704ad97-f42e-4b17-bb08-5dd61606a628",
+        "previous_state": "FACILITY_SELECTED",
+        "new_state": "ACCEPTED",
+        "actor_id": "66666666-6666-6666-6666-666666666666",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:07:30.831Z"
+    },
+    {
+      "id": "c67c1ccb-e933-41dc-8de9-8511784a4ad3",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Appointment Slot Confirmed",
+      "message": "Your appointment is confirmed for the requested date. Slot token: Assigned.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "8704ad97-f42e-4b17-bb08-5dd61606a628",
+        "previous_state": "ACCEPTED",
+        "new_state": "APPOINTMENT_BOOKED",
+        "actor_id": "66666666-6666-6666-6666-666666666666",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:07:32.859Z"
+    },
+    {
+      "id": "8376b877-cc12-4f45-bf3b-707fdaedfc65",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Referral Status Update",
+      "message": "Referral transitioned from APPOINTMENT_BOOKED to PATIENT_IN_TRANSIT.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "8704ad97-f42e-4b17-bb08-5dd61606a628",
+        "previous_state": "APPOINTMENT_BOOKED",
+        "new_state": "PATIENT_IN_TRANSIT",
+        "actor_id": "77777777-7777-7777-7777-777777777777",
+        "actor_role": "HEALTH_WORKER"
+      },
+      "created_at": "2026-09-07T10:07:34.368Z"
+    },
+    {
+      "id": "089be36b-6195-44d2-a6c6-ad2e0b3d374b",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Patient Arrival Verified",
+      "message": "Patient check-in recorded at hospital desk.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "8704ad97-f42e-4b17-bb08-5dd61606a628",
+        "previous_state": "PATIENT_IN_TRANSIT",
+        "new_state": "PATIENT_REACHED",
+        "actor_id": "66666666-6666-6666-6666-666666666666",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:07:35.872Z"
+    },
+    {
+      "id": "a839a7dd-c02d-429a-b12d-f2eda01c4a60",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Specialist Doctor Assigned",
+      "message": "You have been assigned to the attending specialist.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "8704ad97-f42e-4b17-bb08-5dd61606a628",
+        "previous_state": "PATIENT_REACHED",
+        "new_state": "DOCTOR_ASSIGNED",
+        "actor_id": "66666666-6666-6666-6666-666666666666",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:07:37.472Z"
+    },
+    {
+      "id": "2527bb21-1de5-4597-9304-db40d89feba0",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Clinical Consultation Completed",
+      "message": "Doctor has completed your consultation and recorded clinical findings.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "8704ad97-f42e-4b17-bb08-5dd61606a628",
+        "previous_state": "DOCTOR_ASSIGNED",
+        "new_state": "CONSULTATION_COMPLETED",
+        "actor_id": "44444444-4444-4444-4444-444444444444",
+        "actor_role": "DOCTOR"
+      },
+      "created_at": "2026-09-07T10:07:40.222Z"
+    },
+    {
+      "id": "44be15c4-6901-40b6-8956-901987af1118",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Referral Status Update",
+      "message": "Referral transitioned from CONSULTATION_COMPLETED to DIAGNOSTICS_PENDING.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "8704ad97-f42e-4b17-bb08-5dd61606a628",
+        "previous_state": "CONSULTATION_COMPLETED",
+        "new_state": "DIAGNOSTICS_PENDING",
+        "actor_id": "44444444-4444-4444-4444-444444444444",
+        "actor_role": "DOCTOR"
+      },
+      "created_at": "2026-09-07T10:07:41.736Z"
+    },
+    {
+      "id": "efe3b863-866c-4945-b10d-f3a14172602d",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Referral Status Update",
+      "message": "Referral transitioned from DIAGNOSTICS_PENDING to DIAGNOSTICS_COMPLETED.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "8704ad97-f42e-4b17-bb08-5dd61606a628",
+        "previous_state": "DIAGNOSTICS_PENDING",
+        "new_state": "DIAGNOSTICS_COMPLETED",
+        "actor_id": "66666666-6666-6666-6666-666666666666",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:07:43.713Z"
+    },
+    {
+      "id": "ce6021d5-df7a-4d0c-a97b-72c45f6461fb",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Treatment Stage Completed",
+      "message": "Your care cycle treatment is complete. Follow-up plan has been registered.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "8704ad97-f42e-4b17-bb08-5dd61606a628",
+        "previous_state": "DIAGNOSTICS_COMPLETED",
+        "new_state": "TREATMENT_COMPLETED",
+        "actor_id": "66666666-6666-6666-6666-666666666666",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:07:45.455Z"
+    },
+    {
+      "id": "fee1bca6-32d9-4310-bccb-f038c0abd3da",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Referral Status Update",
+      "message": "Referral transitioned from TREATMENT_COMPLETED to FOLLOW_UP_PENDING.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "40299669-b6f8-44bb-a645-4775c25a80eb",
+        "previous_state": "TREATMENT_COMPLETED",
+        "new_state": "FOLLOW_UP_PENDING",
+        "actor_id": "44444444-4444-4444-4444-444444444444",
+        "actor_role": "DOCTOR"
+      },
+      "created_at": "2026-09-07T10:07:47.296Z"
+    },
+    {
+      "id": "8aca874d-b5c2-4d87-ac1b-cef95b1cb25b",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Closed Loop Care Completed",
+      "message": "Community health worker completed follow-up verification. Referral closed successfully.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "40299669-b6f8-44bb-a645-4775c25a80eb",
+        "previous_state": "FOLLOW_UP_PENDING",
+        "new_state": "FOLLOW_UP_COMPLETED",
+        "actor_id": "77777777-7777-7777-7777-777777777777",
+        "actor_role": "HEALTH_WORKER"
+      },
+      "created_at": "2026-09-07T10:07:49.328Z"
+    },
+    {
+      "id": "5020b565-b148-48c8-adc3-6170bfc9d1b1",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Facility Confirmed for Referral",
+      "message": "Your referral has been matched to District Hospital Nashik.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "2ac96266-dc3b-4c8d-9c42-7125f7a02a6b",
+        "previous_state": "TRIAGED",
+        "new_state": "FACILITY_SELECTED",
+        "actor_id": "77777777-7777-7777-7777-777777777777",
+        "actor_role": "HEALTH_WORKER"
+      },
+      "created_at": "2026-09-07T10:07:59.610Z"
+    },
+    {
+      "id": "cfe72dff-d3f8-4d1b-9643-26e82af20335",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Referral Status Update",
+      "message": "Referral transitioned from FACILITY_SELECTED to ACCEPTED.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "2ac96266-dc3b-4c8d-9c42-7125f7a02a6b",
+        "previous_state": "FACILITY_SELECTED",
+        "new_state": "ACCEPTED",
+        "actor_id": "66666666-6666-6666-6666-666666666666",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:08:01.104Z"
+    },
+    {
+      "id": "00912005-248a-40de-a5e1-14e4593aeff1",
+      "user_id": "99999999-9999-9999-9999-999999999999",
+      "title": "Appointment Slot Confirmed",
+      "message": "Your appointment is confirmed for the requested date. Slot token: Assigned.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "2ac96266-dc3b-4c8d-9c42-7125f7a02a6b",
+        "previous_state": "ACCEPTED",
+        "new_state": "APPOINTMENT_BOOKED",
+        "actor_id": "66666666-6666-6666-6666-666666666666",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:08:02.662Z"
+    },
+    {
+      "id": "9ea91704-4da7-4286-91a8-dfe04062357c",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Appointment Slot Confirmed",
+      "message": "Your appointment is confirmed for the requested date. Slot token: Assigned.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "dc9d1e43-f506-4a03-a7af-60c43fadb503",
+        "previous_state": "ACCEPTED",
+        "new_state": "APPOINTMENT_BOOKED",
+        "actor_id": "staff-user-1",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:08:05.945Z"
+    },
+    {
+      "id": "a215e849-561f-4fb7-a44f-f5b16ccd840b",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Referral Status Update",
+      "message": "Referral transitioned from APPOINTMENT_BOOKED to PATIENT_IN_TRANSIT.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "28ee9a03-4e35-4ff1-9437-97d6d75d9b51",
+        "previous_state": "APPOINTMENT_BOOKED",
+        "new_state": "PATIENT_IN_TRANSIT",
+        "actor_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+        "actor_role": "PATIENT"
+      },
+      "created_at": "2026-09-07T10:08:07.895Z"
+    },
+    {
+      "id": "9a1fb7f5-2c02-4f08-9800-6177bb92e3fb",
+      "user_id": "59327aba-535a-49fc-9668-40c6cf37444b",
+      "title": "Welcome to SwasthyaSetu",
+      "message": "Your health account is active.",
+      "type": "GENERAL",
+      "is_read": true,
+      "read": true,
+      "metadata": {},
+      "created_at": "2026-09-07T10:08:08.816Z"
+    },
+    {
+      "id": "26071f87-e369-4ebe-8ea3-370716667e92",
+      "user_id": "59327aba-535a-49fc-9668-40c6cf37444b",
+      "title": "Care Reminder",
+      "message": "Follow-up vitals check tomorrow.",
+      "type": "GENERAL",
+      "is_read": true,
+      "read": true,
+      "metadata": {},
+      "created_at": "2026-09-07T10:08:09.212Z"
+    },
+    {
+      "id": "d8f20eb0-8d8b-4c0b-819b-b4418d808024",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Referral Status Update",
+      "message": "Referral transitioned from APPOINTMENT_BOOKED to PATIENT_IN_TRANSIT.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "f943f3f5-7447-4ba3-b326-a86879fb07db",
+        "previous_state": "APPOINTMENT_BOOKED",
+        "new_state": "PATIENT_IN_TRANSIT",
+        "actor_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+        "actor_role": "PATIENT"
+      },
+      "created_at": "2026-09-07T10:08:16.574Z"
+    },
+    {
+      "id": "78a4c55c-fd5f-4f37-a700-e66ff3cdb928",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Specialist Doctor Assigned",
+      "message": "You have been assigned to the attending specialist.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "705b3708-5cc2-433d-9b79-c4514f928f9e",
+        "previous_state": "PATIENT_REACHED",
+        "new_state": "DOCTOR_ASSIGNED",
+        "actor_id": null,
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:08:18.793Z"
+    },
+    {
+      "id": "bb74c170-3d05-4933-a92d-19707cb3409c",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Referral Rerouting Initiated",
+      "message": "Facility requested transfer or specialist unavailable. Rerouting to next capability match.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "8d577abe-8482-46c5-964a-15c772b5d49b",
+        "previous_state": "FACILITY_CONFIRMATION_PENDING",
+        "new_state": "REROUTING_REQUIRED",
+        "actor_id": "staff-1",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:08:20.676Z"
+    },
+    {
+      "id": "edba6b7d-2dfd-4242-8a4a-21cc5fefd501",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Facility Confirmed for Referral",
+      "message": "Your referral has been matched to the recommended hospital.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "8d577abe-8482-46c5-964a-15c772b5d49b",
+        "previous_state": "REROUTING_REQUIRED",
+        "new_state": "FACILITY_SELECTED",
+        "actor_id": "worker-1",
+        "actor_role": "HEALTH_WORKER"
+      },
+      "created_at": "2026-09-07T10:08:22.057Z"
+    },
+    {
+      "id": "6a2c0157-95be-4f3d-adc2-b6ef3ce3e295",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Referral Status Update",
+      "message": "Referral transitioned from FACILITY_SELECTED to ACCEPTED.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "67f36144-37c7-4c75-8c96-84baa6006059",
+        "previous_state": "FACILITY_SELECTED",
+        "new_state": "ACCEPTED",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:08:26.470Z"
+    },
+    {
+      "id": "5ee71bd8-345e-4ba4-abe7-db5f46d8581c",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Appointment Slot Confirmed",
+      "message": "Your appointment is confirmed for the requested date. Slot token: TOKEN-NASHIK-42.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "67f36144-37c7-4c75-8c96-84baa6006059",
+        "previous_state": "ACCEPTED",
+        "new_state": "APPOINTMENT_BOOKED",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:08:27.975Z"
+    },
+    {
+      "id": "4dd6aa02-efe1-4633-9ff7-835fbecd9579",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Referral Status Update",
+      "message": "Referral transitioned from APPOINTMENT_BOOKED to PATIENT_IN_TRANSIT.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "67f36144-37c7-4c75-8c96-84baa6006059",
+        "previous_state": "APPOINTMENT_BOOKED",
+        "new_state": "PATIENT_IN_TRANSIT",
+        "actor_role": "PATIENT"
+      },
+      "created_at": "2026-09-07T10:08:29.586Z"
+    },
+    {
+      "id": "28e137d8-4512-4732-92b1-412bdb661691",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Patient Arrival Verified",
+      "message": "Patient check-in recorded at hospital desk.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "67f36144-37c7-4c75-8c96-84baa6006059",
+        "previous_state": "PATIENT_IN_TRANSIT",
+        "new_state": "PATIENT_REACHED",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:08:31.129Z"
+    },
+    {
+      "id": "1ec6d167-018b-4272-aaf5-ed241964d80c",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Specialist Doctor Assigned",
+      "message": "You have been assigned to Dr. Rajesh Kulkarni.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "67f36144-37c7-4c75-8c96-84baa6006059",
+        "previous_state": "PATIENT_REACHED",
+        "new_state": "DOCTOR_ASSIGNED",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:08:32.679Z"
+    },
+    {
+      "id": "4bd9cb5c-fcfd-4b18-8ab9-cef97d84867e",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Clinical Consultation Completed",
+      "message": "Doctor has completed your consultation and recorded clinical findings.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "67f36144-37c7-4c75-8c96-84baa6006059",
+        "previous_state": "DOCTOR_ASSIGNED",
+        "new_state": "CONSULTATION_COMPLETED",
+        "actor_role": "DOCTOR"
+      },
+      "created_at": "2026-09-07T10:08:34.138Z"
+    },
+    {
+      "id": "bdf28a4c-960f-44e1-882e-354375070e25",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Treatment Stage Completed",
+      "message": "Your care cycle treatment is complete. Follow-up plan has been registered.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "67f36144-37c7-4c75-8c96-84baa6006059",
+        "previous_state": "CONSULTATION_COMPLETED",
+        "new_state": "TREATMENT_COMPLETED",
+        "actor_role": "DOCTOR"
+      },
+      "created_at": "2026-09-07T10:08:35.631Z"
+    },
+    {
+      "id": "9acd69c6-f3f2-4b32-b2cb-7045871f7804",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Referral Status Update",
+      "message": "Referral transitioned from TREATMENT_COMPLETED to FOLLOW_UP_PENDING.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "67f36144-37c7-4c75-8c96-84baa6006059",
+        "previous_state": "TREATMENT_COMPLETED",
+        "new_state": "FOLLOW_UP_PENDING",
+        "actor_role": "DOCTOR"
+      },
+      "created_at": "2026-09-07T10:08:37.151Z"
+    },
+    {
+      "id": "2ed393a7-86db-492d-b3fc-b1e395a4444a",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Closed Loop Care Completed",
+      "message": "Community health worker completed follow-up verification. Referral closed successfully.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "67f36144-37c7-4c75-8c96-84baa6006059",
+        "previous_state": "FOLLOW_UP_PENDING",
+        "new_state": "FOLLOW_UP_COMPLETED",
+        "actor_role": "HEALTH_WORKER"
+      },
+      "created_at": "2026-09-07T10:08:38.700Z"
+    },
+    {
+      "id": "31a7b572-515e-46a4-96fe-d9786427631f",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Referral Status Update",
+      "message": "Referral transitioned from FACILITY_SELECTED to ACCEPTED.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "12388c20-5382-4214-9384-9c515bc9880e",
+        "previous_state": "FACILITY_SELECTED",
+        "new_state": "ACCEPTED",
+        "actor_id": "staff-1",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:08:41.164Z"
+    },
+    {
+      "id": "cad14033-0881-4f79-a4da-ee7fdd589fc1",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Appointment Slot Confirmed",
+      "message": "Your appointment is confirmed for the requested date. Slot token: Assigned.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "12388c20-5382-4214-9384-9c515bc9880e",
+        "previous_state": "ACCEPTED",
+        "new_state": "APPOINTMENT_BOOKED",
+        "actor_id": "staff-1",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:08:42.677Z"
+    },
+    {
+      "id": "738ca9ba-ed9c-4753-a0a1-d9cca602343d",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Referral Status Update",
+      "message": "Referral transitioned from APPOINTMENT_BOOKED to PATIENT_IN_TRANSIT.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "12388c20-5382-4214-9384-9c515bc9880e",
+        "previous_state": "APPOINTMENT_BOOKED",
+        "new_state": "PATIENT_IN_TRANSIT",
+        "actor_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+        "actor_role": "PATIENT"
+      },
+      "created_at": "2026-09-07T10:08:44.205Z"
+    },
+    {
+      "id": "98bc66e9-c4de-4d69-8107-43f72c0be3f8",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Patient Arrival Verified",
+      "message": "Patient check-in recorded at hospital desk.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "12388c20-5382-4214-9384-9c515bc9880e",
+        "previous_state": "PATIENT_IN_TRANSIT",
+        "new_state": "PATIENT_REACHED",
+        "actor_id": "staff-1",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:08:45.718Z"
+    },
+    {
+      "id": "c7060d97-fb4f-4a15-8978-f84fde70701e",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Specialist Doctor Assigned",
+      "message": "You have been assigned to the attending specialist.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "12388c20-5382-4214-9384-9c515bc9880e",
+        "previous_state": "PATIENT_REACHED",
+        "new_state": "DOCTOR_ASSIGNED",
+        "actor_id": "staff-1",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:08:47.206Z"
+    },
+    {
+      "id": "ddb800a3-e375-45ab-8f84-347378bcd015",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Clinical Consultation Completed",
+      "message": "Doctor has completed your consultation and recorded clinical findings.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "12388c20-5382-4214-9384-9c515bc9880e",
+        "previous_state": "DOCTOR_ASSIGNED",
+        "new_state": "CONSULTATION_COMPLETED",
+        "actor_id": "44444444-4444-4444-4444-444444444444",
+        "actor_role": "DOCTOR"
+      },
+      "created_at": "2026-09-07T10:08:48.718Z"
+    },
+    {
+      "id": "b0c15d8e-bfda-4063-892c-94bfc8475d93",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Treatment Stage Completed",
+      "message": "Your care cycle treatment is complete. Follow-up plan has been registered.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "12388c20-5382-4214-9384-9c515bc9880e",
+        "previous_state": "CONSULTATION_COMPLETED",
+        "new_state": "TREATMENT_COMPLETED",
+        "actor_id": "44444444-4444-4444-4444-444444444444",
+        "actor_role": "DOCTOR"
+      },
+      "created_at": "2026-09-07T10:08:50.281Z"
+    },
+    {
+      "id": "5f6dc8ec-80d0-41c2-8267-014712a6c07f",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Referral Status Update",
+      "message": "Referral transitioned from TREATMENT_COMPLETED to FOLLOW_UP_PENDING.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "12388c20-5382-4214-9384-9c515bc9880e",
+        "previous_state": "TREATMENT_COMPLETED",
+        "new_state": "FOLLOW_UP_PENDING",
+        "actor_id": "44444444-4444-4444-4444-444444444444",
+        "actor_role": "DOCTOR"
+      },
+      "created_at": "2026-09-07T10:08:51.834Z"
+    },
+    {
+      "id": "5d0fa1b2-5bcc-484c-a6b2-393bd1f8201f",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Closed Loop Care Completed",
+      "message": "Community health worker completed follow-up verification. Referral closed successfully.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "12388c20-5382-4214-9384-9c515bc9880e",
+        "previous_state": "FOLLOW_UP_PENDING",
+        "new_state": "FOLLOW_UP_COMPLETED",
+        "actor_id": "worker-1",
+        "actor_role": "HEALTH_WORKER"
+      },
+      "created_at": "2026-09-07T10:08:53.379Z"
+    },
+    {
+      "id": "19ab28c1-4fc6-44d8-91c8-0b8b3970b682",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Referral Status Update",
+      "message": "Referral transitioned from FACILITY_SELECTED to ACCEPTED.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "e66b6b67-cad9-4e57-82fb-2fe594598940",
+        "previous_state": "FACILITY_SELECTED",
+        "new_state": "ACCEPTED",
+        "actor_id": "staff-1",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:08:54.935Z"
+    },
+    {
+      "id": "c16d1720-1d0b-4b2b-919e-3f4d5a586bca",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Referral Status Update",
+      "message": "Referral transitioned from ACCEPTED to PATIENT_IN_TRANSIT.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "e66b6b67-cad9-4e57-82fb-2fe594598940",
+        "previous_state": "ACCEPTED",
+        "new_state": "PATIENT_IN_TRANSIT",
+        "actor_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+        "actor_role": "PATIENT"
+      },
+      "created_at": "2026-09-07T10:08:56.443Z"
+    },
+    {
+      "id": "0a35e56f-fc88-45ea-9985-f27ba996ba05",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Patient Arrival Verified",
+      "message": "Patient check-in recorded at hospital desk.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "e66b6b67-cad9-4e57-82fb-2fe594598940",
+        "previous_state": "PATIENT_IN_TRANSIT",
+        "new_state": "PATIENT_REACHED",
+        "actor_id": "staff-1",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:08:57.987Z"
+    },
+    {
+      "id": "a08041f1-9167-4af4-86e1-7c1d86221044",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Specialist Doctor Assigned",
+      "message": "You have been assigned to the attending specialist.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "e66b6b67-cad9-4e57-82fb-2fe594598940",
+        "previous_state": "PATIENT_REACHED",
+        "new_state": "DOCTOR_ASSIGNED",
+        "actor_id": "staff-1",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:08:59.720Z"
+    },
+    {
+      "id": "59549b53-e187-4081-bc0a-ed0c948966f4",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Clinical Consultation Completed",
+      "message": "Doctor has completed your consultation and recorded clinical findings.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "e66b6b67-cad9-4e57-82fb-2fe594598940",
+        "previous_state": "DOCTOR_ASSIGNED",
+        "new_state": "CONSULTATION_COMPLETED",
+        "actor_id": "44444444-4444-4444-4444-444444444444",
+        "actor_role": "DOCTOR"
+      },
+      "created_at": "2026-09-07T10:09:01.212Z"
+    },
+    {
+      "id": "f7b97a80-a2dc-4626-8ae4-5e2affd02919",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Treatment Stage Completed",
+      "message": "Your care cycle treatment is complete. Follow-up plan has been registered.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "e66b6b67-cad9-4e57-82fb-2fe594598940",
+        "previous_state": "CONSULTATION_COMPLETED",
+        "new_state": "TREATMENT_COMPLETED",
+        "actor_id": "44444444-4444-4444-4444-444444444444",
+        "actor_role": "DOCTOR"
+      },
+      "created_at": "2026-09-07T10:09:02.775Z"
+    },
+    {
+      "id": "0ca6a952-b95e-4615-a2c6-329f5923adaf",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Referral Rerouting Initiated",
+      "message": "Facility requested transfer or specialist unavailable. Rerouting to next capability match.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "b477490a-a445-418c-9c8c-18fb058a9d41",
+        "previous_state": "FACILITY_CONFIRMATION_PENDING",
+        "new_state": "REROUTING_REQUIRED",
+        "actor_id": "staff-1",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:09:04.570Z"
+    },
+    {
+      "id": "202e8d39-c7a0-46e4-8882-e211e97d8c4f",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Facility Confirmed for Referral",
+      "message": "Your referral has been matched to the recommended hospital.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "b477490a-a445-418c-9c8c-18fb058a9d41",
+        "previous_state": "REROUTING_REQUIRED",
+        "new_state": "FACILITY_SELECTED",
+        "actor_id": "worker-1",
+        "actor_role": "HEALTH_WORKER"
+      },
+      "created_at": "2026-09-07T10:09:06.087Z"
+    },
+    {
+      "id": "3cbf848d-bd0c-4f15-9a59-30d207c48762",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Referral Status Update",
+      "message": "Referral transitioned from FACILITY_SELECTED to ACCEPTED.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "b477490a-a445-418c-9c8c-18fb058a9d41",
+        "previous_state": "FACILITY_SELECTED",
+        "new_state": "ACCEPTED",
+        "actor_id": "staff-2",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:09:07.599Z"
+    },
+    {
+      "id": "b6761723-229e-429b-ac7d-04ac19c52051",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Referral Cancelled",
+      "message": "Referral has been cancelled. Reason: Administrative/Patient request.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "70d1d661-78fc-47e7-ae52-0229d7ecbb57",
+        "previous_state": "APPOINTMENT_BOOKED",
+        "new_state": "CANCELLED",
+        "actor_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+        "actor_role": "PATIENT"
+      },
+      "created_at": "2026-09-07T10:09:09.120Z"
+    },
+    {
+      "id": "ab70db1a-9eca-4f2a-984a-68c5264fc0ff",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Missed Appointment Notification",
+      "message": "Scheduled appointment was missed. Please contact your health worker to reschedule.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "222dd502-5e2a-43d3-a893-0c1419a8c0f4",
+        "previous_state": "APPOINTMENT_BOOKED",
+        "new_state": "MISSED_APPOINTMENT",
+        "actor_id": "staff-1",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:09:10.653Z"
+    },
+    {
+      "id": "45a40cbe-acb9-4b02-995f-beef9b9fa8b2",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Appointment Slot Confirmed",
+      "message": "Your appointment is confirmed for the requested date. Slot token: Assigned.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "222dd502-5e2a-43d3-a893-0c1419a8c0f4",
+        "previous_state": "MISSED_APPOINTMENT",
+        "new_state": "APPOINTMENT_BOOKED",
+        "actor_id": "staff-1",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:09:12.376Z"
+    },
+    {
+      "id": "0ddd27a6-1535-44e7-9a7b-f93c7d095361",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Clinical Consultation Completed",
+      "message": "Doctor has completed your consultation and recorded clinical findings.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "4e52b1ed-1cfc-4242-a373-a48dd27cc0f4",
+        "previous_state": "DOCTOR_ASSIGNED",
+        "new_state": "CONSULTATION_COMPLETED",
+        "actor_id": "44444444-4444-4444-4444-444444444444",
+        "actor_role": "DOCTOR"
+      },
+      "created_at": "2026-09-07T10:09:13.931Z"
+    },
+    {
+      "id": "d20273a6-0561-4b0d-8b19-3078fc89413b",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Referral Status Update",
+      "message": "Referral transitioned from CONSULTATION_COMPLETED to DIAGNOSTICS_PENDING.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "4e52b1ed-1cfc-4242-a373-a48dd27cc0f4",
+        "previous_state": "CONSULTATION_COMPLETED",
+        "new_state": "DIAGNOSTICS_PENDING",
+        "actor_id": "44444444-4444-4444-4444-444444444444",
+        "actor_role": "DOCTOR"
+      },
+      "created_at": "2026-09-07T10:09:15.467Z"
+    },
+    {
+      "id": "bda3b0fc-4f69-4361-9faf-45e3eb90e128",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Referral Status Update",
+      "message": "Referral transitioned from DIAGNOSTICS_PENDING to DIAGNOSTICS_COMPLETED.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "4e52b1ed-1cfc-4242-a373-a48dd27cc0f4",
+        "previous_state": "DIAGNOSTICS_PENDING",
+        "new_state": "DIAGNOSTICS_COMPLETED",
+        "actor_id": "lab-tech-1",
+        "actor_role": "FACILITY_STAFF"
+      },
+      "created_at": "2026-09-07T10:09:17.100Z"
+    },
+    {
+      "id": "a699b593-a326-4f86-b64c-6d69b198a320",
+      "user_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "title": "Treatment Stage Completed",
+      "message": "Your care cycle treatment is complete. Follow-up plan has been registered.",
+      "type": "REFERRAL_STATE_CHANGE",
+      "is_read": false,
+      "read": false,
+      "metadata": {
+        "referral_id": "4e52b1ed-1cfc-4242-a373-a48dd27cc0f4",
+        "previous_state": "DIAGNOSTICS_COMPLETED",
+        "new_state": "TREATMENT_COMPLETED",
+        "actor_id": "44444444-4444-4444-4444-444444444444",
+        "actor_role": "DOCTOR"
+      },
+      "created_at": "2026-09-07T10:09:18.695Z"
     }
   ]
 }
