@@ -7,7 +7,7 @@ const VALID_USER_COLUMNS = new Set([
 ]);
 
 // Update User Profile
-exports.updateProfile = async (req, res) => {
+exports.updateProfile = async (req, res, next) => {
     try {
         const userId = req.user.id;
         const { section, data } = req.body;
@@ -18,24 +18,28 @@ exports.updateProfile = async (req, res) => {
         const updatedUser = await dbService.updateUser(userId, inputData);
 
         res.json({
+            success: true,
             message: "Profile updated successfully",
             user: updatedUser
         });
 
     } catch (err) {
-        console.error("Profile Update Error:", err);
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 
 // Get User Profile
-exports.getProfile = async (req, res) => {
+exports.getProfile = async (req, res, next) => {
     try {
         const userId = req.user.id;
         const user = await dbService.getUser(userId);
 
         if (!user) {
-            return res.status(404).json({ error: "User not found" });
+            return res.status(404).json({
+                success: false,
+                error: "User not found",
+                code: "USER_NOT_FOUND"
+            });
         }
 
         const flattened = {
@@ -43,24 +47,54 @@ exports.getProfile = async (req, res) => {
             ...(user?.medical_history || {})
         };
 
-        res.json(flattened);
+        res.json({
+            success: true,
+            user: flattened
+        });
     } catch (err) {
-        console.error("Get Profile Error:", err);
-        res.status(500).json({ error: err.message });
+        next(err);
+    }
+};
+
+// Update Profile Consent
+exports.updateConsent = async (req, res, next) => {
+    try {
+        const userId = req.user.id;
+        const { consent_status } = req.body;
+
+        if (!consent_status) {
+            return res.status(400).json({
+                success: false,
+                error: "consent_status is required",
+                code: "VALIDATION_ERROR"
+            });
+        }
+
+        const updated = await dbService.updatePatientConsent(userId, consent_status, userId, req.user.role);
+
+        res.json({
+            success: true,
+            message: `Consent updated to ${consent_status}`,
+            data: updated
+        });
+    } catch (err) {
+        next(err);
     }
 };
 
 // Delete User Profile
-exports.deleteProfile = async (req, res) => {
+exports.deleteProfile = async (req, res, next) => {
     try {
         const userId = req.user.id;
         console.log(`[DELETE] Deleting account for user ${userId}`);
 
         await dbService.deleteUser(userId);
-        res.json({ message: "Account deleted successfully" });
+        res.json({
+            success: true,
+            message: "Account deleted successfully"
+        });
     } catch (err) {
-        console.error("Delete Profile Error:", err);
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 

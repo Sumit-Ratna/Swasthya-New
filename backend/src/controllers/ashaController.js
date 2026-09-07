@@ -18,7 +18,8 @@ class AshaController {
 
     async registerBeneficiary(req, res, next) {
         try {
-            const result = await supabaseService.recordAshaBeneficiary(req.body);
+            const workerId = req.user?.id || null;
+            const result = await supabaseService.recordAshaBeneficiary(req.body, workerId);
             return res.status(201).json({
                 success: true,
                 message: "Beneficiary registered successfully",

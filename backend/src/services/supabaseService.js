@@ -8,31 +8,30 @@ class SupabaseService {
     // USER & PATIENT CLOUD DATABASE OPERATIONS
     // ==========================================
     async createUser(userId, userData) {
-        let phone = userData.phone;
-        if (!phone || String(phone).trim() === '') {
-            phone = String(Math.floor(6000000000 + Math.random() * 3999999999));
-        } else {
-            phone = String(phone).replace(/\D/g, '').slice(-10);
+        let phone = userData.phone ? String(userData.phone).replace(/\D/g, '').slice(-10) : null;
+        const fullName = userData.name || userData.full_name;
+
+        if (!fullName || !fullName.trim()) {
+            throw new Error('full_name is required for user registration');
         }
 
-        const fullName = userData.name || userData.full_name || 'New User';
         const rawRole = (userData.role || 'patient').toUpperCase();
-        const role = rawRole.includes('DOC') ? 'DOCTOR' : (rawRole.includes('HEALTH') || rawRole.includes('WORKER') || rawRole.includes('ASHA') ? 'HEALTH_WORKER' : 'PATIENT');
+        const role = rawRole.includes('DOC') ? 'DOCTOR' : (rawRole.includes('HEALTH') || rawRole.includes('WORKER') || rawRole.includes('ASHA') ? 'HEALTH_WORKER' : (rawRole.includes('STAFF') || rawRole.includes('FACILITY') ? 'FACILITY_STAFF' : (rawRole.includes('ADMIN') ? 'ADMIN' : (rawRole.includes('CAREGIVER') ? 'CAREGIVER' : 'PATIENT'))));
 
         const userPayload = {
             id: userId,
             phone: phone,
-            full_name: fullName,
+            full_name: fullName.trim(),
             email: userData.email ? userData.email.trim().toLowerCase() : null,
             role: role,
             status: 'ACTIVE',
+            assigned_facility_id: userData.assigned_facility_id || null,
+            jurisdiction_district: userData.jurisdiction_district || userData.district || null,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
         };
 
-        if (userData.password_hash) {
-            userPayload.password_hash = userData.password_hash;
-        }
+        userPayload.password_hash = userData.password_hash || '$2a$10$wE8wY0B9KqjX5Z5yXhB6EeNn3nI5sF7aF1b3.a8c8.e8.g8.i8.k';
 
         try {
             const { data, error } = await supabase
@@ -43,49 +42,68 @@ class SupabaseService {
 
             if (error) {
                 console.warn('[SUPABASE] user upsert error:', error.message);
+                throw error;
             }
 
-            // Also create/update associated patient record in Supabase patients table
-            const patientPayload = {
-                id: userId,
-                user_id: userId,
-                full_name: fullName,
-                phone: phone,
-                gender: userData.gender || 'Male',
-                date_of_birth: userData.dob || userData.date_of_birth || '2000-01-01',
-                address: userData.address || '',
-                district: userData.address_city || userData.district || 'Lucknow',
-                village: userData.village || userData.address_state || '',
-                abha_id: userData.abha_id || null,
-                abha_address: userData.abha_address || null,
-                consent_status: 'GRANTED',
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-            };
+            let unified = { ...userPayload, name: fullName.trim(), role: role.toLowerCase() };
 
-            const { error: patientErr } = await supabase
-                .from('patients')
-                .upsert(patientPayload);
+            // ONLY create/update patient clinical profile if the user's role is PATIENT
+            if (role === 'PATIENT') {
+                const dob = userData.dob || userData.date_of_birth || null;
+                let age = userData.age ? parseInt(userData.age, 10) : null;
+                if ((age === null || isNaN(age)) && dob) {
+                    const birthDate = new Date(dob);
+                    if (!isNaN(birthDate.getTime())) {
+                        age = Math.max(0, Math.floor((Date.now() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000)));
+                    }
+                }
+                if (age === null || isNaN(age)) age = 0;
 
-            if (patientErr) {
-                console.warn('[SUPABASE] patient table sync notice:', patientErr.message);
+                const patientPayload = {
+                    id: userId,
+                    user_id: userId,
+                    full_name: fullName.trim(),
+                    phone: phone,
+                    gender: userData.gender || null,
+                    date_of_birth: dob,
+                    age: age,
+                    address: userData.address || null,
+                    district: userData.district || userData.address_city || null,
+                    village: userData.village || userData.address_state || null,
+                    abha_id: userData.abha_id || null,
+                    abha_address: userData.abha_address || null,
+                    consent_status: userData.consent_status || 'GRANTED',
+                    registered_by_health_worker_id: userData.registered_by_health_worker_id || null,
+                    assigned_facility_id: userData.assigned_facility_id || null,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                };
+
+                const { error: patientErr } = await supabase
+                    .from('patients')
+                    .upsert(patientPayload);
+
+                if (patientErr) {
+                    console.warn('[SUPABASE] patient table sync notice:', patientErr.message);
+                }
+
+                unified = {
+                    ...unified,
+                    ...patientPayload,
+                    dob: patientPayload.date_of_birth,
+                    blood_group: userData.blood_group || null,
+                    allergies: userData.allergies || null,
+                    chronic_conditions: userData.chronic_conditions || null,
+                    emergency_contact: userData.emergency_contact || null
+                };
             }
-
-            const unified = {
-                ...userPayload,
-                ...patientPayload,
-                name: fullName,
-                role: role.toLowerCase(),
-                dob: patientPayload.date_of_birth,
-                blood_group: userData.blood_group || 'O+',
-                allergies: userData.allergies || 'None',
-                chronic_conditions: userData.chronic_conditions || 'None',
-                emergency_contact: userData.emergency_contact || null
-            };
 
             if (config.demoMode) {
                 localDb.insert('users', unified);
             }
+
+            await this.logAuditEvent('USER_REGISTERED', userId, userId, 'SUCCESS', `User registered with role ${role}`);
+
             return unified;
         } catch (e) {
             console.error('[SUPABASE] createUser exception:', e.message);
@@ -218,10 +236,121 @@ class SupabaseService {
         return data;
     }
 
+    // ==========================================
+    // SWASTHYASETU PATIENT IDENTITY & CONSENT
+    // ==========================================
+    async registerPatient(patientData, actorUserId = null, actorRole = 'PATIENT') {
+        const fullName = patientData.full_name || patientData.name;
+        if (!fullName || !fullName.trim()) {
+            throw new Error('full_name is required for patient registration');
+        }
+
+        const cleanPhone = patientData.phone ? String(patientData.phone).replace(/\D/g, '').slice(-10) : null;
+        if (!cleanPhone || cleanPhone.length < 10) {
+            throw new Error('A valid 10-digit phone number is required for patient registration');
+        }
+
+        // Duplicate detection: check if a patient with this phone or abha_id already exists
+        let query = supabase.from('patients').select('*').ilike('phone', `%${cleanPhone}%`);
+        const { data: existingPatients } = await query;
+
+        if (existingPatients && existingPatients.length > 0) {
+            const existing = existingPatients[0];
+            console.log(`[PATIENT] Duplicate detected for phone ${cleanPhone}. Returning existing patient ${existing.id}`);
+            return existing;
+        }
+
+        const patientId = patientData.id || crypto.randomUUID();
+        const dob = patientData.dob || patientData.date_of_birth || null;
+        let age = patientData.age ? parseInt(patientData.age, 10) : null;
+        if ((age === null || isNaN(age)) && dob) {
+            const birthDate = new Date(dob);
+            if (!isNaN(birthDate.getTime())) {
+                age = Math.max(0, Math.floor((Date.now() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000)));
+            }
+        }
+        if (age === null || isNaN(age)) age = 0;
+
+        const payload = {
+            id: patientId,
+            user_id: patientData.user_id || null,
+            full_name: fullName.trim(),
+            phone: cleanPhone,
+            date_of_birth: dob,
+            age: age,
+            gender: patientData.gender || null,
+            address: patientData.address || null,
+            village: patientData.village || null,
+            district: patientData.district || null,
+            abha_id: patientData.abha_id || null,
+            abha_address: patientData.abha_address || null,
+            consent_status: patientData.consent_status ? String(patientData.consent_status).toUpperCase() : 'GRANTED',
+            registered_by_health_worker_id: actorRole === 'HEALTH_WORKER' ? actorUserId : (patientData.registered_by_health_worker_id || null),
+            assigned_facility_id: patientData.assigned_facility_id || null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+        };
+
+        const { data, error } = await supabase
+            .from('patients')
+            .insert(payload)
+            .select()
+            .single();
+
+        if (error) {
+            console.error('[SUPABASE] registerPatient error:', error);
+            throw new Error(`Failed to register patient: ${error.message}`);
+        }
+
+        const auditAction = actorRole === 'HEALTH_WORKER' ? 'PATIENT_ASSISTED_REGISTRATION' : 'PATIENT_SELF_REGISTRATION';
+        await this.logAuditEvent(auditAction, actorUserId || patientId, patientId, 'SUCCESS', `Patient registered: ${fullName.trim()} (Phone: ${cleanPhone})`);
+
+        return data;
+    }
+
+    async updatePatientConsent(patientId, consentStatus, actorUserId = null, actorRole = 'PATIENT') {
+        const validStatuses = ['GRANTED', 'REVOKED', 'PENDING'];
+        const normalized = String(consentStatus).toUpperCase();
+        if (!validStatuses.includes(normalized)) {
+            throw new Error(`Invalid consent status: ${consentStatus}. Must be one of: ${validStatuses.join(', ')}`);
+        }
+
+        const { data, error } = await supabase
+            .from('patients')
+            .update({
+                consent_status: normalized,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', patientId)
+            .select()
+            .single();
+
+        if (error) {
+            console.error('[SUPABASE] updatePatientConsent error:', error);
+            throw new Error(`Failed to update consent status: ${error.message}`);
+        }
+
+        const eventType = normalized === 'GRANTED' ? 'PATIENT_CONSENT_GRANTED' : (normalized === 'REVOKED' ? 'PATIENT_CONSENT_REVOKED' : 'PATIENT_CONSENT_PENDING');
+        await this.logAuditEvent(eventType, actorUserId || patientId, patientId, 'SUCCESS', `Patient consent updated to ${normalized}`);
+
+        return data;
+    }
+
+    async getPatientById(patientId) {
+        const { data, error } = await supabase
+            .from('patients')
+            .select('*')
+            .eq('id', patientId)
+            .maybeSingle();
+
+        if (error) throw error;
+        return data;
+    }
+
     async updateUser(userId, updateData) {
         const fullName = updateData.name || updateData.full_name;
         const userUpdates = { updated_at: new Date().toISOString() };
-        if (fullName) userUpdates.full_name = fullName;
+        if (fullName) userUpdates.full_name = fullName.trim();
         if (updateData.email) userUpdates.email = updateData.email.trim().toLowerCase();
         if (updateData.phone) userUpdates.phone = String(updateData.phone).replace(/\D/g, '').slice(-10);
         if (updateData.role) userUpdates.role = updateData.role.toUpperCase();
@@ -232,13 +361,14 @@ class SupabaseService {
                 .update(userUpdates)
                 .eq('id', userId);
 
-            // Update patients table
+            // Update patients table if patient record exists
             const patientUpdates = {
                 updated_at: new Date().toISOString()
             };
-            if (fullName) patientUpdates.full_name = fullName;
+            if (fullName) patientUpdates.full_name = fullName.trim();
             if (updateData.gender) patientUpdates.gender = updateData.gender;
             if (updateData.dob || updateData.date_of_birth) patientUpdates.date_of_birth = updateData.dob || updateData.date_of_birth;
+            if (updateData.age) patientUpdates.age = parseInt(updateData.age, 10);
             if (updateData.address) patientUpdates.address = updateData.address;
             if (updateData.address_city || updateData.district) patientUpdates.district = updateData.address_city || updateData.district;
             if (updateData.address_state || updateData.village) patientUpdates.village = updateData.address_state || updateData.village;
@@ -250,10 +380,12 @@ class SupabaseService {
                 .update(patientUpdates)
                 .or(`id.eq.${userId},user_id.eq.${userId}`);
 
+            await this.logAuditEvent('USER_PROFILE_UPDATED', userId, userId, 'SUCCESS', 'Profile and demographic fields updated');
+
             return this.getUser(userId);
         } catch (err) {
             console.error('[SUPABASE] updateUser error:', err);
-            return this.getUser(userId);
+            throw err;
         }
     }
 
@@ -261,6 +393,7 @@ class SupabaseService {
         try {
             await supabase.from('patients').delete().or(`id.eq.${userId},user_id.eq.${userId}`);
             await supabase.from('users').delete().eq('id', userId);
+            await this.logAuditEvent('USER_ACCOUNT_DELETED', userId, userId, 'SUCCESS', 'User account and patient profile deleted');
         } catch (e) {}
         return true;
     }
@@ -1809,12 +1942,26 @@ class SupabaseService {
         };
     }
 
-    async recordAshaBeneficiary(data) {
-        const id = crypto.randomUUID ? crypto.randomUUID() : `asha-b-${Date.now()}`;
-        return {
-            id,
+    async recordAshaBeneficiary(data, workerId = null) {
+        const beneficiaryData = {
             ...data,
-            created_at: new Date().toISOString(),
+            full_name: data.full_name || data.name || data.beneficiaryName,
+            phone: data.phone || data.mobile,
+            gender: data.gender || 'FEMALE',
+            date_of_birth: data.dob || data.date_of_birth || null,
+            age: data.age || null,
+            address: data.address || null,
+            village: data.village || null,
+            district: data.district || 'Pune',
+            abha_id: data.abha_id || null,
+            abha_address: data.abha_address || null,
+            consent_status: data.consent_status || 'GRANTED',
+            registered_by_health_worker_id: workerId || data.registered_by_health_worker_id || null
+        };
+
+        const patient = await this.registerPatient(beneficiaryData, workerId, 'HEALTH_WORKER');
+        return {
+            ...patient,
             syncStatus: 'SYNCED_WITH_RCH_PORTAL'
         };
     }

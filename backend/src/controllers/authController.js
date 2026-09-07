@@ -161,10 +161,28 @@ exports.verifyOtp = async (req, res) => {
 
 // Register New User
 exports.register = async (req, res) => {
-    const { phone, otp, role, name, age, dob, gender, blood_group } = req.body;
+    const { phone, otp, role, name, full_name, age, dob, gender, blood_group } = req.body;
     const cleanPhone = normalizePhone(phone);
     const cleanOtp = (otp || '').toString().trim();
-    console.log(`[UPDATE] Register: Phone: ${cleanPhone}, OTP: ${cleanOtp}, Role: ${role}`);
+    const resolvedName = (name || full_name || '').trim();
+
+    if (!resolvedName) {
+        return res.status(400).json({
+            success: false,
+            error: "Full name is required for registration",
+            code: "VALIDATION_ERROR"
+        });
+    }
+
+    if (!cleanPhone || cleanPhone.length < 10) {
+        return res.status(400).json({
+            success: false,
+            error: "A valid phone number is required for registration",
+            code: "VALIDATION_ERROR"
+        });
+    }
+
+    console.log(`[UPDATE] Register: Phone: ${cleanPhone}, Role: ${role}, Name: ${resolvedName}`);
 
     try {
         if (cleanOtp) {
@@ -172,7 +190,11 @@ exports.register = async (req, res) => {
             const isValidBypass = cleanOtp === '123456' || cleanOtp === '000000';
             const isOtpMatch = storedData && storedData.code === cleanOtp;
             if (!isValidBypass && !isOtpMatch && cleanOtp.length !== 6) {
-                return res.status(400).json({ error: "Invalid OTP code. Please enter the 6-digit code or 123456." });
+                return res.status(400).json({
+                    success: false,
+                    error: "Invalid OTP code. Please enter the 6-digit code or 123456.",
+                    code: "INVALID_OTP"
+                });
             }
         }
 
@@ -182,9 +204,10 @@ exports.register = async (req, res) => {
         } catch (e) {}
 
         if (user) {
-            // User already exists, log them in
+            // User already exists, prevent duplicate and return logged-in session
             const tokens = generateTokens(user);
             return res.json({
+                success: true,
                 message: "Account already exists - Logged in successfully",
                 accessToken: tokens.accessToken,
                 refreshToken: tokens.refreshToken,
@@ -192,10 +215,10 @@ exports.register = async (req, res) => {
             });
         }
 
-        let finalDob = dob;
+        let finalDob = dob || null;
         if (!finalDob && age) {
             const date = new Date();
-            date.setFullYear(date.getFullYear() - parseInt(age));
+            date.setFullYear(date.getFullYear() - parseInt(age, 10));
             finalDob = date.toISOString().split('T')[0];
         }
 
@@ -203,10 +226,11 @@ exports.register = async (req, res) => {
             ...req.body,
             phone: cleanPhone,
             role: role || 'patient',
-            name: name || 'New User',
+            name: resolvedName,
+            full_name: resolvedName,
             dob: finalDob,
-            gender: gender || 'Male',
-            blood_group: blood_group || 'O+'
+            gender: gender || null,
+            blood_group: blood_group || null
         };
 
         delete userData.firebaseToken;
@@ -214,28 +238,24 @@ exports.register = async (req, res) => {
         delete userData.otp;
 
         if (role === 'doctor') {
-            userData.specialization = req.body.specialization || 'General Physician';
-            userData.hospital_name = req.body.hospital_name || 'Primary Health Centre';
+            userData.specialization = req.body.specialization || null;
+            userData.hospital_name = req.body.hospital_name || null;
             userData.doctor_qr_id = 'DOC-' + Math.random().toString(36).substr(2, 6).toUpperCase();
         }
 
         const userId = uuidv4();
-        try {
-            user = await dbService.createUser(userId, userData);
-        } catch (createErr) {
-            console.warn('[AUTH] Fallback memory user created:', createErr.message);
-            user = { id: userId, ...userData };
-        }
+        user = await dbService.createUser(userId, userData);
 
         const tokens = generateTokens(user);
 
         res.status(201).json({
+            success: true,
             message: "Registration Successful",
             accessToken: tokens.accessToken,
             refreshToken: tokens.refreshToken,
             user: {
                 id: user.id,
-                name: user.name,
+                name: user.name || user.full_name,
                 phone: user.phone,
                 role: user.role,
                 ...userData
@@ -244,7 +264,11 @@ exports.register = async (req, res) => {
 
     } catch (err) {
         console.error("[ERROR] Registration Error:", err);
-        res.status(500).json({ error: "Registration failed: " + err.message });
+        res.status(500).json({
+            success: false,
+            error: "Registration failed: " + err.message,
+            code: "REGISTRATION_ERROR"
+        });
     }
 };
 

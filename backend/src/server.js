@@ -23,6 +23,7 @@ const feedbackRoutes = require('./routes/feedback');
 const ashaRoutes = require('./routes/asha');
 const caregiverRoutes = require('./routes/caregiver');
 const facilityOpsRoutes = require('./routes/facilityOps');
+const patientRoutes = require('./routes/patients');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./config/swaggerDoc');
 
@@ -162,6 +163,8 @@ app.use('/api/feedback', feedbackRoutes);
 app.use('/api/asha', ashaRoutes);
 app.use('/api/caregiver', caregiverRoutes);
 app.use('/api/facility-ops', facilityOpsRoutes);
+app.use('/api/v1/patients', patientRoutes);
+app.use('/api/patients', patientRoutes);
 
 // Swagger Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
