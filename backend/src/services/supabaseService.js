@@ -552,7 +552,7 @@ class SupabaseService {
     // ==========================================
     async createAssessment(assessmentData) {
         const payload = {
-            id: 'ass-' + Date.now(),
+            id: assessmentData.id || crypto.randomUUID(),
             patient_id: assessmentData.patient_id,
             assessor_id: assessmentData.assessor_id || null,
             systolic_bp: assessmentData.systolic_bp || null,
@@ -563,10 +563,21 @@ class SupabaseService {
             temperature: assessmentData.temperature || null,
             is_pregnant: !!assessmentData.is_pregnant,
             danger_signs: assessmentData.danger_signs || null,
-            ai_risk_score: assessmentData.ai_risk_score || 0.0,
-            computed_risk_level: assessmentData.computed_risk_level || 'LOW',
-            ai_triage_explanation: assessmentData.ai_triage_explanation || null,
+            ai_risk_score: assessmentData.ai_risk_score !== undefined ? assessmentData.ai_risk_score : (assessmentData.riskScore || 0.0),
+            computed_risk_level: assessmentData.computed_risk_level || assessmentData.riskLevel || 'LOW',
+            ai_triage_explanation: assessmentData.ai_triage_explanation || assessmentData.explanation || null,
             created_at: new Date().toISOString()
+        };
+
+        const enrichedResult = {
+            ...payload,
+            temperature_c: assessmentData.temperature_c !== undefined ? assessmentData.temperature_c : null,
+            temperature_f: assessmentData.temperature_f !== undefined ? assessmentData.temperature_f : null,
+            urgency: assessmentData.urgency || 'ROUTINE',
+            flagged_factors: Array.isArray(assessmentData.flaggedFactors) ? assessmentData.flaggedFactors : (assessmentData.flagged_factors || []),
+            action_recommendation: assessmentData.actionRecommendation || assessmentData.action_recommendation || null,
+            triage_rule_version: assessmentData.triage_rule_version || assessmentData.ruleVersion || 'SWASTHYA_TRIAGE_V2',
+            source: assessmentData.source || 'DETERMINISTIC_RULES'
         };
 
         try {
@@ -577,10 +588,11 @@ class SupabaseService {
                 .single();
 
             if (!error && data) {
+                const combined = { ...enrichedResult, ...data };
                 if (config.demoMode) {
-                    localDb.insert('assessments', data);
+                    localDb.insert('assessments', combined);
                 }
-                return data;
+                return combined;
             }
             if (error) throw error;
         } catch (e) {
@@ -589,9 +601,28 @@ class SupabaseService {
         }
 
         if (config.demoMode) {
-            return localDb.insert('assessments', payload);
+            return localDb.insert('assessments', enrichedResult);
         }
         throw new Error('Failed to create assessment in database');
+    }
+
+    async getAssessmentById(assessmentId) {
+        try {
+            const { data, error } = await supabase
+                .from('assessments')
+                .select('*')
+                .eq('id', assessmentId)
+                .single();
+            if (!error && data) return data;
+        } catch (e) {
+            console.warn('[SUPABASE] Get assessment by ID error:', e.message);
+            if (!config.demoMode) throw e;
+        }
+
+        if (config.demoMode) {
+            return localDb.findOne('assessments', a => a.id === assessmentId);
+        }
+        return null;
     }
 
     async getAssessmentsByPatient(patientId) {
@@ -614,6 +645,57 @@ class SupabaseService {
         }
         return [];
     }
+
+    async overrideAssessmentTriage(assessmentId, overrideData, user) {
+        const updatePayload = {
+            computed_risk_level: overrideData.override_risk_level,
+            ai_triage_explanation: `[OVERRIDDEN to ${overrideData.override_risk_level}/${overrideData.override_urgency} by ${user.role || 'DOCTOR'}] Reason: ${overrideData.override_reason}`,
+            updated_at: new Date().toISOString()
+        };
+
+        const enrichedOverride = {
+            override_risk_level: overrideData.override_risk_level,
+            override_urgency: overrideData.override_urgency,
+            override_reason: overrideData.override_reason,
+            overridden_by: user.id || user.phone,
+            overridden_by_role: user.role,
+            overridden_at: updatePayload.updated_at,
+            computed_risk_level: overrideData.override_risk_level,
+            urgency: overrideData.override_urgency
+        };
+
+        try {
+            const { data, error } = await supabase
+                .from('assessments')
+                .update(updatePayload)
+                .eq('id', assessmentId)
+                .select()
+                .single();
+
+            if (!error && data) {
+                const combined = { ...data, ...enrichedOverride };
+                if (config.demoMode) {
+                    localDb.update('assessments', a => a.id === assessmentId, combined);
+                }
+                return combined;
+            }
+            if (error) throw error;
+        } catch (e) {
+            console.warn('[SUPABASE] Override assessment error:', e.message);
+            if (!config.demoMode) throw e;
+        }
+
+        if (config.demoMode) {
+            const updated = localDb.update('assessments', a => a.id === assessmentId, enrichedOverride);
+            if (!updated) {
+                throw new Error('Assessment not found');
+            }
+            return updated;
+        }
+        throw new Error('Failed to update assessment override in database');
+    }
+
+
 
     // ==========================================
     // SWASTHYASETU CLOSED-LOOP REFERRALS (19-State Machine)

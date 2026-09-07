@@ -234,9 +234,89 @@ exports.generateMedicalExplainer = async (medicineName, patientProfile, reportCo
             console.error("Raw Text:", text);
             throw new Error("AI generated invalid JSON. Please try again.");
         }
-
     } catch (error) {
         console.error("AI Explainer Error:", error);
         throw new Error("Failed to generate explainer: " + error.message);
     }
 };
+
+/**
+ * Safe AI-Augmented Triage
+ * Evaluates deterministic clinical rules as ground truth.
+ * Falls back transparently on any AI timeout or error without failing assessment capture.
+ * Never claims autonomous disease diagnosis.
+ */
+const { evaluateDeterministicTriage } = require('../domain/clinicalTriageEngine');
+
+exports.triageAssessmentWithAI = async (vitals) => {
+    // 1. Establish deterministic clinical safety baseline
+    const deterministicResult = evaluateDeterministicTriage(vitals);
+
+    // If deterministic evaluation is CRITICAL / EMERGENCY, do not delay for AI
+    if (deterministicResult.urgency === 'EMERGENCY') {
+        return deterministicResult;
+    }
+
+    try {
+        const apiKey = process.env.GEMINI_API_KEY || "AIzaSyBUfU9qK2wNsKWWmdo-bNGy_BN7NpJ3C9g";
+        if (!apiKey) {
+            return deterministicResult;
+        }
+
+        const model = genAI.getGenerativeModel({
+            model: "gemini-3-flash-preview",
+            generationConfig: { responseMimeType: "application/json" }
+        });
+
+        const prompt = `You are a clinical decision support AI assisting community health workers.
+You MUST NOT generate autonomous disease diagnoses or drug prescriptions. Provide action-oriented guidance.
+
+PATIENT VITALS:
+- Systolic BP: ${vitals.systolic_bp || 'Not recorded'} mmHg
+- Diastolic BP: ${vitals.diastolic_bp || 'Not recorded'} mmHg
+- Pulse Rate: ${vitals.pulse_rate || 'Not recorded'} bpm
+- SpO2: ${vitals.spo2 || 'Not recorded'} %
+- Respiratory Rate: ${vitals.respiratory_rate || 'Not recorded'} breaths/min
+- Temperature: ${vitals.temperature_c ? vitals.temperature_c + '°C' : (vitals.temperature || 'Not recorded')}
+- Pregnancy: ${vitals.is_pregnant ? 'Yes' : 'No'}
+- Danger Signs / Notes: ${vitals.danger_signs || 'None'}
+
+DETERMINISTIC CLINICAL BASELINE:
+- Computed Risk Level: ${deterministicResult.riskLevel}
+- Computed Urgency: ${deterministicResult.urgency}
+- Flagged Factors: ${JSON.stringify(deterministicResult.flaggedFactors)}
+
+Return a JSON object:
+{
+  "clinical_summary": "Concise summary of vital signs without disease diagnosis",
+  "action_recommendation": "Action-oriented recommendation for next clinical step",
+  "key_concerns": ["concise list of observations"]
+}`;
+
+        // Timeout promise after 2 seconds
+        const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("AI triage request timed out")), 2000)
+        );
+
+        const aiPromise = (async () => {
+            const result = await model.generateContent(prompt);
+            const response = await result.response;
+            const text = response.text().replace(/```json/g, '').replace(/```/g, '').trim();
+            return JSON.parse(text);
+        })();
+
+        const aiResponse = await Promise.race([aiPromise, timeoutPromise]);
+
+        return {
+            ...deterministicResult,
+            source: 'AI_ASSISTED',
+            ai_summary: aiResponse.clinical_summary || deterministicResult.explanation,
+            actionRecommendation: aiResponse.action_recommendation || deterministicResult.actionRecommendation,
+            ai_concerns: aiResponse.key_concerns || deterministicResult.flaggedFactors
+        };
+    } catch (aiErr) {
+        console.warn("[AI_TRIAGE_FALLBACK] AI unavailable or timed out. Falling back to deterministic clinical rules:", aiErr.message);
+        return deterministicResult;
+    }
+};
+
