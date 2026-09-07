@@ -6,6 +6,7 @@ import {
     Building2, Activity, ArrowRight, Sparkles, CheckCircle2, Lock
 } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
+import { SwasthyaEmblem } from '../components/SwasthyaLogo';
 
 const RoleSelection = () => {
     const navigate = useNavigate();
@@ -126,21 +127,11 @@ const RoleSelection = () => {
                 animate={{ opacity: 1, y: 0 }}
                 style={{ textAlign: 'center', marginBottom: '28px', color: '#1e293b' }}
             >
-                <div style={{
-                    width: '68px',
-                    height: '68px',
-                    background: 'white',
-                    borderRadius: '18px',
-                    margin: '0 auto 12px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 10px 20px -5px rgba(0, 0, 0, 0.1)'
-                }}>
-                    <HeartPulse size={38} color="#0d9488" />
+                <div style={{ margin: '0 auto 14px', display: 'flex', justifyContent: 'center' }}>
+                    <SwasthyaEmblem size={72} />
                 </div>
                 <h1 style={{ fontSize: '28px', fontWeight: '800', margin: '0 0 4px 0', color: '#0f172a' }}>
-                    Swasthya
+                    Swasthya <span style={{ color: '#0d9488', fontSize: '18px', verticalAlign: 'middle', background: '#f0fdfa', padding: '2px 8px', borderRadius: '8px', border: '1px solid #ccfbf1' }}>सेतु</span>
                 </h1>
                 <p style={{ fontSize: '13px', color: '#64748b', maxWidth: '420px', margin: '0 auto 16px', lineHeight: '1.4' }}>
                     AI Clinical Triage, Referral Engine & Health Records
