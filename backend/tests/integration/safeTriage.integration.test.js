@@ -250,7 +250,6 @@ async function runSafeTriageIntegrationTests() {
 
 if (require.main === module) {
     runSafeTriageIntegrationTests()
-        .then(() => process.exit(0))
         .catch(err => {
             console.error("Fatal Test Suite Error:", err);
             process.exit(1);
