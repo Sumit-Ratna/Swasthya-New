@@ -828,57 +828,6 @@ const Home = () => {
                 </div>
             </div>
 
-            {/* Smart Facility Directory Preview */}
-            <div style={{ marginBottom: '32px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                    <h2 className="section-title" style={{ margin: 0, color: 'var(--text-primary)', fontSize: '18px', fontWeight: 800 }}>
-                        Nearby Facility Operational Loads
-                    </h2>
-                    <button
-                        onClick={() => navigate('/facilities')}
-                        style={{ background: 'none', border: 'none', color: 'var(--primary-color)', fontSize: '13px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                    >
-                        View Directory <ChevronRight size={16} />
-                    </button>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '14px' }}>
-                    {facilities.map((fac) => (
-                        <div
-                            key={fac.id}
-                            className="card"
-                            onClick={() => navigate('/facilities')}
-                            style={{ padding: '16px', border: '1px solid var(--border-color)', borderRadius: '16px', cursor: 'pointer', background: 'var(--card-bg)' }}
-                        >
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                                <div>
-                                    <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>{fac.name}</h3>
-                                    <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>{fac.district} • {fac.tier}</div>
-                                </div>
-                                {fac.emergency_capable && (
-                                    <span style={{ fontSize: '9px', fontWeight: 800, padding: '2px 6px', borderRadius: '6px', background: '#fee2e2', color: '#b91c1c' }}>
-                                        24x7 Emergency
-                                    </span>
-                                )}
-                            </div>
-
-                            <div style={{ marginTop: '10px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '4px' }}>
-                                    <span style={{ color: 'var(--text-secondary)' }}>Bed Occupancy:</span>
-                                    <strong style={{ color: fac.current_load > 75 ? '#dc2626' : '#16a34a' }}>{fac.current_load}%</strong>
-                                </div>
-                                <div style={{ width: '100%', height: '6px', background: 'var(--border-color)', borderRadius: '3px', overflow: 'hidden' }}>
-                                    <div style={{
-                                        width: `${fac.current_load}%`,
-                                        height: '100%',
-                                        background: fac.current_load > 75 ? '#dc2626' : fac.current_load > 50 ? '#d97706' : '#16a34a'
-                                    }}></div>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
 
             {/* Connected Doctors / Care Team Preview */}
             <div style={{ marginBottom: '24px' }}>

@@ -90,6 +90,37 @@ function getGeminiClient() {
     return new GoogleGenerativeAI(apiKey);
 }
 
+// NVIDIA Nemotron / OpenAI-compatible API Helper
+async function callNemotronAI(userPrompt, systemPrompt = "You are a professional medical AI assistant. Analyze medical reports, medicines, and clinical data accurately without giving uncertified prescription directives.") {
+    const apiKey = process.env.NEMOTRON_API_KEY || process.env.NVIDIA_API_KEY || process.env.OPENAI_API_KEY;
+    if (!apiKey) return null;
+
+    const baseUrl = process.env.NEMOTRON_BASE_URL || process.env.NVIDIA_BASE_URL || 'https://integrate.api.nvidia.com/v1';
+    const model = process.env.NEMOTRON_MODEL || 'nvidia/llama-3.1-nemotron-70b-instruct';
+
+    const payload = {
+        model: model,
+        messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt }
+        ],
+        temperature: 0.2,
+        top_p: 0.7,
+        max_tokens: 1024
+    };
+
+    const response = await axios.post(`${baseUrl}/chat/completions`, payload, {
+        headers: {
+            'Authorization': `Bearer ${apiKey.trim()}`,
+            'Content-Type': 'application/json'
+        },
+        timeout: 25000
+    });
+
+    const content = response.data?.choices?.[0]?.message?.content || '';
+    return content;
+}
+
 /**
  * Clamps AI triage risk and urgency against the deterministic floor.
  * AI cannot downgrade deterministic severity.
@@ -282,6 +313,36 @@ exports.summarizeLabReport = async (reportText, metadata = {}) => {
         }
     }
 
+    // Try NVIDIA Nemotron API if configured
+    try {
+        const nemotronResult = await callNemotronAI(
+            `Interpret the following medical lab report. 
+Do not prescribe medications. Highlight key abnormal indicators and state that clinical evaluation by a medical doctor is required.
+
+REPORT CONTENT:
+${reportText}
+
+Provide a structured summary:
+- Key Findings
+- Out-of-Range Indicators
+- Suggested Clinical Discussion Points`,
+            "You are a clinical decision support AI assistant. Provide structured, accurate analysis of medical lab reports with zero prescription directives."
+        );
+
+        if (nemotronResult) {
+            return {
+                summary_text: nemotronResult,
+                structured_data: {},
+                patient_name: metadata.patient_name || "Patient",
+                disclaimer: CLINICAL_SAFETY_DISCLAIMER,
+                prescribing_authority: "NONE",
+                source: "NEMOTRON_AI"
+            };
+        }
+    } catch (nemoErr) {
+        console.warn("[NEMOTRON_REPORT_NOTICE] Nemotron call failed, checking next fallback:", nemoErr.message);
+    }
+
     // Fallback to Gemini if configured
     const genAI = getGeminiClient();
     if (genAI && circuitBreaker.canExecute()) {
@@ -394,16 +455,11 @@ Return as a VALID JSON with "text_content", "structured_data", and "patient_name
 /**
  * Check Drug Interactions
  */
+/**
+ * Check Drug Interactions
+ */
 exports.checkDrugInteractions = async (newMed, patientHistory) => {
-    const genAI = getGeminiClient();
-    if (!genAI) {
-        return `[INFO] AI drug interaction check unavailable. Please check pharmacology reference manually for ${newMed}.`;
-    }
-
-    try {
-        const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
-
-        const prompt = `You are a medical AI checking drug safety.
+    const prompt = `You are a medical AI checking drug safety.
 
 PATIENT MEDICAL HISTORY:
 ${JSON.stringify(patientHistory, null, 2)}
@@ -431,6 +487,21 @@ If UNSAFE:
 
 Be specific, cite the exact interaction, and be concise.`;
 
+    // Try Nemotron AI first if key exists
+    try {
+        const nemotronResult = await callNemotronAI(prompt, "You are a clinical pharmacology safety AI.");
+        if (nemotronResult) return nemotronResult;
+    } catch (e) {
+        console.warn("[NEMOTRON_DRUG_CHECK_NOTICE] Nemotron call failed, falling back to Gemini:", e.message);
+    }
+
+    const genAI = getGeminiClient();
+    if (!genAI) {
+        return `[INFO] AI drug interaction check unavailable. Please check pharmacology reference manually for ${newMed}.`;
+    }
+
+    try {
+        const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
         const result = await model.generateContent(prompt);
         const response = await result.response;
         return response.text();
@@ -444,15 +515,7 @@ Be specific, cite the exact interaction, and be concise.`;
  * Medical Scribe
  */
 exports.scribeConsultation = async (audioTranscript) => {
-    const genAI = getGeminiClient();
-    if (!genAI) {
-        return `TRANSCRIPT SUMMARY:\n${audioTranscript}\n\n[Note: Clinical scribe AI model unavailable]`;
-    }
-
-    try {
-        const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
-
-        const prompt = `You are a medical scribe AI. Create a structured consultation note.
+    const prompt = `You are a medical scribe AI. Create a structured consultation note.
 
 TRANSCRIPT:
 "${audioTranscript}"
@@ -480,6 +543,21 @@ FORMAT YOUR NOTE AS:
 
 Keep it professional, concise, and medically accurate.`;
 
+    // Try Nemotron AI first
+    try {
+        const nemotronResult = await callNemotronAI(prompt, "You are an expert clinical medical scribe AI.");
+        if (nemotronResult) return nemotronResult;
+    } catch (e) {
+        console.warn("[NEMOTRON_SCRIBE_NOTICE] Nemotron scribe failed, trying Gemini:", e.message);
+    }
+
+    const genAI = getGeminiClient();
+    if (!genAI) {
+        return `TRANSCRIPT SUMMARY:\n${audioTranscript}\n\n[Note: Clinical scribe AI model unavailable]`;
+    }
+
+    try {
+        const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
         const result = await model.generateContent(prompt);
         const response = await result.response;
         return response.text();
@@ -493,26 +571,15 @@ Keep it professional, concise, and medically accurate.`;
  * Explainer Video Storyboard Generation
  */
 exports.generateMedicalExplainer = async (medicineName, patientProfile, reportContext) => {
-    const genAI = getGeminiClient();
-    if (!genAI) {
-        throw new Error("Gemini API key is not configured for video explainer generation");
-    }
+    let audienceStyle = "general";
+    const age = patientProfile?.age || 70;
+    if (age > 60) audienceStyle = "elderly";
+    else if (age < 12) audienceStyle = "child";
 
-    try {
-        const model = genAI.getGenerativeModel({
-            model: "gemini-3-flash-preview",
-            generationConfig: { responseMimeType: "application/json" }
-        });
+    const contextStr = typeof reportContext === 'string' ? reportContext : JSON.stringify(reportContext || {});
+    const safeContext = contextStr.length > 5000 ? contextStr.substring(0, 5000) + "..." : contextStr;
 
-        let audienceStyle = "general";
-        const age = patientProfile?.age || 70;
-        if (age > 60) audienceStyle = "elderly";
-        else if (age < 12) audienceStyle = "child";
-
-        const contextStr = typeof reportContext === 'string' ? reportContext : JSON.stringify(reportContext || {});
-        const safeContext = contextStr.length > 5000 ? contextStr.substring(0, 5000) + "..." : contextStr;
-
-        let prompt = `You are a medical animation generator.
+    let prompt = `You are a medical animation generator.
 Context:
 Medicine: ${medicineName}
 Patient Age: ${age}
@@ -527,18 +594,70 @@ ${audienceStyle === 'child' ? "- Use friendly characters, playful visuals." : ""
 
 End the video with a mandatory safety disclaimer: "${CLINICAL_SAFETY_DISCLAIMER}"
 
-Return a VALID JSON ARRAY of scene objects:
+Return ONLY A VALID JSON ARRAY of scene objects (no markdown, no other text):
 [
   {
     "scene_number": 1,
-    "title": "String title",
-    "narration": "Narration text",
+    "title": "Introduction to Medicine",
+    "narration": "Narration text explaining how medicine works",
     "visual_description": "3D visual animation description",
-    "animation_type": "fade_in | slide_right | pulse | flow | zoom_in",
-    "main_icon": "tablet | injection | lungs | heart | brain | stomach | blood_vessel | liver | kidney | shield | check | warning",
+    "animation_type": "fade_in",
+    "main_icon": "tablet",
     "duration_seconds": 6
   }
 ]`;
+
+    // Try Nemotron first
+    try {
+        const nemotronResult = await callNemotronAI(prompt, "You are an expert medical video storyboard animation AI. Always return strict valid JSON arrays only.");
+        if (nemotronResult) {
+            let cleanJson = nemotronResult.replace(/```json/g, '').replace(/```/g, '').trim();
+            const parsed = JSON.parse(cleanJson);
+            if (Array.isArray(parsed)) return parsed;
+        }
+    } catch (e) {
+        console.warn("[NEMOTRON_EXPLAINER_NOTICE] Nemotron explainer failed, trying Gemini:", e.message);
+    }
+
+    const genAI = getGeminiClient();
+    if (!genAI) {
+        // Fallback default storyboard if no API is available
+        return [
+            {
+                scene_number: 1,
+                title: `Understanding ${medicineName}`,
+                narration: `${medicineName} has been prescribed to manage your clinical condition. Take strictly as directed by your physician.`,
+                visual_description: `Visual overview of ${medicineName} tablet and its therapeutic action.`,
+                animation_type: "fade_in",
+                main_icon: "tablet",
+                duration_seconds: 6
+            },
+            {
+                scene_number: 2,
+                title: "Dosage & Usage Instructions",
+                narration: "Take this medicine at regular intervals with water. Do not skip doses or double up if missed.",
+                visual_description: "Patient drinking water and following regular schedule.",
+                animation_type: "slide_right",
+                main_icon: "shield",
+                duration_seconds: 6
+            },
+            {
+                scene_number: 3,
+                title: "Important Safety Disclaimer",
+                narration: CLINICAL_SAFETY_DISCLAIMER,
+                visual_description: "Clinical safety shield and doctor consultation recommendation.",
+                animation_type: "pulse",
+                main_icon: "check",
+                duration_seconds: 6
+            }
+        ];
+    }
+
+    try {
+        const model = genAI.getGenerativeModel({
+            model: "gemini-3-flash-preview",
+            generationConfig: { responseMimeType: "application/json" }
+        });
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
