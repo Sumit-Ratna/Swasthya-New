@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, LogOut, UserCircle } from 'lucide-react';
+import { LayoutDashboard, Users, LogOut, UserCircle, Sparkles } from 'lucide-react';
 
 const DoctorNavbar = () => {
     const { logout } = useContext(AuthContext);
@@ -11,6 +11,7 @@ const DoctorNavbar = () => {
     const navItems = [
         { path: '/doctor/dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { path: '/doctor/patients', label: 'Patients', icon: Users },
+        { path: '/doctor/scribe', label: 'AI Scribe', icon: Sparkles },
         { path: '/profile', label: 'Profile', icon: UserCircle },
     ];
 

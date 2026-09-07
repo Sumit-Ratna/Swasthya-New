@@ -42,6 +42,8 @@ import DoctorPatients from './pages/DoctorPatients';
 import PatientHistory from './pages/PatientHistory';
 import PrescribeMedicine from './pages/PrescribeMedicine';
 import AddDiagnosis from './pages/AddDiagnosis';
+import DoctorAIScribe from './pages/DoctorAIScribe';
+import DoctorQR from './pages/DoctorQR';
 
 const MainApp = () => {
   const { user, loading } = useContext(AuthContext);
@@ -162,6 +164,8 @@ const MainApp = () => {
           <Route path="/doctor/patient/:patient_id" element={<PatientHistory />} />
           <Route path="/doctor/prescribe" element={<PrescribeMedicine />} />
           <Route path="/doctor/diagnosis" element={<AddDiagnosis />} />
+          <Route path="/doctor/scribe" element={<DoctorAIScribe />} />
+          <Route path="/doctor/qr" element={<DoctorQR />} />
 
           {/* Catch all */}
           <Route path="*" element={<Navigate to={user ? getRoleHome(user.role) : '/login'} replace />} />

@@ -60,15 +60,9 @@ const Navbar = () => {
         ];
     } else if (role === 'doctor') {
         navItems = [
-            { path: '/doctor/dashboard', label: 'OPD Queue', icon: Stethoscope },
+            { path: '/doctor/dashboard', label: 'Dashboard', icon: LayoutGrid },
             { path: '/doctor/patients', label: 'Patients', icon: Users },
-            { 
-                path: '/doctor/prescribe', 
-                label: 'Prescribe', 
-                icon: FileText,
-                highlight: true 
-            },
-            { path: '/facility-dashboard', label: 'Bed Grid', icon: Building2 },
+            { path: '/doctor/scribe', label: 'AI Scribe', icon: Sparkles },
             { path: '/profile', label: 'Profile', icon: User }
         ];
     } else if (role === 'facility_staff' || role === 'facility_coordinator' || role === 'facility') {
