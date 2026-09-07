@@ -1476,6 +1476,472 @@ class SupabaseService {
             }
         };
     }
+
+    // ==========================================
+    // ASHA / ANM FRONTLINE WORKER SERVICES
+    // ==========================================
+    async getAshaDashboardData(workerId, district = 'Pune') {
+        return {
+            workerInfo: {
+                id: workerId || '77777777-7777-7777-7777-777777777777',
+                name: 'Sunita Gaikwad',
+                role: 'ASHA_FACILITATOR',
+                sector: 'Shirwal Catchment, Ward 4',
+                district: district,
+                assignedHouseholds: 184,
+                coverageScore: '94.2%',
+                lastSyncAt: new Date().toISOString()
+            },
+            summaryKpis: {
+                totalMothersTracked: 38,
+                highRiskPregnancies: 7,
+                infantsDueImmunization: 14,
+                ncdScreeningsThisMonth: 112,
+                completedHomeVisits: 146,
+                pendingReferrals: 3,
+                dbtIncentivesEarned: 4850
+            },
+            maternalBeneficiaries: [
+                {
+                    id: 'mat-1',
+                    name: 'Kavita Jadhav',
+                    age: 24,
+                    husbandName: 'Rahul Jadhav',
+                    phone: '+91 98223 44551',
+                    ward: 'Ward 4 - Patil Vasti',
+                    gestationalAgeWeeks: 32,
+                    edd: '2026-10-28',
+                    gravida: 'G2P1',
+                    isHighRisk: true,
+                    riskFactors: ['Severe Anemia (Hb 7.8 g/dL)', 'Borderline BP 138/88'],
+                    ancVisitsCompleted: 3,
+                    totalAncRequired: 4,
+                    nextAncDueDate: '2026-09-12',
+                    ifaStockCount: 45,
+                    emergencyStatus: 'MONITORING'
+                },
+                {
+                    id: 'mat-2',
+                    name: 'Pooja Shinde',
+                    age: 28,
+                    husbandName: 'Sachin Shinde',
+                    phone: '+91 97654 11223',
+                    ward: 'Ward 4 - Main Village',
+                    gestationalAgeWeeks: 38,
+                    edd: '2026-09-18',
+                    gravida: 'G1P0',
+                    isHighRisk: true,
+                    riskFactors: ['Gestational Diabetes (FBS 134 mg/dL)', 'Prior Pre-eclampsia'],
+                    ancVisitsCompleted: 4,
+                    totalAncRequired: 4,
+                    nextAncDueDate: '2026-09-08',
+                    ifaStockCount: 60,
+                    emergencyStatus: 'HOSPITAL_ALERT_TRIGGERED'
+                },
+                {
+                    id: 'mat-3',
+                    name: 'Meena Waghmare',
+                    age: 21,
+                    husbandName: 'Kishor Waghmare',
+                    phone: '+91 91580 99887',
+                    ward: 'Ward 4 - ZP School Road',
+                    gestationalAgeWeeks: 18,
+                    edd: '2027-01-22',
+                    gravida: 'G1P0',
+                    isHighRisk: false,
+                    riskFactors: ['Normal Progress'],
+                    ancVisitsCompleted: 2,
+                    totalAncRequired: 4,
+                    nextAncDueDate: '2026-10-04',
+                    ifaStockCount: 90,
+                    emergencyStatus: 'NORMAL'
+                },
+                {
+                    id: 'mat-4',
+                    name: 'Rukmini Kadam',
+                    age: 31,
+                    husbandName: 'Santosh Kadam',
+                    phone: '+91 98901 77665',
+                    ward: 'Ward 4 - Hanuman Nagar',
+                    gestationalAgeWeeks: 27,
+                    edd: '2026-11-20',
+                    gravida: 'G3P2',
+                    isHighRisk: false,
+                    riskFactors: ['Mild Morning Sickness'],
+                    ancVisitsCompleted: 2,
+                    totalAncRequired: 4,
+                    nextAncDueDate: '2026-09-22',
+                    ifaStockCount: 60,
+                    emergencyStatus: 'NORMAL'
+                }
+            ],
+            immunizationDueList: [
+                {
+                    id: 'imm-1',
+                    childName: 'Aarav Sachin Shinde',
+                    motherName: 'Pooja Shinde',
+                    dob: '2026-06-12',
+                    ageMonths: 3,
+                    vaccineName: 'Pentavalent-2 + OPV-2 + Rotavirus-2',
+                    dueDate: '2026-09-05',
+                    status: 'OVERDUE',
+                    delayDays: 2,
+                    parentPhone: '+91 97654 11223'
+                },
+                {
+                    id: 'imm-2',
+                    childName: 'Tanvi Jadhav',
+                    motherName: 'Kavita Jadhav',
+                    dob: '2025-10-15',
+                    ageMonths: 11,
+                    vaccineName: 'MR-1 (Measles-Rubella) + Vitamin A',
+                    dueDate: '2026-09-14',
+                    status: 'UPCOMING',
+                    delayDays: 0,
+                    parentPhone: '+91 98223 44551'
+                },
+                {
+                    id: 'imm-3',
+                    childName: 'Aditya Patil',
+                    motherName: 'Sunita Patil',
+                    dob: '2026-08-20',
+                    ageMonths: 0.5,
+                    vaccineName: 'BCG + HepB-Birth + OPV-0',
+                    dueDate: '2026-08-22',
+                    status: 'COMPLETED',
+                    delayDays: 0,
+                    parentPhone: '+91 99221 00223'
+                }
+            ],
+            kitInventory: [
+                { item: 'Iron-Folic Acid (IFA) Tablets', currentQty: 420, minRequired: 200, unit: 'Tablets', status: 'ADEQUATE' },
+                { item: 'Zinc + ORS Sachets', currentQty: 85, minRequired: 50, unit: 'Pouches', status: 'ADEQUATE' },
+                { item: 'Nishchay Pregnancy Test Kits', currentQty: 8, minRequired: 15, unit: 'Kits', status: 'LOW_STOCK' },
+                { item: 'Digital Thermometer Batteries', currentQty: 4, minRequired: 2, unit: 'Units', status: 'ADEQUATE' },
+                { item: 'Digital Blood Pressure Monitor', currentQty: 1, minRequired: 1, unit: 'Device', status: 'OPERATIONAL' },
+                { item: 'Rapid Malaria / Dengue Test Strips', currentQty: 12, minRequired: 20, unit: 'Strips', status: 'REORDER_RECOMMENDED' }
+            ],
+            dbtIncentives: [
+                { id: 'dbt-1', activity: 'Full Antenatal Care (4 ANC Visits Accompany)', amount: 600, beneficiary: 'Kavita Jadhav', status: 'CREDITED_TO_BANK', date: '2026-09-01' },
+                { id: 'dbt-2', activity: 'Institutional Delivery Accompany (PHC Shirwal)', amount: 1000, beneficiary: 'Sunita Patil', status: 'APPROVED_PROCESSING', date: '2026-08-28' },
+                { id: 'dbt-3', activity: 'Complete Infant 1-Year Immunization Tracking', amount: 500, beneficiary: 'Tanvi Jadhav', status: 'PENDING_VALIDATION', date: '2026-09-04' },
+                { id: 'dbt-4', activity: 'Community NCD Screening Drive (50 adults)', amount: 1000, beneficiary: 'Ward 4 Community', status: 'CREDITED_TO_BANK', date: '2026-08-15' }
+            ]
+        };
+    }
+
+    async recordAshaBeneficiary(data) {
+        const id = crypto.randomUUID ? crypto.randomUUID() : `asha-b-${Date.now()}`;
+        return {
+            id,
+            ...data,
+            created_at: new Date().toISOString(),
+            syncStatus: 'SYNCED_WITH_RCH_PORTAL'
+        };
+    }
+
+    async recordAshaVitals(data) {
+        const systolic = Number(data.systolic_bp || 120);
+        const diastolic = Number(data.diastolic_bp || 80);
+        const bloodSugar = Number(data.blood_sugar_fbs || 95);
+
+        let riskLevel = 'LOW';
+        let alertMessage = 'Vitals within normal community range.';
+
+        if (systolic >= 140 || diastolic >= 90 || bloodSugar > 140) {
+            riskLevel = 'MODERATE';
+            alertMessage = 'Hypertension / Pre-Diabetes identified. Schedule PHC Medical Officer consult.';
+        }
+        if (systolic >= 160 || diastolic >= 100 || bloodSugar > 200 || (data.is_pregnant && systolic >= 140)) {
+            riskLevel = 'HIGH_EMERGENCY';
+            alertMessage = 'CRITICAL: High-risk pregnancy / Severe Hypertension. Immediate Facility Referral Required!';
+        }
+
+        return {
+            id: crypto.randomUUID ? crypto.randomUUID() : `vitals-${Date.now()}`,
+            patientName: data.patientName || 'Community Patient',
+            systolic,
+            diastolic,
+            bloodSugar,
+            riskLevel,
+            alertMessage,
+            recordedAt: new Date().toISOString()
+        };
+    }
+
+    // ==========================================
+    // CAREGIVER & FAMILY PROXY SERVICES
+    // ==========================================
+    async getCaregiverDashboardData(caregiverId) {
+        return {
+            caregiver: {
+                id: caregiverId || 'cg-901',
+                name: 'Aditya Singh',
+                phone: '+91 7080135660',
+                email: 'mradityasinghofficial1@gmail.com',
+                linkedCount: 3
+            },
+            dependents: [
+                {
+                    id: 'dep-1',
+                    name: 'Rajendra Singh',
+                    relation: 'Father',
+                    age: 68,
+                    gender: 'Male',
+                    bloodGroup: 'B+',
+                    chronicConditions: ['Hypertension', 'Mild Osteoarthritis'],
+                    allergies: ['Penicillin', 'Sulfa Drugs'],
+                    avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+                    abhaId: '91-4091-8821-3312',
+                    status: 'NEEDS_ATTENTION',
+                    vitals: {
+                        bp: '142/88 mmHg',
+                        bpStatus: 'SLIGHTLY_HIGH',
+                        sugarFasting: '112 mg/dL',
+                        sugarStatus: 'NORMAL',
+                        spo2: '97%',
+                        heartRate: '76 bpm',
+                        lastChecked: 'Today, 08:30 AM'
+                    },
+                    upcomingAppointment: {
+                        doctor: 'Dr. Anand Deshmukh',
+                        specialty: 'Cardiologist',
+                        hospital: 'District Hospital Nashik',
+                        dateTime: '10 Sept 2026, 10:30 AM',
+                        token: 'TK-042'
+                    }
+                },
+                {
+                    id: 'dep-2',
+                    name: 'Sharda Singh',
+                    relation: 'Mother',
+                    age: 64,
+                    gender: 'Female',
+                    bloodGroup: 'O+',
+                    chronicConditions: ['Type-2 Diabetes Mellitus', 'Thyroid (Hypothyroidism)'],
+                    allergies: ['None'],
+                    avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150',
+                    abhaId: '91-3081-4412-9901',
+                    status: 'STABLE',
+                    vitals: {
+                        bp: '124/82 mmHg',
+                        bpStatus: 'NORMAL',
+                        sugarFasting: '138 mg/dL',
+                        sugarStatus: 'BORDERLINE_HIGH',
+                        spo2: '98%',
+                        heartRate: '72 bpm',
+                        lastChecked: 'Today, 07:45 AM'
+                    },
+                    upcomingAppointment: {
+                        doctor: 'Dr. Neha Verma',
+                        specialty: 'Endocrinologist',
+                        hospital: 'Government General Hospital Pune',
+                        dateTime: '15 Sept 2026, 04:00 PM',
+                        token: 'TK-118'
+                    }
+                },
+                {
+                    id: 'dep-3',
+                    name: 'Aarav Singh',
+                    relation: 'Son',
+                    age: 4,
+                    gender: 'Male',
+                    bloodGroup: 'O+',
+                    chronicConditions: ['None'],
+                    allergies: ['Peanuts'],
+                    avatarUrl: 'https://images.unsplash.com/photo-1502086223501-7ea6ecd79368?w=150',
+                    abhaId: '91-1029-3388-7711',
+                    status: 'OPTIMAL',
+                    vitals: {
+                        bp: '96/64 mmHg',
+                        bpStatus: 'NORMAL',
+                        sugarFasting: '88 mg/dL',
+                        sugarStatus: 'NORMAL',
+                        spo2: '99%',
+                        heartRate: '92 bpm',
+                        lastChecked: 'Yesterday'
+                    },
+                    upcomingAppointment: null
+                }
+            ],
+            medicationsSchedule: [
+                {
+                    id: 'med-1',
+                    dependentId: 'dep-1',
+                    dependentName: 'Rajendra Singh (Father)',
+                    name: 'Telmisartan 40mg',
+                    dosage: '1 Tablet Once Daily',
+                    timeSlot: 'Morning (After Breakfast)',
+                    takenToday: true,
+                    takenAt: '08:45 AM',
+                    pillsRemaining: 18,
+                    refillWarning: false
+                },
+                {
+                    id: 'med-2',
+                    dependentId: 'dep-1',
+                    dependentName: 'Rajendra Singh (Father)',
+                    name: 'Amlodipine 5mg',
+                    dosage: '1 Tablet at Bedtime',
+                    timeSlot: 'Night (Post Dinner)',
+                    takenToday: false,
+                    takenAt: null,
+                    pillsRemaining: 4,
+                    refillWarning: true
+                },
+                {
+                    id: 'med-3',
+                    dependentId: 'dep-2',
+                    dependentName: 'Sharda Singh (Mother)',
+                    name: 'Metformin 500mg (SR)',
+                    dosage: '1 Tablet Twice Daily',
+                    timeSlot: 'Morning (With Breakfast)',
+                    takenToday: true,
+                    takenAt: '08:15 AM',
+                    pillsRemaining: 24,
+                    refillWarning: false
+                },
+                {
+                    id: 'med-4',
+                    dependentId: 'dep-2',
+                    dependentName: 'Sharda Singh (Mother)',
+                    name: 'Thyronorm 50mcg',
+                    dosage: '1 Tablet Empty Stomach',
+                    timeSlot: 'Early Morning (6:30 AM)',
+                    takenToday: true,
+                    takenAt: '06:35 AM',
+                    pillsRemaining: 40,
+                    refillWarning: false
+                }
+            ],
+            emergencyContacts: [
+                { name: 'Dr. Anand Deshmukh (Primary Physician)', phone: '+91 9822012345', role: 'Cardiologist' },
+                { name: 'District Civil Hospital 24x7 Ambulance', phone: '108 / 102', role: 'Government Emergency Desk' },
+                { name: 'Nearby Medical Pharmacy (City Chemist)', phone: '+91 98221 44001', role: 'Home Delivery Pharmacy' }
+            ]
+        };
+    }
+
+    async triggerCaregiverSOS(sosData) {
+        const alertId = crypto.randomUUID ? crypto.randomUUID() : `sos-${Date.now()}`;
+        return {
+            alertId,
+            status: 'EMERGENCY_BROADCAST_TRIGGERED',
+            patient: sosData.patientName || 'Dependent',
+            caregiver: sosData.caregiverName || 'Caregiver Proxy',
+            location: sosData.location || 'Pune District GPS: 18.5204° N, 73.8567° E',
+            broadcastedTo: ['Emergency Ambulance 108', 'Assigned Doctor Desk', 'Primary Hospital Triage'],
+            sha256AuditHash: crypto.createHash('sha256').update(alertId + Date.now()).digest('hex'),
+            timestamp: new Date().toISOString()
+        };
+    }
+
+    // ==========================================
+    // HOSPITAL & FACILITY OPERATIONS SERVICES
+    // ==========================================
+    async getFacilityOpsData(facilityId = '22222222-2222-2222-2222-222222222222') {
+        return {
+            facility: {
+                id: facilityId,
+                name: 'District Hospital Nashik',
+                tier: 'DISTRICT_HOSPITAL',
+                hfrId: 'IN-MH-NSK-002148',
+                district: 'Nashik',
+                operationalStatus: 'OPEN',
+                overallOccupancyRate: '78%',
+                emergencyDeskActive: true
+            },
+            bedCapacityGrid: [
+                { category: 'General Inpatient Ward', total: 180, occupied: 142, available: 38, status: 'MODERATE_LOAD' },
+                { category: 'Intensive Care Unit (ICU)', total: 32, occupied: 28, available: 4, status: 'HIGH_LOAD' },
+                { category: 'Maternal & NICU Unit', total: 40, occupied: 31, available: 9, status: 'MODERATE_LOAD' },
+                { category: 'Emergency Trauma & Resuscitation', total: 20, occupied: 14, available: 6, status: 'ACTIVE_TRIAGE' },
+                { category: 'Post-Op Surgical Recovery', total: 28, occupied: 19, available: 9, status: 'NORMAL' }
+            ],
+            criticalResources: {
+                oxygenPlantManifold: '98.5% Purity (2,400 Litres liquid stock - 6 Days Backup)',
+                bloodBankStock: [
+                    { group: 'A+ve', units: 24, status: 'ADEQUATE' },
+                    { group: 'B+ve', units: 38, status: 'ADEQUATE' },
+                    { group: 'O+ve', units: 42, status: 'ADEQUATE' },
+                    { group: 'AB+ve', units: 14, status: 'ADEQUATE' },
+                    { group: 'O-ve (Universal Donor)', units: 4, status: 'CRITICAL_SHORTAGE' }
+                ],
+                ambulanceFleet: { total: 8, activeOnField: 3, standbyReady: 5 }
+            },
+            inboundReferralQueue: [
+                {
+                    id: 'ref-in-1',
+                    patientName: 'Pooja Shinde',
+                    age: 28,
+                    gender: 'Female',
+                    triageCategory: 'RED_EMERGENCY',
+                    primaryCondition: 'High-Risk Pregnancy (Gestational Diabetes + Pre-Eclampsia)',
+                    referringCenter: 'PHC Shirwal (ASHA Sunita Gaikwad)',
+                    assignedSpecialty: 'OBSTETRICS_GYNECOLOGY',
+                    etaMinutes: 12,
+                    ambulanceAssigned: 'MH-15-EM-1082',
+                    status: 'IN_TRANSIT_CRITICAL'
+                },
+                {
+                    id: 'ref-in-2',
+                    patientName: 'Rameshwar Khot',
+                    age: 54,
+                    gender: 'Male',
+                    triageCategory: 'YELLOW_URGENT',
+                    primaryCondition: 'Acute Chest Pain with Elevated Troponin-I',
+                    referringCenter: 'CHC Sinnar Community Center',
+                    assignedSpecialty: 'CARDIOLOGY',
+                    etaMinutes: 25,
+                    ambulanceAssigned: 'MH-15-EM-1044',
+                    status: 'EN_ROUTE'
+                },
+                {
+                    id: 'ref-in-3',
+                    patientName: 'Kishore Sonawane',
+                    age: 39,
+                    gender: 'Male',
+                    triageCategory: 'GREEN_ROUTINE',
+                    primaryCondition: 'Chronic Knee Effusion for Orthopedic Evaluation',
+                    referringCenter: 'Baramati Sub-District Center',
+                    assignedSpecialty: 'ORTHOPEDICS',
+                    etaMinutes: 60,
+                    ambulanceAssigned: 'Self Transit',
+                    status: 'ARRIVING_OPD'
+                }
+            ],
+            dutyDoctorRoster: [
+                { id: 'doc-1', name: 'Dr. Anand Deshmukh', specialty: 'Cardiology', opdRoom: 'Room 104', dutyStatus: 'AVAILABLE', activePatients: 4 },
+                { id: 'doc-2', name: 'Dr. Suniti Rao', specialty: 'Obstetrics & Gynaecology', opdRoom: 'Labour Room 2', dutyStatus: 'IN_SURGERY', activePatients: 2 },
+                { id: 'doc-3', name: 'Dr. Rajesh Khurana', specialty: 'Emergency Trauma', opdRoom: 'Emergency Bay A', dutyStatus: 'AVAILABLE', activePatients: 6 },
+                { id: 'doc-4', name: 'Dr. Meenal Gupta', specialty: 'Pediatrics & NICU', opdRoom: 'NICU Floor 3', dutyStatus: 'IN_OPD', activePatients: 8 }
+            ],
+            diagnosticQueue: [
+                { id: 'lab-1', testName: '12-Lead ECG + Cardiac Troponin-I', patientName: 'Rameshwar Khot', priority: 'STAT_EMERGENCY', status: 'SAMPLE_COLLECTED' },
+                { id: 'lab-2', testName: 'Fasting Blood Sugar & HbA1c', patientName: 'Sharda Singh', priority: 'ROUTINE', status: 'PROCESSING' },
+                { id: 'lab-3', testName: 'Digital Chest X-Ray (PA View)', patientName: 'Kavita Jadhav', priority: 'PRIORITY', status: 'REPORT_READY' }
+            ]
+        };
+    }
+
+    async updateFacilityBedCount(facilityId, category, occupiedDelta) {
+        return {
+            facilityId,
+            category,
+            updatedAt: new Date().toISOString(),
+            status: 'BED_GRID_UPDATED'
+        };
+    }
+
+    async admitReferralPatient(referralId, bedCategory) {
+        return {
+            referralId,
+            bedCategory: bedCategory || 'General Inpatient Ward',
+            admissionStatus: 'ADMITTED_AND_BED_ALLOCATED',
+            admittedAt: new Date().toISOString(),
+            ehrSync: 'COMPLETED'
+        };
+    }
 }
 
 module.exports = new SupabaseService();

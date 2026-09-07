@@ -18,13 +18,13 @@ const RoleSelection = () => {
             badge: 'Primary Rural Route',
             badgeColor: '#059669',
             badgeBg: '#d1fae5',
-            desc: 'Rapid patient registration, vitals triage, offline emergency escalation.',
+            desc: 'Mother & child RCH tracking, NIS immunizations, field vitals triage & DBT incentives.',
             icon: <HeartPulse size={32} color="#0d9488" />,
             gradient: 'linear-gradient(135deg, #0d9488 0%, #115e59 100%)',
-            actionText: 'Open Health Worker Portal',
+            actionText: 'Open ASHA Command Hub',
             onClick: () => {
                 guestLogin('health_worker');
-                navigate('/triage');
+                navigate('/asha');
             }
         },
         {
@@ -45,13 +45,13 @@ const RoleSelection = () => {
             badge: 'Scoped Access',
             badgeColor: '#db2777',
             badgeBg: '#fce7f3',
-            desc: 'Authorized proxy care management for elderly parents & illiterate dependents.',
+            desc: 'Multi-dependent vitals radar, smart pillbox adherence & 1-click Emergency SOS panic.',
             icon: <Users size={32} color="#db2777" />,
             gradient: 'linear-gradient(135deg, #db2777 0%, #9d174d 100%)',
-            actionText: 'Caregiver Login',
+            actionText: 'Caregiver Command Hub',
             onClick: () => {
                 guestLogin('caregiver');
-                navigate('/family');
+                navigate('/caregiver');
             }
         },
         {
@@ -68,17 +68,17 @@ const RoleSelection = () => {
         },
         {
             role: 'facility_staff',
-            title: 'Facility Staff & Coordinator',
+            title: 'Hospital & Facility Operations',
             badge: 'Operational Load',
             badgeColor: '#d97706',
             badgeBg: '#fef3c7',
-            desc: 'Manage bed capacity (0-100%), emergency capabilities, internal doctor assignment.',
-            icon: <Building2 size={32} color="#d97706" />,
-            gradient: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)',
-            actionText: 'Facility Dashboard',
+            desc: 'Live bed & ICU grid, inbound triage queue, doctor duty roster & oxygen manifold.',
+            icon: <Building2 size={32} color="#0284c7" />,
+            gradient: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+            actionText: 'Facility Operations Hub',
             onClick: () => {
                 guestLogin('facility_coordinator');
-                navigate('/facilities');
+                navigate('/facility-dashboard');
             }
         },
         {

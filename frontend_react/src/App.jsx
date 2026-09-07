@@ -26,6 +26,9 @@ import ReferralTracker from './pages/ReferralTracker';
 import FacilityFinder from './pages/FacilityFinder';
 import TriageAssessment from './pages/TriageAssessment';
 import AdminDashboard from './pages/AdminDashboard';
+import AshaDashboard from './pages/AshaDashboard';
+import CaregiverDashboard from './pages/CaregiverDashboard';
+import FacilityDashboard from './pages/FacilityDashboard';
 
 // Auth Pages
 import RoleSelection from './pages/RoleSelection';
@@ -83,7 +86,11 @@ const MainApp = () => {
     );
   }
 
-  const publicRoutes = ['/', '/login', '/login/patient', '/login/doctor', '/signup', '/admin', '/referrals', '/facilities', '/triage'];
+  const publicRoutes = [
+    '/', '/login', '/login/patient', '/login/doctor', '/signup', 
+    '/admin', '/referrals', '/facilities', '/triage',
+    '/asha', '/caregiver', '/facility-dashboard'
+  ];
   if (!user && !publicRoutes.includes(location.pathname)) {
     console.log("Redirecting to / from", location.pathname);
     return <Navigate to="/" replace />;
@@ -106,6 +113,9 @@ const MainApp = () => {
           <Route path="/facilities" element={<FacilityFinder />} />
           <Route path="/triage" element={<TriageAssessment />} />
           <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/asha" element={<AshaDashboard />} />
+          <Route path="/caregiver" element={<CaregiverDashboard />} />
+          <Route path="/facility-dashboard" element={<FacilityDashboard />} />
 
           {/* Patient Routes */}
           {user?.role === 'patient' && (

@@ -18,6 +18,9 @@ const facilityRoutes = require('./routes/facilities');
 const assessmentRoutes = require('./routes/assessments');
 const adminRoutes = require('./routes/admin');
 const feedbackRoutes = require('./routes/feedback');
+const ashaRoutes = require('./routes/asha');
+const caregiverRoutes = require('./routes/caregiver');
+const facilityOpsRoutes = require('./routes/facilityOps');
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -57,6 +60,9 @@ app.use('/api/facilities', facilityRoutes);
 app.use('/api/assessments', assessmentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/feedback', feedbackRoutes);
+app.use('/api/asha', ashaRoutes);
+app.use('/api/caregiver', caregiverRoutes);
+app.use('/api/facility-ops', facilityOpsRoutes);
 
 app.get('/', (req, res) => {
     res.json({
