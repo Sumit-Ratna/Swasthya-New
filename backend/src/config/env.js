@@ -13,7 +13,8 @@ const config = {
     },
     aiServiceUrl: process.env.AI_SERVICE_URL || 'http://127.0.0.1:8001',
     corsOrigins: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',').map(s => s.trim()) : ['*'],
-    enableAuditChain: process.env.ENABLE_AUDIT_CHAIN !== 'false'
+    enableAuditChain: process.env.ENABLE_AUDIT_CHAIN !== 'false',
+    demoMode: process.env.DEMO_MODE === 'true'
 };
 
 module.exports = config;

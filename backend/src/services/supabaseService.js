@@ -1,5 +1,6 @@
 const supabase = require('../config/supabaseClient');
 const crypto = require('crypto');
+const config = require('../config/env');
 const localDb = require('./localDb');
 
 class SupabaseService {
@@ -82,12 +83,17 @@ class SupabaseService {
                 emergency_contact: userData.emergency_contact || null
             };
 
-            localDb.insert('users', unified);
+            if (config.demoMode) {
+                localDb.insert('users', unified);
+            }
             return unified;
         } catch (e) {
             console.error('[SUPABASE] createUser exception:', e.message);
-            const fallback = { ...userPayload, name: fullName, role: role.toLowerCase() };
-            return localDb.insert('users', fallback);
+            if (config.demoMode) {
+                const fallback = { ...userPayload, name: fullName, role: role.toLowerCase() };
+                return localDb.insert('users', fallback);
+            }
+            throw e;
         }
     }
 
@@ -104,14 +110,19 @@ class SupabaseService {
                 .single();
 
             if (!error && data) {
-                localDb.update('users', u => u.id === userId, { password_hash: passwordHash });
+                if (config.demoMode) {
+                    localDb.update('users', u => u.id === userId, { password_hash: passwordHash });
+                }
                 return data;
             }
+            if (error) throw error;
         } catch (e) {
             console.warn('[SUPABASE] Password update notice:', e.message);
+            if (config.demoMode) {
+                return localDb.update('users', u => u.id === userId, { password_hash: passwordHash });
+            }
+            throw e;
         }
-
-        return localDb.update('users', u => u.id === userId, { password_hash: passwordHash });
     }
 
     async getUser(userId) {
@@ -150,7 +161,10 @@ class SupabaseService {
             console.warn('[SUPABASE] getUser notice:', e.message);
         }
 
-        return localDb.findOne('users', u => u.id === userId);
+        if (config.demoMode) {
+            return localDb.findOne('users', u => u.id === userId);
+        }
+        return null;
     }
 
     async getUserByPhone(phone) {
@@ -167,7 +181,10 @@ class SupabaseService {
             }
         } catch (e) {}
 
-        return localDb.findOne('users', u => u.phone && u.phone.includes(cleanPhone));
+        if (config.demoMode) {
+            return localDb.findOne('users', u => u.phone && u.phone.includes(cleanPhone));
+        }
+        return null;
     }
 
     async getUserByEmail(email) {
@@ -185,7 +202,10 @@ class SupabaseService {
             }
         } catch (e) {}
 
-        return localDb.findOne('users', u => u.email && u.email.toLowerCase() === cleanEmail);
+        if (config.demoMode) {
+            return localDb.findOne('users', u => u.email && u.email.toLowerCase() === cleanEmail);
+        }
+        return null;
     }
 
     async getUserByQrId(doctor_qr_id) {
@@ -252,23 +272,28 @@ class SupabaseService {
         try {
             let query = supabase.from('facilities').select('*');
             if (filters.district) query = query.eq('district', filters.district);
-            if (filters.tier) query = query.eq('tier', filters.tier);
+            if (filters.tier && filters.tier !== 'ALL') query = query.eq('tier', filters.tier);
             if (filters.emergency_capable !== undefined) query = query.eq('emergency_capable', filters.emergency_capable);
 
             const { data, error } = await query.order('current_load', { ascending: true });
-            if (!error && data && data.length > 0) return data;
+            if (error) throw error;
+            if (data && data.length > 0) return data;
         } catch (e) {
-            console.warn('[SUPABASE] Facilities fetch notice, using localDb:', e.message);
+            console.warn('[SUPABASE] Facilities fetch error:', e.message);
+            if (!config.demoMode) throw e;
         }
 
-        let list = localDb.getCollection('facilities');
-        if (filters.tier && filters.tier !== 'ALL') {
-            list = list.filter(f => f.tier === filters.tier);
+        if (config.demoMode) {
+            let list = localDb.getCollection('facilities');
+            if (filters.tier && filters.tier !== 'ALL') {
+                list = list.filter(f => f.tier === filters.tier);
+            }
+            if (filters.emergency_capable) {
+                list = list.filter(f => f.emergency_capable === true);
+            }
+            return list;
         }
-        if (filters.emergency_capable) {
-            list = list.filter(f => f.emergency_capable === true);
-        }
-        return list;
+        return [];
     }
 
     async getFacilityById(facilityId) {
@@ -279,10 +304,17 @@ class SupabaseService {
                 .eq('id', facilityId)
                 .maybeSingle();
 
-            if (!error && data) return data;
-        } catch (e) {}
+            if (error) throw error;
+            if (data) return data;
+        } catch (e) {
+            console.warn('[SUPABASE] Facility detail error:', e.message);
+            if (!config.demoMode) throw e;
+        }
 
-        return localDb.findOne('facilities', f => f.id === facilityId);
+        if (config.demoMode) {
+            return localDb.findOne('facilities', f => f.id === facilityId);
+        }
+        return null;
     }
 
     async updateFacilityStatus(facilityId, updateData) {
@@ -295,13 +327,22 @@ class SupabaseService {
                 .select()
                 .single();
 
-            if (!error && data) {
-                localDb.update('facilities', f => f.id === facilityId, payload);
+            if (error) throw error;
+            if (data) {
+                if (config.demoMode) {
+                    localDb.update('facilities', f => f.id === facilityId, payload);
+                }
                 return data;
             }
-        } catch (e) {}
+        } catch (e) {
+            console.warn('[SUPABASE] Facility update error:', e.message);
+            if (!config.demoMode) throw e;
+        }
 
-        return localDb.update('facilities', f => f.id === facilityId, payload);
+        if (config.demoMode) {
+            return localDb.update('facilities', f => f.id === facilityId, payload);
+        }
+        return null;
     }
 
     // ==========================================
@@ -313,23 +354,22 @@ class SupabaseService {
             if (specialty) query = query.ilike('specialty_name', `%${specialty}%`);
 
             const { data, error } = await query;
-            if (!error && data && data.length > 0) return data;
-        } catch (e) {}
+            if (error) throw error;
+            if (data && data.length > 0) return data;
+        } catch (e) {
+            console.warn('[SUPABASE] Doctors fetch error:', e.message);
+            if (!config.demoMode) throw e;
+        }
 
-        let list = localDb.getCollection('doctors');
-        if (facilityId) list = list.filter(d => d.facility_id === facilityId);
-        return list;
+        if (config.demoMode) {
+            let list = localDb.getCollection('doctors');
+            if (facilityId) list = list.filter(d => d.facility_id === facilityId);
+            return list;
+        }
+        return [];
     }
 
     async assignDoctorToReferral(referralId, doctorId) {
-        const doc = localDb.findOne('doctors', d => d.id === doctorId) || { name: 'Dr. Anand Deshmukh', specialty_name: 'OBSTETRICS' };
-        const updatePayload = {
-            assigned_doctor_id: doctorId,
-            status: 'CONSULTATION_IN_PROGRESS',
-            updated_at: new Date().toISOString(),
-            doctors: doc
-        };
-
         try {
             const { data: ref, error: refErr } = await supabase
                 .from('referrals')
@@ -339,18 +379,39 @@ class SupabaseService {
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', referralId)
-                .select()
+                .select(`
+                    *,
+                    facilities:receiving_facility_id (*),
+                    doctors:assigned_doctor_id (*)
+                `)
                 .single();
 
             if (!refErr && ref) {
-                localDb.update('referrals', r => r.id === referralId, updatePayload);
+                await this.logReferralEvent(referralId, 'PATIENT_REACHED', 'CONSULTATION_IN_PROGRESS', doctorId, 'DOCTOR', 'Doctor assigned internally');
+                if (config.demoMode) {
+                    localDb.update('referrals', r => r.id === referralId, { assigned_doctor_id: doctorId, status: 'CONSULTATION_IN_PROGRESS' });
+                }
                 return ref;
             }
-        } catch (e) {}
+            if (refErr) throw refErr;
+        } catch (e) {
+            console.warn('[SUPABASE] Assign doctor error:', e.message);
+            if (!config.demoMode) throw e;
+        }
 
-        localDb.update('referrals', r => r.id === referralId, updatePayload);
-        await this.logReferralEvent(referralId, 'PATIENT_REACHED', 'CONSULTATION_IN_PROGRESS', doctorId, 'DOCTOR', 'Doctor assigned internally');
-        return localDb.findOne('referrals', r => r.id === referralId);
+        if (config.demoMode) {
+            const doc = localDb.findOne('doctors', d => d.id === doctorId) || { name: 'Dr. Anand Deshmukh', specialty_name: 'OBSTETRICS' };
+            const updatePayload = {
+                assigned_doctor_id: doctorId,
+                status: 'CONSULTATION_IN_PROGRESS',
+                updated_at: new Date().toISOString(),
+                doctors: doc
+            };
+            localDb.update('referrals', r => r.id === referralId, updatePayload);
+            await this.logReferralEvent(referralId, 'PATIENT_REACHED', 'CONSULTATION_IN_PROGRESS', doctorId, 'DOCTOR', 'Doctor assigned internally');
+            return localDb.findOne('referrals', r => r.id === referralId);
+        }
+        return null;
     }
 
     // ==========================================
@@ -383,47 +444,56 @@ class SupabaseService {
                 .single();
 
             if (!error && data) {
-                localDb.insert('assessments', data);
+                if (config.demoMode) {
+                    localDb.insert('assessments', data);
+                }
                 return data;
             }
-        } catch (e) {}
+            if (error) throw error;
+        } catch (e) {
+            console.warn('[SUPABASE] Create assessment error:', e.message);
+            if (!config.demoMode) throw e;
+        }
 
-        return localDb.insert('assessments', payload);
+        if (config.demoMode) {
+            return localDb.insert('assessments', payload);
+        }
+        throw new Error('Failed to create assessment in database');
     }
 
     async getAssessmentsByPatient(patientId) {
         try {
-            const { data, error } = await supabase
-                .from('assessments')
-                .select('*')
-                .eq('patient_id', patientId)
-                .order('created_at', { ascending: false });
+            let query = supabase.from('assessments').select('*').order('created_at', { ascending: false });
+            if (patientId && patientId !== 'all') {
+                query = query.eq('patient_id', patientId);
+            }
 
-            if (!error && data && data.length > 0) return data;
-        } catch (e) {}
+            const { data, error } = await query;
+            if (error) throw error;
+            if (data && data.length > 0) return data;
+        } catch (e) {
+            console.warn('[SUPABASE] Get assessments error:', e.message);
+            if (!config.demoMode) throw e;
+        }
 
-        return localDb.find('assessments', a => a.patient_id === patientId || patientId === 'all');
+        if (config.demoMode) {
+            return localDb.find('assessments', a => a.patient_id === patientId || patientId === 'all');
+        }
+        return [];
     }
 
     // ==========================================
-    // SWASTHYASETU CLOSED-LOOP REFERRALS (13-State Machine)
+    // SWASTHYASETU CLOSED-LOOP REFERRALS (19-State Machine)
     // ==========================================
     async createReferral(referralData) {
-        const fac = localDb.findOne('facilities', f => f.id === referralData.receiving_facility_id) || {
-            name: 'District Hospital Nashik',
-            tier: 'DISTRICT_HOSPITAL',
-            address: 'Civil Hospital Road, Nashik',
-            district: 'Nashik'
-        };
-
         const payload = {
             id: 'ref-' + Date.now(),
             patient_id: referralData.patient_id,
             assessment_id: referralData.assessment_id || null,
             referring_facility_id: referralData.referring_facility_id || null,
             referring_user_id: referralData.referring_user_id || null,
-            receiving_facility_id: referralData.receiving_facility_id || '22222222-2222-2222-2222-222222222222',
-            assigned_doctor_id: referralData.assigned_doctor_id || '44444444-4444-4444-4444-444444444444',
+            receiving_facility_id: referralData.receiving_facility_id || null,
+            assigned_doctor_id: referralData.assigned_doctor_id || null,
             status: referralData.status || 'TRIAGED',
             risk_level: referralData.risk_level || 'MODERATE',
             urgency: referralData.urgency || 'ROUTINE',
@@ -434,31 +504,39 @@ class SupabaseService {
             reason_for_referral: referralData.reason_for_referral || '',
             appointment_slot_time: referralData.appointment_slot_time || null,
             slot_token: referralData.slot_token || `Token #${Math.floor(10 + Math.random() * 90)}`,
-            created_at: new Date().toISOString(),
-            facilities: fac,
-            doctors: {
-                name: 'Dr. Anand Deshmukh',
-                specialty_name: referralData.specialty_required || 'OBSTETRICS'
-            }
+            created_at: new Date().toISOString()
         };
 
         try {
             const { data, error } = await supabase
                 .from('referrals')
                 .insert(payload)
-                .select()
+                .select(`
+                    *,
+                    facilities:receiving_facility_id (*),
+                    doctors:assigned_doctor_id (*)
+                `)
                 .single();
 
             if (!error && data) {
-                localDb.insert('referrals', data);
+                if (config.demoMode) {
+                    localDb.insert('referrals', data);
+                }
                 await this.logReferralEvent(data.id, 'INIT', data.status, referralData.referring_user_id || 'system', 'CREATOR', 'Referral created');
                 return data;
             }
-        } catch (e) {}
+            if (error) throw error;
+        } catch (e) {
+            console.warn('[SUPABASE] Create referral error:', e.message);
+            if (!config.demoMode) throw e;
+        }
 
-        localDb.insert('referrals', payload);
-        await this.logReferralEvent(payload.id, 'INIT', payload.status, referralData.referring_user_id || 'system', 'CREATOR', 'Referral created from triage');
-        return payload;
+        if (config.demoMode) {
+            localDb.insert('referrals', payload);
+            await this.logReferralEvent(payload.id, 'INIT', payload.status, referralData.referring_user_id || 'system', 'CREATOR', 'Referral created from triage');
+            return payload;
+        }
+        throw new Error('Failed to create referral in database');
     }
 
     async getReferralById(referralId) {
@@ -469,10 +547,17 @@ class SupabaseService {
                 .eq('id', referralId)
                 .maybeSingle();
 
-            if (!error && data) return data;
-        } catch (e) {}
+            if (error) throw error;
+            if (data) return data;
+        } catch (e) {
+            console.warn('[SUPABASE] Get referral error:', e.message);
+            if (!config.demoMode) throw e;
+        }
 
-        return localDb.findOne('referrals', r => r.id === referralId) || localDb.getCollection('referrals')[0];
+        if (config.demoMode) {
+            return localDb.findOne('referrals', r => r.id === referralId);
+        }
+        return null;
     }
 
     async getReferralsByPatient(patientId) {
@@ -483,23 +568,39 @@ class SupabaseService {
                 .eq('patient_id', patientId)
                 .order('created_at', { ascending: false });
 
-            if (!error && data && data.length > 0) return data;
-        } catch (e) {}
+            if (error) throw error;
+            if (data && data.length > 0) return data;
+        } catch (e) {
+            console.warn('[SUPABASE] Get patient referrals error:', e.message);
+            if (!config.demoMode) throw e;
+        }
 
-        return localDb.getCollection('referrals');
+        if (config.demoMode) {
+            return localDb.find('referrals', r => r.patient_id === patientId);
+        }
+        return [];
     }
 
     async getReferralsByFacility(facilityId, status = null) {
         try {
             let query = supabase.from('referrals').select('*').eq('receiving_facility_id', facilityId);
             if (status) query = query.eq('status', status);
-            const { data, error } = await query;
-            if (!error && data && data.length > 0) return data;
-        } catch (e) {}
+            const { data, error } = await query.order('created_at', { ascending: false });
 
-        let list = localDb.getCollection('referrals');
-        if (status) list = list.filter(r => r.status === status);
-        return list;
+            if (error) throw error;
+            if (data && data.length > 0) return data;
+        } catch (e) {
+            console.warn('[SUPABASE] Get facility referrals error:', e.message);
+            if (!config.demoMode) throw e;
+        }
+
+        if (config.demoMode) {
+            let list = localDb.getCollection('referrals');
+            list = list.filter(r => r.receiving_facility_id === facilityId);
+            if (status) list = list.filter(r => r.status === status);
+            return list;
+        }
+        return [];
     }
 
     async updateReferralStatus(referralId, toStatus, actorUserId, actorRole, reason = '') {
@@ -511,21 +612,30 @@ class SupabaseService {
                 .from('referrals')
                 .update({ status: toStatus, updated_at: new Date().toISOString() })
                 .eq('id', referralId)
-                .select()
+                .select(`*, facilities:receiving_facility_id (*), doctors:assigned_doctor_id (*)`)
                 .single();
 
             if (!error && data) {
-                localDb.update('referrals', r => r.id === referralId, { status: toStatus, updated_at: new Date().toISOString() });
+                if (config.demoMode) {
+                    localDb.update('referrals', r => r.id === referralId, { status: toStatus, updated_at: new Date().toISOString() });
+                }
                 await this.logReferralEvent(referralId, fromStatus, toStatus, actorUserId, actorRole, reason);
                 await this.logAuditEvent('REFERRAL_STATE_CHANGE', actorUserId, referralId, 'SUCCESS', `Status changed to ${toStatus}: ${reason}`);
                 return data;
             }
-        } catch (e) {}
+            if (error) throw error;
+        } catch (e) {
+            console.warn('[SUPABASE] Update referral status error:', e.message);
+            if (!config.demoMode) throw e;
+        }
 
-        localDb.update('referrals', r => r.id === referralId, { status: toStatus, updated_at: new Date().toISOString() });
-        await this.logReferralEvent(referralId, fromStatus, toStatus, actorUserId, actorRole, reason);
-        await this.logAuditEvent('REFERRAL_STATE_CHANGE', actorUserId, referralId, 'SUCCESS', `Status changed to ${toStatus}: ${reason}`);
-        return localDb.findOne('referrals', r => r.id === referralId);
+        if (config.demoMode) {
+            localDb.update('referrals', r => r.id === referralId, { status: toStatus, updated_at: new Date().toISOString() });
+            await this.logReferralEvent(referralId, fromStatus, toStatus, actorUserId, actorRole, reason);
+            await this.logAuditEvent('REFERRAL_STATE_CHANGE', actorUserId, referralId, 'SUCCESS', `Status changed to ${toStatus}: ${reason}`);
+            return localDb.findOne('referrals', r => r.id === referralId);
+        }
+        return null;
     }
 
     async logReferralEvent(referralId, fromStatus, toStatus, actorUserId, actorRole, reason = '') {
@@ -542,9 +652,13 @@ class SupabaseService {
 
         try {
             await supabase.from('referral_events').insert(payload);
-        } catch (e) {}
+        } catch (e) {
+            console.warn('[SUPABASE] Log referral event error:', e.message);
+        }
 
-        localDb.insert('referral_events', payload);
+        if (config.demoMode) {
+            localDb.insert('referral_events', payload);
+        }
     }
 
     async getReferralTimeline(referralId) {
@@ -555,11 +669,17 @@ class SupabaseService {
                 .eq('referral_id', referralId)
                 .order('created_at', { ascending: true });
 
-            if (!error && data && data.length > 0) return data;
-        } catch (e) {}
+            if (error) throw error;
+            if (data && data.length > 0) return data;
+        } catch (e) {
+            console.warn('[SUPABASE] Get timeline error:', e.message);
+            if (!config.demoMode) throw e;
+        }
 
-        const events = localDb.find('referral_events', ev => ev.referral_id === referralId || referralId === 'all');
-        return events.length > 0 ? events : localDb.getCollection('referral_events');
+        if (config.demoMode) {
+            return localDb.find('referral_events', ev => ev.referral_id === referralId);
+        }
+        return [];
     }
 
     // ==========================================
@@ -787,10 +907,17 @@ class SupabaseService {
                 .eq('patient_id', patientId)
                 .order('created_at', { ascending: false });
 
-            if (!error && data && data.length > 0) return data;
-        } catch (e) {}
+            if (error) throw error;
+            if (data && data.length > 0) return data;
+        } catch (e) {
+            console.warn('[SUPABASE] Get documents error:', e.message);
+            if (!config.demoMode) throw e;
+        }
 
-        return localDb.find('documents', d => d.patient_id === patientId || patientId === 'all');
+        if (config.demoMode) {
+            return localDb.find('documents', d => d.patient_id === patientId || patientId === 'all');
+        }
+        return [];
     }
 
     async getRecentDoctorActivity(doctorId) {
@@ -816,11 +943,17 @@ class SupabaseService {
                         if (recentActivity.length >= 12) break;
                     }
                 }
-                if (recentActivity.length > 0) return recentActivity;
+                return recentActivity;
             }
-        } catch (e) {}
+        } catch (e) {
+            console.warn('[SUPABASE] Get recent doctor activity error:', e.message);
+            if (!config.demoMode) throw e;
+        }
 
-        return localDb.getCollection('documents');
+        if (config.demoMode) {
+            return localDb.getCollection('documents');
+        }
+        return [];
     }
 
     async updateDocument(docId, updateData) {
@@ -834,19 +967,34 @@ class SupabaseService {
                 .single();
 
             if (!error && data) {
-                localDb.update('documents', d => d.id === docId, payload);
+                if (config.demoMode) {
+                    localDb.update('documents', d => d.id === docId, payload);
+                }
                 return data;
             }
-        } catch (e) {}
+            if (error) throw error;
+        } catch (e) {
+            console.warn('[SUPABASE] Update document error:', e.message);
+            if (!config.demoMode) throw e;
+        }
 
-        return localDb.update('documents', d => d.id === docId, payload);
+        if (config.demoMode) {
+            return localDb.update('documents', d => d.id === docId, payload);
+        }
+        throw new Error('Failed to update document');
     }
 
     async deleteDocument(docId) {
         try {
-            await supabase.from('documents').delete().eq('id', docId);
-        } catch (e) {}
-        localDb.delete('documents', d => d.id === docId);
+            const { error } = await supabase.from('documents').delete().eq('id', docId);
+            if (error) throw error;
+        } catch (e) {
+            console.warn('[SUPABASE] Delete document error:', e.message);
+            if (!config.demoMode) throw e;
+        }
+        if (config.demoMode) {
+            localDb.delete('documents', d => d.id === docId);
+        }
         return true;
     }
 
@@ -861,33 +1009,27 @@ class SupabaseService {
             permissions: linkData.permissions || { view_records: true, prescribe: true }
         };
 
-        try {
-            const { data, error } = await supabase
-                .from('doctor_patient_links')
-                .upsert(payload, { onConflict: 'doctor_id,patient_id' })
-                .select()
-                .single();
+        const { data, error } = await supabase
+            .from('doctor_patient_links')
+            .upsert(payload, { onConflict: 'doctor_id,patient_id' })
+            .select()
+            .single();
 
-            if (!error && data) return data;
-        } catch (e) {}
-
-        return payload;
+        if (error) throw new Error(error.message);
+        return data;
     }
 
     async getDoctorPatientLink(doctorId, patientId) {
-        try {
-            const { data, error } = await supabase
-                .from('doctor_patient_links')
-                .select('*')
-                .eq('doctor_id', doctorId)
-                .eq('patient_id', patientId)
-                .eq('status', 'active')
-                .maybeSingle();
+        const { data, error } = await supabase
+            .from('doctor_patient_links')
+            .select('*')
+            .eq('doctor_id', doctorId)
+            .eq('patient_id', patientId)
+            .eq('status', 'active')
+            .maybeSingle();
 
-            if (!error && data) return data;
-        } catch (e) {}
-
-        return { doctor_id: doctorId, patient_id: patientId, status: 'active' };
+        if (error) throw new Error(error.message);
+        return data;
     }
 
     async getPatientsByDoctor(doctorId) {
@@ -900,12 +1042,18 @@ class SupabaseService {
 
             if (!linkErr && links && links.length > 0) {
                 const patientIds = links.map(l => l.patient_id);
-                const { data: patients } = await supabase.from('users').select('*').in('id', patientIds);
-                if (patients && patients.length > 0) return patients;
+                const { data: patients, error: patErr } = await supabase.from('users').select('*').in('id', patientIds);
+                if (!patErr && patients) return patients;
             }
-        } catch (e) {}
+        } catch (e) {
+            console.warn('[SUPABASE] Get patients by doctor error:', e.message);
+            if (!config.demoMode) throw e;
+        }
 
-        return localDb.find('users', u => u.role === 'patient');
+        if (config.demoMode) {
+            return localDb.find('users', u => u.role === 'patient');
+        }
+        return [];
     }
 
     async getDoctorsByPatient(patientId) {
@@ -918,12 +1066,18 @@ class SupabaseService {
 
             if (!linkErr && links && links.length > 0) {
                 const doctorIds = links.map(l => l.doctor_id);
-                const { data: doctors } = await supabase.from('users').select('*').in('id', doctorIds);
-                if (doctors && doctors.length > 0) return doctors;
+                const { data: doctors, error: docErr } = await supabase.from('users').select('*').in('id', doctorIds);
+                if (!docErr && doctors) return doctors;
             }
-        } catch (e) {}
+        } catch (e) {
+            console.warn('[SUPABASE] Get doctors by patient error:', e.message);
+            if (!config.demoMode) throw e;
+        }
 
-        return localDb.find('users', u => u.role === 'doctor');
+        if (config.demoMode) {
+            return localDb.find('users', u => u.role === 'doctor');
+        }
+        return [];
     }
 
     async createAppointment(appointmentData) {
@@ -936,12 +1090,7 @@ class SupabaseService {
             type: appointmentData.type || 'general',
             department: appointmentData.department || null,
             reason: appointmentData.reason || null,
-            status: appointmentData.status || 'confirmed',
-            doctor: localDb.findOne('users', u => u.id === appointmentData.doctor_id) || {
-                name: 'Dr. Anand Deshmukh',
-                specialization: 'OBSTETRICS',
-                hospital_name: 'District Hospital Nashik'
-            }
+            status: appointmentData.status || 'confirmed'
         };
 
         try {
@@ -952,12 +1101,21 @@ class SupabaseService {
                 .single();
 
             if (!error && data) {
-                localDb.insert('appointments', data);
+                if (config.demoMode) {
+                    localDb.insert('appointments', data);
+                }
                 return data;
             }
-        } catch (e) {}
+            if (error) throw error;
+        } catch (e) {
+            console.warn('[SUPABASE] Create appointment error:', e.message);
+            if (!config.demoMode) throw e;
+        }
 
-        return localDb.insert('appointments', payload);
+        if (config.demoMode) {
+            return localDb.insert('appointments', payload);
+        }
+        throw new Error('Failed to create appointment');
     }
 
     async getAppointmentsByPatient(patientId) {
@@ -968,10 +1126,17 @@ class SupabaseService {
                 .eq('patient_id', patientId)
                 .order('appointment_date', { ascending: false });
 
-            if (!error && data && data.length > 0) return data;
-        } catch (e) {}
+            if (error) throw error;
+            if (data && data.length > 0) return data;
+        } catch (e) {
+            console.warn('[SUPABASE] Get appointments error:', e.message);
+            if (!config.demoMode) throw e;
+        }
 
-        return localDb.find('appointments', a => a.patient_id === patientId || patientId === 'all');
+        if (config.demoMode) {
+            return localDb.find('appointments', a => a.patient_id === patientId || patientId === 'all');
+        }
+        return [];
     }
 
     async getAppointmentsByDoctor(doctorId) {
@@ -1158,14 +1323,21 @@ class SupabaseService {
                 .single();
 
             if (!error && data) {
-                localDb.insert('feedbacks', data);
+                if (config.demoMode) {
+                    localDb.insert('feedbacks', data);
+                }
                 return data;
             }
+            if (error) throw error;
         } catch (e) {
-            console.warn('[SUPABASE] Feedback create fallback to localDb:', e.message);
+            console.warn('[SUPABASE] Feedback create error:', e.message);
+            if (!config.demoMode) throw e;
         }
 
-        return localDb.insert('feedbacks', payload);
+        if (config.demoMode) {
+            return localDb.insert('feedbacks', payload);
+        }
+        throw new Error('Failed to create feedback');
     }
 
     async getFeedbacks(filter = {}) {
@@ -1180,15 +1352,22 @@ class SupabaseService {
             if (filter.category) query = query.eq('category', filter.category);
 
             const { data, error } = await query;
-            if (!error && data && data.length > 0) return data;
-        } catch (e) {}
+            if (error) throw error;
+            if (data && data.length > 0) return data;
+        } catch (e) {
+            console.warn('[SUPABASE] Feedback fetch error:', e.message);
+            if (!config.demoMode) throw e;
+        }
 
-        return localDb.find('feedbacks', f => {
-            if (filter.user_id && f.user_id !== filter.user_id) return false;
-            if (filter.user_role && f.user_role !== filter.user_role) return false;
-            if (filter.category && f.category !== filter.category) return false;
-            return true;
-        });
+        if (config.demoMode) {
+            return localDb.find('feedbacks', f => {
+                if (filter.user_id && f.user_id !== filter.user_id) return false;
+                if (filter.user_role && f.user_role !== filter.user_role) return false;
+                if (filter.category && f.category !== filter.category) return false;
+                return true;
+            });
+        }
+        return [];
     }
 
     async getFeedbackStats() {
