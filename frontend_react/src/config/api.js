@@ -10,8 +10,18 @@ const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
 export const DEV_LAN_IP = '192.168.29.111';
 export const LOCAL_API_URL = isNative ? `http://${DEV_LAN_IP}:8000` : 'http://localhost:8000';
 
+// In production cloud deployment (e.g., Vercel), relative API requests seamlessly target the same origin.
+// In native mobile app (Capacitor), default to production backend or LAN IP.
+const getFallbackApiUrl = () => {
+    if (isNative) return 'https://swasthya-zeta.vercel.app';
+    if (typeof window !== 'undefined' && !isLocalhost) return '';
+    return 'http://localhost:8000';
+};
+
 // Configurable API Base URL via environment or fallback
-export const API_BASE_URL = import.meta.env.VITE_API_URL || LOCAL_API_URL;
+export const API_BASE_URL = import.meta.env.VITE_API_URL !== undefined 
+    ? import.meta.env.VITE_API_URL 
+    : getFallbackApiUrl();
 
 // Configure Axios defaults
 axios.defaults.baseURL = API_BASE_URL;
