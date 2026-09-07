@@ -1,6 +1,7 @@
 const supabaseService = require('../services/supabaseService');
 const supabase = require('../config/supabaseClient');
 const { REFERRAL_STATES, transitionReferral } = require('../services/referralStateMachine');
+const doctorAssignmentService = require('../services/doctorAssignmentService');
 
 class FacilityOpsController {
     async getOverview(req, res, next) {
@@ -65,6 +66,37 @@ class FacilityOpsController {
             });
         } catch (error) {
             next(error);
+        }
+    }
+
+    /**
+     * Internal Doctor Assignment at Facility
+     */
+    async assignDoctor(req, res, next) {
+        try {
+            const { referralId, doctorId, reason } = req.body;
+            const result = await doctorAssignmentService.assignDoctorToReferral({
+                referralId,
+                doctorId: doctorId || null,
+                actorUser: req.user,
+                reason
+            });
+
+            return res.json({
+                success: true,
+                message: result.message,
+                status: result.status,
+                rerouted: result.rerouted,
+                doctor: result.doctor,
+                referral: result.referral
+            });
+        } catch (err) {
+            const statusCode = err.status || (err.code === 'PATIENT_NOT_REACHED' ? 409 : (err.code === 'CROSS_FACILITY_ASSIGNMENT_DENIED' ? 400 : 500));
+            return res.status(statusCode).json({
+                success: false,
+                error: err.message,
+                code: err.code || 'ASSIGNMENT_ERROR'
+            });
         }
     }
 }

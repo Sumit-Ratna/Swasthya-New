@@ -5,6 +5,7 @@ const {
     isValidTransition
 } = require('../services/referralStateMachine');
 const { normalizeRole } = require('../middleware/auth');
+const doctorAssignmentService = require('../services/doctorAssignmentService');
 
 /**
  * Get all referrals (filtered by role / query parameters)
@@ -361,54 +362,27 @@ exports.assignDoctor = async (req, res, next) => {
         const { id } = req.params;
         const { doctor_id, reason } = req.body;
 
-        if (!doctor_id) {
-            return res.status(400).json({
-                success: false,
-                error: "doctor_id is required to assign doctor",
-                code: "VALIDATION_ERROR"
-            });
-        }
-
-        // Verify doctor exists
-        const { data: doctor, error: docErr } = await supabase
-            .from('doctors')
-            .select('id, name, specialty_name, facility_id')
-            .eq('id', doctor_id)
-            .single();
-
-        if (docErr || !doctor) {
-            return res.status(404).json({
-                success: false,
-                error: `Doctor not found with ID: ${doctor_id}`,
-                code: "DOCTOR_NOT_FOUND"
-            });
-        }
-
-        const actorUserId = req.user?.id || null;
-        const actorRole = req.user?.role || 'FACILITY_STAFF';
-
-        // Check if referral has reached or transition to DOCTOR_ASSIGNED
-        const result = await transitionReferral({
+        const result = await doctorAssignmentService.assignDoctorToReferral({
             referralId: id,
-            toStatus: REFERRAL_STATES.DOCTOR_ASSIGNED,
-            actorUserId,
-            actorRole,
-            reason: reason || `Doctor ${doctor.name} (${doctor.specialty_name}) assigned`,
-            payload: {
-                assigned_doctor_id: doctor_id
-            }
+            doctorId: doctor_id || null,
+            actorUser: req.user,
+            reason
         });
 
         return res.json({
             success: true,
-            message: `Doctor ${doctor.name} assigned successfully`,
+            message: result.message,
+            status: result.status,
+            rerouted: result.rerouted,
+            doctor: result.doctor,
             data: result.referral
         });
     } catch (err) {
-        return res.status(400).json({
+        const statusCode = err.status || (err.code === 'PATIENT_NOT_REACHED' ? 409 : (err.code === 'CROSS_FACILITY_ASSIGNMENT_DENIED' ? 400 : 500));
+        return res.status(statusCode).json({
             success: false,
             error: err.message,
-            code: 'ASSIGNMENT_ERROR'
+            code: err.code || 'ASSIGNMENT_ERROR'
         });
     }
 };
