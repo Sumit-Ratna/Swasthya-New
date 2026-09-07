@@ -1,0 +1,23 @@
+{
+  "name": "facility-distance-routing-engine",
+  "version": "1.0.0",
+  "description": "Production-grade standalone Facility Distance & Routing Engine using OpenStreetMap and OSRM with Haversine fallback, intelligent caching, rate-limited geocoding, and batch routing.",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node --test tests/**/*.test.js",
+    "demo": "node examples/demo.js"
+  },
+  "keywords": [
+    "osrm",
+    "openstreetmap",
+    "routing",
+    "distance",
+    "healthcare",
+    "facility-finder",
+    "geodesic",
+    "haversine",
+    "nominatim"
+  ],
+  "author": "Antigravity Engineering",
+  "license": "MIT"
+}

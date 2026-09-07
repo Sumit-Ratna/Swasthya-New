@@ -1,0 +1,37 @@
+{
+  "origin": {
+    "latitude": 28.6139,
+    "longitude": 77.2090
+  },
+  "profile": "driving",
+  "facilities": [
+    {
+      "id": "FAC-001",
+      "name": "Dr. Ram Manohar Lohia Hospital",
+      "type": "TERTIARY_HOSPITAL",
+      "latitude": 28.6247,
+      "longitude": 77.2023
+    },
+    {
+      "id": "FAC-002",
+      "name": "Lady Hardinge Medical College & Hospital",
+      "type": "TERTIARY_HOSPITAL",
+      "latitude": 28.6335,
+      "longitude": 77.2148
+    },
+    {
+      "id": "FAC-003",
+      "name": "All India Institute of Medical Sciences (AIIMS)",
+      "type": "CENTRAL_INSTITUTE",
+      "latitude": 28.5672,
+      "longitude": 77.2100
+    },
+    {
+      "id": "FAC-004",
+      "name": "Primary Health Centre (PHC) Mehrauli",
+      "type": "PHC",
+      "latitude": 28.5175,
+      "longitude": 77.1812
+    }
+  ]
+}

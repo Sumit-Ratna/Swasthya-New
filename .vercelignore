@@ -7,7 +7,9 @@ offline health help
 .git
 frontend_react/node_modules
 backend/node_modules
-*.jpeg
-*.png
+frontend_react/android
+frontend_react/dist
+.artifacts
+Screenshot*.png
 *.apk
 apks.json
