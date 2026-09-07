@@ -45,9 +45,11 @@ const Records = ({ viewingPatientId, defaultTab }) => {
         if (tabParam === 'medicines' || tabParam === 'explainer') {
             setActiveTab('medicines');
         } else if (tabParam === 'history' || tabParam === 'records') {
-            setActiveTab('history');
+            navigate('/medical-history');
+        } else {
+            setActiveTab('ocr');
         }
-    }, [searchParams]);
+    }, [searchParams, navigate]);
 
     useEffect(() => {
         if (targetUserId) {
@@ -319,8 +321,8 @@ const Records = ({ viewingPatientId, defaultTab }) => {
             {/* Segmented Tab Bar */}
             <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: '6px',
+                gridTemplateColumns: 'repeat(2, 1fr)',
+                gap: '8px',
                 background: '#e2e8f0',
                 padding: '4px',
                 borderRadius: '14px',
@@ -329,11 +331,11 @@ const Records = ({ viewingPatientId, defaultTab }) => {
                 <button
                     onClick={() => setActiveTab('ocr')}
                     style={{
-                        padding: '10px 8px',
+                        padding: '11px 12px',
                         border: 'none',
                         borderRadius: '10px',
                         fontWeight: 700,
-                        fontSize: '12.5px',
+                        fontSize: '13px',
                         cursor: 'pointer',
                         transition: 'all 0.2s ease',
                         background: activeTab === 'ocr' ? '#ffffff' : 'transparent',
@@ -342,21 +344,21 @@ const Records = ({ viewingPatientId, defaultTab }) => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '6px'
+                        gap: '8px'
                     }}
                 >
-                    <FileText size={15} />
+                    <FileText size={16} />
                     <span>Report OCR</span>
                 </button>
 
                 <button
                     onClick={() => setActiveTab('medicines')}
                     style={{
-                        padding: '10px 8px',
+                        padding: '11px 12px',
                         border: 'none',
                         borderRadius: '10px',
                         fontWeight: 700,
-                        fontSize: '12.5px',
+                        fontSize: '13px',
                         cursor: 'pointer',
                         transition: 'all 0.2s ease',
                         background: activeTab === 'medicines' ? '#ffffff' : 'transparent',
@@ -365,34 +367,11 @@ const Records = ({ viewingPatientId, defaultTab }) => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '6px'
+                        gap: '8px'
                     }}
                 >
-                    <Pill size={15} />
+                    <Pill size={16} />
                     <span>Medicine Explainer</span>
-                </button>
-
-                <button
-                    onClick={() => setActiveTab('history')}
-                    style={{
-                        padding: '10px 8px',
-                        border: 'none',
-                        borderRadius: '10px',
-                        fontWeight: 700,
-                        fontSize: '12.5px',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                        background: activeTab === 'history' ? '#ffffff' : 'transparent',
-                        color: activeTab === 'history' ? '#2563eb' : '#475569',
-                        boxShadow: activeTab === 'history' ? '0 2px 8px rgba(0,0,0,0.08)' : 'none',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '6px'
-                    }}
-                >
-                    <Stethoscope size={15} />
-                    <span>History & Files</span>
                 </button>
             </div>
 
@@ -885,245 +864,7 @@ const Records = ({ viewingPatientId, defaultTab }) => {
                 </motion.div>
             )}
 
-            {/* TAB 3: CONSULTATION HISTORY & STORED FILES */}
-            {activeTab === 'history' && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
-                    
-                    {/* Consultation History */}
-                    <div style={{ marginBottom: '24px' }}>
-                        <h3 style={{ margin: '0 0 12px', fontSize: '16px', fontWeight: 700, color: '#1e293b' }}>
-                            Consultation Visits & Doctor Notes
-                        </h3>
-                        {(() => {
-                            const clinicalDocs = documents.filter(doc => doc.type === 'prescription' || doc.type === 'diagnosis_note');
 
-                            if (clinicalDocs.length === 0) {
-                                return (
-                                    <div className="card" style={{ textAlign: 'center', padding: '36px', color: '#64748b', background: '#f8fafc', borderRadius: '14px', border: '1px dashed #cbd5e1' }}>
-                                        <Stethoscope size={40} style={{ margin: '0 auto 12px', opacity: 0.4 }} />
-                                        <p style={{ margin: 0, fontSize: '13.5px' }}>No doctor consultation visits logged yet</p>
-                                    </div>
-                                );
-                            }
-
-                            const visits = {};
-                            clinicalDocs.forEach(doc => {
-                                const date = new Date(doc.createdAt).toLocaleDateString();
-                                const docId = doc.extracted_data?.doctor_id;
-                                let docName = doc.extracted_data?.doctor_name;
-                                const linkedDoc = connectedDoctors.find(d => d.id == docId);
-
-                                if ((!docName || docName === 'Dr. Unknown' || docName === 'Doctor') && linkedDoc) {
-                                    docName = linkedDoc.name;
-                                }
-                                if (!docName) docName = 'Dr. Unknown';
-                                const cleanName = docName.replace(/^Dr\.\s+/i, '');
-                                const routeDocId = docId || 'unknown';
-                                const dateURL = new Date(doc.createdAt).toISOString().split('T')[0];
-                                const key = `${date}_${cleanName}`;
-
-                                if (!visits[key]) visits[key] = {
-                                    displayDate: date,
-                                    urlDate: dateURL,
-                                    doctorName: cleanName,
-                                    doctorId: routeDocId,
-                                    docs: [],
-                                    timestamp: new Date(doc.createdAt)
-                                };
-                                visits[key].docs.push(doc);
-                            });
-
-                            return Object.entries(visits)
-                                .sort(([, a], [, b]) => b.timestamp - a.timestamp)
-                                .map(([key, visit], idx) => (
-                                    <motion.div
-                                        key={key}
-                                        initial={{ opacity: 0, y: 8 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: idx * 0.05 }}
-                                        className="card"
-                                        style={{ marginBottom: '12px', overflow: 'hidden', border: '1px solid #e2e8f0', borderRadius: '14px', background: '#ffffff' }}
-                                    >
-                                        <div
-                                            onClick={() => navigate(`/consultation/${visit.urlDate}/${visit.doctorId}`)}
-                                            style={{
-                                                padding: '14px 16px',
-                                                cursor: 'pointer',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'space-between'
-                                            }}
-                                        >
-                                            <div style={{ display: 'flex', alignItems: 'center' }}>
-                                                <div style={{
-                                                    width: '42px', height: '42px', borderRadius: '10px',
-                                                    background: '#e0f2fe',
-                                                    color: '#0284c7',
-                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                    marginRight: '14px', fontSize: '16px', fontWeight: 'bold'
-                                                }}>
-                                                    {visit.doctorName[0]}
-                                                </div>
-                                                <div>
-                                                    <div style={{ fontWeight: 700, fontSize: '14.5px', color: '#1e293b' }}>Dr. {visit.doctorName}</div>
-                                                    <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
-                                                        Visited on {visit.displayDate} • {visit.docs.length} Record{visit.docs.length !== 1 ? 's' : ''}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div style={{ display: 'flex', alignItems: 'center', color: '#0284c7', fontSize: '12.5px', fontWeight: 700 }}>
-                                                View <ChevronRight size={15} style={{ marginLeft: '2px' }} />
-                                            </div>
-                                        </div>
-                                    </motion.div>
-                                ));
-                        })()}
-                    </div>
-
-                    {/* Uploaded Lab Reports & Files */}
-                    <div>
-                        <h3 style={{ margin: '0 0 12px', fontSize: '16px', fontWeight: 700, color: '#1e293b' }}>
-                            Uploaded Lab Reports & Scanned Prescriptions
-                        </h3>
-                        {documents.filter(doc => doc.type === 'lab_report' || doc.type === 'prescription').length === 0 ? (
-                            <div className="card" style={{ textAlign: 'center', padding: '36px', color: '#64748b', background: '#f8fafc', borderRadius: '14px', border: '1px dashed #cbd5e1' }}>
-                                <FileText size={40} style={{ margin: '0 auto 12px', opacity: 0.4 }} />
-                                <p style={{ margin: 0, fontSize: '13.5px' }}>No reports uploaded yet</p>
-                            </div>
-                        ) : (
-                            documents.filter(doc => doc.type === 'lab_report' || doc.type === 'prescription').map((doc, index) => (
-                                <motion.div
-                                    key={doc.id}
-                                    className="card"
-                                    initial={{ opacity: 0, x: -8 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: index * 0.05 }}
-                                    style={{
-                                        display: 'flex',
-                                        flexDirection: 'row',
-                                        alignItems: 'center',
-                                        padding: '14px 16px',
-                                        marginBottom: '10px',
-                                        background: '#ffffff',
-                                        borderRadius: '14px',
-                                        border: '1px solid #e2e8f0'
-                                    }}
-                                >
-                                    <div style={{
-                                        width: '42px',
-                                        height: '42px',
-                                        borderRadius: '10px',
-                                        background: doc.type === 'prescription' ? '#dcfce7' : '#ede9fe',
-                                        color: doc.type === 'prescription' ? '#16a34a' : '#7c3aed',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        marginRight: '14px',
-                                        flexShrink: 0
-                                    }}>
-                                        <FileText size={20} />
-                                    </div>
-
-                                    <div style={{ flex: 1, minWidth: '180px' }}>
-                                        <div style={{ fontWeight: 700, marginBottom: '4px', fontSize: '14px', color: '#1e293b' }}>
-                                            {doc.type === 'prescription' ? 'Prescription Scan' : 'Lab Test Report'}
-                                        </div>
-                                        <div style={{ fontSize: '11.5px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                                            <span>{new Date(doc.createdAt).toLocaleDateString()}</span>
-                                            <span>•</span>
-                                            <span style={{
-                                                color: doc.shared_with?.length > 0 ? '#16a34a' : '#64748b',
-                                                fontWeight: 600,
-                                                background: doc.shared_with?.length > 0 ? '#dcfce7' : '#f1f5f9',
-                                                padding: '2px 6px',
-                                                borderRadius: '4px',
-                                                fontSize: '10.5px'
-                                            }}>
-                                                {doc.shared_with?.length > 0 ? `Shared (${doc.shared_with.length})` : 'Private'}
-                                            </span>
-                                            {doc.extracted_data && (
-                                                <span style={{
-                                                    background: '#ede9fe', color: '#6d28d9',
-                                                    padding: '2px 6px', borderRadius: '4px',
-                                                    fontSize: '10.5px', fontWeight: 700
-                                                }}>
-                                                    AI OCR Ready
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div style={{ display: 'flex', gap: '6px', marginLeft: '12px' }}>
-                                        <button
-                                            onClick={() => window.open(`/${doc.file_url}`, '_blank')}
-                                            disabled={!doc.file_url}
-                                            style={{
-                                                padding: '6px 10px',
-                                                borderRadius: '8px',
-                                                background: '#f1f5f9',
-                                                border: '1px solid #cbd5e1',
-                                                cursor: doc.file_url ? 'pointer' : 'not-allowed',
-                                                color: '#334155',
-                                                fontWeight: 700,
-                                                fontSize: '12px'
-                                            }}
-                                        >
-                                            View
-                                        </button>
-                                        <button
-                                            onClick={() => setSharingModalDoc(doc)}
-                                            style={{
-                                                padding: '6px 10px',
-                                                borderRadius: '8px',
-                                                background: '#e0f2fe',
-                                                border: 'none',
-                                                cursor: 'pointer',
-                                                color: '#0284c7',
-                                                fontWeight: 700,
-                                                fontSize: '12px'
-                                            }}
-                                        >
-                                            Share
-                                        </button>
-                                        <button
-                                            onClick={() => handleAnalyze(doc.id)}
-                                            style={{
-                                                padding: '6px 10px',
-                                                borderRadius: '8px',
-                                                background: '#16a34a',
-                                                border: 'none',
-                                                cursor: 'pointer',
-                                                color: 'white',
-                                                fontWeight: 700,
-                                                fontSize: '12px'
-                                            }}
-                                        >
-                                            OCR
-                                        </button>
-                                        <button
-                                            onClick={() => handleDelete(doc.id, doc.shared_with?.length > 0 || doc.is_shared)}
-                                            style={{
-                                                padding: '6px 8px',
-                                                borderRadius: '8px',
-                                                background: '#fee2e2',
-                                                border: 'none',
-                                                cursor: 'pointer',
-                                                color: '#dc2626',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center'
-                                            }}
-                                            title="Delete"
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
-                                    </div>
-                                </motion.div>
-                            ))
-                        )}
-                    </div>
-                </motion.div>
-            )}
 
             {/* Video Modal */}
             {showExplainer && explainerStoryboard && (
