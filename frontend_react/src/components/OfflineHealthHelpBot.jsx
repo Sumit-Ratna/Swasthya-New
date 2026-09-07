@@ -28,6 +28,7 @@ const QUICK_ACTIONS = [
     { label: '🛡️ Antibiotic Safety', query: 'Can I take antibiotics for viral cold?', color: '#475569', bg: '#f1f5f9' }
 ];
 
+const DEFAULT_N8N_URL = 'https://saadkhan104.app.n8n.cloud/webhook/78c07e24-c57c-4e71-8f21-ed98b5d3c73a';
 const STORAGE_N8N_URL = 'swasthya_n8n_webhook_url';
 const STORAGE_AI_MODE = 'swasthya_ai_mode'; // 'online' | 'offline'
 
@@ -36,7 +37,7 @@ const OfflineHealthHelpBot = () => {
     const [messages, setMessages] = useState([
         {
             sender: 'bot',
-            text: 'Namaste! I am your **Swasthya AI Health & Emergency Assistant**.\n\n• **Online Mode**: Connected to n8n AI Agent Webhook.\n• **Offline Mode**: 100% On-Device Gemma 3 INT4 & Emergency Protocol Engine (Airplane Mode ready).',
+            text: 'Namaste! I am your **Swasthya AI Health & Emergency Assistant**.\n\n• **Online Mode**: Connected to **n8n AI Agent Webhook**.\n• **Offline Mode**: 100% On-Device **Gemma 1.5 Lite INT4** & 24 Emergency Protocol Engine (Airplane Mode ready).',
             type: 'WELCOME',
             timestamp: new Date()
         }
@@ -47,9 +48,9 @@ const OfflineHealthHelpBot = () => {
     const [language, setLanguage] = useState('en'); // 'en' | 'hi'
     const [isOnline, setIsOnline] = useState(navigator.onLine);
     
-    // User Mode Toggle: 'online' (n8n webhook) vs 'offline' (on-device Gemma 3)
+    // User Mode Toggle: 'online' (n8n webhook) vs 'offline' (on-device Gemma 1.5 Lite)
     const [aiMode, setAiMode] = useState(localStorage.getItem(STORAGE_AI_MODE) || (navigator.onLine ? 'online' : 'offline'));
-    const [customN8nUrl, setCustomN8nUrl] = useState(localStorage.getItem(STORAGE_N8N_URL) || '');
+    const [customN8nUrl, setCustomN8nUrl] = useState(localStorage.getItem(STORAGE_N8N_URL) || DEFAULT_N8N_URL);
     const [tempN8nUrl, setTempN8nUrl] = useState(customN8nUrl);
     const [isSending, setIsSending] = useState(false);
 
@@ -91,7 +92,7 @@ const OfflineHealthHelpBot = () => {
         };
     }, []);
 
-    // Auto-trigger model download on first time open
+    // Trigger Gemma 1.5 Lite model download
     const handleDownloadGemma = async () => {
         try {
             await gemmaEngine.startModelDownload();
@@ -101,16 +102,31 @@ const OfflineHealthHelpBot = () => {
         }
     };
 
+    // Auto-trigger Gemma 1.5 Lite model download when bot is opened while offline
+    useEffect(() => {
+        if (isOpen && (!isOnline || aiMode === 'offline')) {
+            if (gemmaState.status === 'not_downloaded' && !gemmaState.isDownloading) {
+                console.log('[OFFLINE BOT] Bot opened in offline mode - starting automatic Gemma 1.5 Lite mobile download...');
+                handleDownloadGemma();
+            }
+        }
+    }, [isOpen, isOnline, aiMode, gemmaState.status]);
+
     // Toggle Mode
     const handleToggleMode = (newMode) => {
         setAiMode(newMode);
         localStorage.setItem(STORAGE_AI_MODE, newMode);
+        // If switched to offline and model not downloaded, auto-start download
+        if (newMode === 'offline' && gemmaState.status === 'not_downloaded' && !gemmaState.isDownloading) {
+            handleDownloadGemma();
+        }
     };
 
     // Save Custom n8n Webhook URL
     const handleSaveN8nUrl = () => {
-        setCustomN8nUrl(tempN8nUrl.trim());
-        localStorage.setItem(STORAGE_N8N_URL, tempN8nUrl.trim());
+        const urlToSave = tempN8nUrl.trim() || DEFAULT_N8N_URL;
+        setCustomN8nUrl(urlToSave);
+        localStorage.setItem(STORAGE_N8N_URL, urlToSave);
         alert('n8n Webhook URL saved successfully!');
     };
 
@@ -209,39 +225,9 @@ const OfflineHealthHelpBot = () => {
         setIsSending(true);
 
         // =========================================================================
-        // 1. ONLINE MODE: DISPATCH TO N8N WEBHOOK
-        // =========================================================================
-        if (aiMode === 'online' && isOnline) {
-            try {
-                const token = localStorage.getItem('accessToken');
-                const authHeader = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-
-                const res = await axios.post('/api/ai/n8n-webhook', {
-                    query: queryText,
-                    message: queryText,
-                    language: language,
-                    customWebhookUrl: customN8nUrl || undefined
-                }, authHeader);
-
-                if (res.data && res.data.reply) {
-                    const botMsg = {
-                        sender: 'bot',
-                        text: res.data.reply,
-                        type: 'N8N_WEBHOOK',
-                        engine: res.data.source === 'n8n_webhook' ? '🌐 n8n Webhook Agent' : '🤖 Cloud AI Triage',
-                        timestamp: new Date()
-                    };
-                    setMessages(prev => [...prev, botMsg]);
-                    setIsSending(false);
-                    return;
-                }
-            } catch (err) {
-                console.warn('[ONLINE] n8n webhook request failed, falling back to local Gemma engine:', err.message);
-            }
-        }
-
-        // =========================================================================
-        // 2. OFFLINE MODE: ON-DEVICE GEMMA 3 INT4 + 24 DETERMINISTIC PROTOCOLS
+        // 1. IMMEDIATE HARDCODED EMERGENCY PROTOCOLS (0ms ZERO-LATENCY GUARANTEE)
+        // CPR, Severe Bleeding, Choking, Stroke, Heart Attack, Burns, Electric Shock, etc.
+        // Major acute health risks MUST bypass network calls and display immediately.
         // =========================================================================
         const offlineResult = evaluateOfflineQuery(queryText);
 
@@ -251,7 +237,7 @@ const OfflineHealthHelpBot = () => {
                 text: offlineResult.message,
                 type: 'EMERGENCY_PROTOCOL',
                 protocol: offlineResult.protocol,
-                engine: '✨ On-Device Gemma 3 INT4 (0ms Emergency)',
+                engine: '⚡ Instant Emergency Protocol (0ms Latency)',
                 timestamp: new Date()
             };
             setMessages(prev => [...prev, botMsg]);
@@ -259,13 +245,77 @@ const OfflineHealthHelpBot = () => {
             return;
         }
 
+        // =========================================================================
+        // 2. ONLINE MODE: DISPATCH TO N8N AI AGENT WEBHOOK (90s TIMEOUT)
+        // =========================================================================
+        if (aiMode === 'online' && isOnline) {
+            try {
+                const token = localStorage.getItem('accessToken');
+                const authHeader = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+                const webhookToHit = customN8nUrl || DEFAULT_N8N_URL;
+
+                const res = await axios.post('/api/ai/n8n-webhook', {
+                    query: queryText,
+                    message: queryText,
+                    language: language,
+                    customWebhookUrl: webhookToHit
+                }, { ...authHeader, timeout: 90000 });
+
+                if (res.data && res.data.reply) {
+                    const botMsg = {
+                        sender: 'bot',
+                        text: res.data.reply,
+                        type: 'N8N_WEBHOOK',
+                        engine: res.data.source === 'n8n_webhook' ? '🌐 n8n AI Workflow Agent' : '🤖 Cloud AI Triage',
+                        timestamp: new Date()
+                    };
+                    setMessages(prev => [...prev, botMsg]);
+                    setIsSending(false);
+                    return;
+                }
+            } catch (err) {
+                console.warn('[ONLINE] n8n webhook via backend proxy error, trying direct webhook POST (90s timeout):', err.message);
+                try {
+                    const directRes = await axios.post(customN8nUrl || DEFAULT_N8N_URL, {
+                        query: queryText,
+                        message: queryText,
+                        language: language,
+                        timestamp: new Date().toISOString()
+                    }, { headers: { 'Content-Type': 'application/json' }, timeout: 90000 });
+
+                    const output = directRes.data;
+                    let replyText = typeof output === 'string' ? output : (output.reply || output.output || output.text || output.message || JSON.stringify(output));
+                    if (Array.isArray(output) && output[0]) {
+                        const item = output[0];
+                        replyText = typeof item === 'string' ? item : (item.output || item.reply || item.text || item.message || JSON.stringify(item));
+                    }
+
+                    const botMsg = {
+                        sender: 'bot',
+                        text: replyText,
+                        type: 'N8N_WEBHOOK',
+                        engine: '🌐 n8n AI Agent Workflow (Direct)',
+                        timestamp: new Date()
+                    };
+                    setMessages(prev => [...prev, botMsg]);
+                    setIsSending(false);
+                    return;
+                } catch (directErr) {
+                    console.warn('[ONLINE] Direct n8n webhook call failed, falling back to local Gemma 1.5 Lite:', directErr.message);
+                }
+            }
+        }
+
+        // =========================================================================
+        // 3. OFFLINE MODE: ON-DEVICE GEMMA 1.5 LITE INT4 + FORMULARY REASONING
+        // =========================================================================
         if (offlineResult && offlineResult.type === 'MEDICATION_GUIDANCE') {
             const botMsg = {
                 sender: 'bot',
                 text: offlineResult.message,
                 type: 'MEDICATION_GUIDANCE',
                 medication: offlineResult.medication,
-                engine: '✨ On-Device Gemma 3 INT4 (Formulary)',
+                engine: '⚡ Gemma 1.5 Lite (Formulary Safety)',
                 timestamp: new Date()
             };
             setMessages(prev => [...prev, botMsg]);
@@ -273,21 +323,20 @@ const OfflineHealthHelpBot = () => {
             return;
         }
 
-        // On-Device Gemma Neural Core Dynamic Reasoning
-        await gemmaEngine.generateInference(queryText);
-        const dynamicReply = offlineResult 
-            ? offlineResult.message 
-            : `🩺 **Gemma 3 On-Device Clinical Evaluation:**\n\n` +
-              `I have evaluated your symptoms against the on-device WHO medical knowledge base.\n\n` +
-              `• **First-Aid Assessment:** Ensure patient is seated comfortably, check responsiveness, and monitor airway/breathing.\n` +
-              `• **Red Flags to Watch:** Severe breathlessness, persistent chest pressure, sudden weakness, or vomiting.\n` +
-              `• **Action:** For acute life-threatening situations, select from emergency buttons above or dial **108** immediately.`;
+        // Auto-download Gemma 1.5 Lite model if not yet cached on device
+        if (gemmaEngine.getStatus().status === 'not_downloaded') {
+            await gemmaEngine.startModelDownload();
+        }
+
+        // On-Device Gemma 1.5 Lite Neural Core Dynamic Reasoning
+        const gemmaResult = await gemmaEngine.generateInference(queryText);
+        const dynamicReply = gemmaResult.reply || (offlineResult ? offlineResult.message : 'Evaluation complete.');
 
         const botMsg = {
             sender: 'bot',
             text: dynamicReply,
             type: 'LOCAL_GEMMA',
-            engine: '✨ On-Device Gemma 3 INT4 Neural Core',
+            engine: '⚡ On-Device Gemma 1.5 Lite INT4 (Offline)',
             timestamp: new Date()
         };
         setMessages(prev => [...prev, botMsg]);
@@ -333,7 +382,7 @@ const OfflineHealthHelpBot = () => {
                             boxShadow: `0 0 8px ${aiMode === 'online' ? '#38bdf8' : '#22c55e'}`
                         }} />
                     </div>
-                    <span>{aiMode === 'online' ? 'Online AI (n8n)' : 'Offline Gemma 3'}</span>
+                    <span>{aiMode === 'online' ? 'Online AI (n8n)' : 'Offline Gemma 1.5'}</span>
                     <span style={{
                         background: 'rgba(255,255,255,0.2)',
                         padding: '2px 8px',
@@ -401,7 +450,7 @@ const OfflineHealthHelpBot = () => {
                                         <span>Swasthya AI Assistant</span>
                                     </div>
                                     <div style={{ fontSize: '11px', opacity: 0.9, marginTop: '1px' }}>
-                                        {aiMode === 'online' ? '🌐 n8n Agent Webhook Mode' : '⚡ On-Device Gemma 3 INT4 Mode'}
+                                        {aiMode === 'online' ? '🌐 n8n AI Workflow Mode' : '⚡ On-Device Gemma 1.5 Lite Mode'}
                                     </div>
                                 </div>
                             </div>
@@ -516,7 +565,7 @@ const OfflineHealthHelpBot = () => {
                                     }}
                                 >
                                     <Cpu size={12} />
-                                    <span>Offline (Gemma)</span>
+                                    <span>Offline (Gemma 1.5)</span>
                                 </button>
                             </div>
                         </div>
@@ -535,7 +584,7 @@ const OfflineHealthHelpBot = () => {
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <Cpu size={18} color="#ffffff" />
                                     <div style={{ fontSize: '11px' }}>
-                                        <strong>Download On-Device Gemma 3 (248 MB):</strong>
+                                        <strong>Download Gemma 1.5 Lite Mobile (185 MB):</strong>
                                         <div style={{ opacity: 0.9 }}>100% offline neural AI in Airplane Mode.</div>
                                     </div>
                                 </div>
@@ -567,7 +616,7 @@ const OfflineHealthHelpBot = () => {
                             <div style={{ background: '#f0f9ff', padding: '8px 14px', borderBottom: '1px solid #bae6fd' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#0369a1', fontWeight: 700, marginBottom: '3px' }}>
                                     <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                        <RefreshCw size={11} className="spin" /> Caching Gemma 3 locally...
+                                        <RefreshCw size={11} className="spin" /> Caching Gemma 1.5 Lite locally...
                                     </span>
                                     <span>{gemmaState.progress}%</span>
                                 </div>
@@ -800,7 +849,7 @@ const OfflineHealthHelpBot = () => {
                             {isSending && (
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b', fontSize: '11px', padding: '4px' }}>
                                     <RefreshCw size={12} className="spin" />
-                                    <span>{aiMode === 'online' ? 'Querying n8n AI Agent...' : 'Gemma 3 On-Device Processing...'}</span>
+                                    <span>{aiMode === 'online' ? 'Querying n8n AI Agent...' : 'Gemma 1.5 Lite On-Device Processing...'}</span>
                                 </div>
                             )}
                             <div ref={messagesEndRef} />
@@ -845,7 +894,7 @@ const OfflineHealthHelpBot = () => {
                                 type="text"
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
-                                placeholder={isListening ? 'Listening to voice...' : (aiMode === 'online' ? 'Ask n8n AI Webhook agent...' : 'Ask offline Gemma 3 (CPR, bleeding, burns)...')}
+                                placeholder={isListening ? 'Listening to voice...' : (aiMode === 'online' ? 'Ask n8n AI Webhook agent...' : 'Ask offline Gemma 1.5 (CPR, bleeding, burns)...')}
                                 style={{
                                     flex: 1,
                                     padding: '9px 12px',
@@ -956,15 +1005,15 @@ const OfflineHealthHelpBot = () => {
                                         </button>
                                     </div>
 
-                                    {/* Gemma 3 On-Device Info */}
+                                    {/* Gemma 1.5 Lite On-Device Info */}
                                     <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '10px', marginBottom: '12px', fontSize: '11px' }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                                             <span style={{ color: '#64748b' }}>Offline Model:</span>
-                                            <strong style={{ color: '#0f172a' }}>Gemma 3 1B INT4</strong>
+                                            <strong style={{ color: '#0f172a' }}>Gemma 1.5 Lite INT4</strong>
                                         </div>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                                            <span style={{ color: '#64748b' }}>Size:</span>
-                                            <strong style={{ color: '#0f172a' }}>248 MB</strong>
+                                            <span style={{ color: '#64748b' }}>Target Size:</span>
+                                            <strong style={{ color: '#0f172a' }}>185 MB (Mobile Fast)</strong>
                                         </div>
                                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                             <span style={{ color: '#64748b' }}>Cache Status:</span>
@@ -1000,7 +1049,7 @@ const OfflineHealthHelpBot = () => {
                                                 gap: '5px'
                                             }}
                                         >
-                                            <Trash2 size={13} /> Clear Gemma Cache
+                                            <Trash2 size={13} /> Clear Gemma 1.5 Cache
                                         </button>
                                     ) : (
                                         <button
@@ -1023,7 +1072,7 @@ const OfflineHealthHelpBot = () => {
                                             }}
                                         >
                                             <Download size={14} />
-                                            <span>{gemmaState.isDownloading ? `Downloading (${gemmaState.progress}%)...` : 'Download Gemma Model (248 MB)'}</span>
+                                            <span>{gemmaState.isDownloading ? `Downloading (${gemmaState.progress}%)...` : 'Download Gemma 1.5 Lite (185 MB)'}</span>
                                         </button>
                                     )}
                                 </div>

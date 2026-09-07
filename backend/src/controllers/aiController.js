@@ -1,5 +1,6 @@
 const aiService = require('../services/aiService');
 const dbService = require('../services/supabaseService');
+const config = require('../config/env');
 
 /**
  * GET /api/ai/health
@@ -120,10 +121,27 @@ exports.generateExplainer = async (req, res) => {
     }
 };
 
-/**
- * POST /api/ai/n8n-webhook
- * Dispatches online user queries to external n8n AI agent workflows or cloud fallback.
- */
+// POST /api/ai/n8n-webhook helper
+function extractN8nReply(data) {
+    if (!data) return 'Received empty response from n8n agent workflow.';
+    if (typeof data === 'string') return data;
+    if (Array.isArray(data)) {
+        if (data.length === 0) return 'Received empty response from n8n.';
+        const first = data[0];
+        if (typeof first === 'string') return first;
+        if (first && typeof first === 'object') {
+            return extractN8nReply(first.json || first.output || first.text || first.message || first.reply || first.response || first);
+        }
+    }
+    if (typeof data === 'object') {
+        const candidate = data.reply || data.output || data.text || data.message || data.response || data.result || data.answer || (data.json ? extractN8nReply(data.json) : null);
+        if (typeof candidate === 'string') return candidate;
+        if (candidate && typeof candidate === 'object') return JSON.stringify(candidate, null, 2);
+        return JSON.stringify(data, null, 2);
+    }
+    return String(data);
+}
+
 exports.n8nWebhook = async (req, res) => {
     const axios = require('axios');
     const { query, message, sessionId, userId, language, customWebhookUrl } = req.body;
@@ -133,7 +151,7 @@ exports.n8nWebhook = async (req, res) => {
         return res.status(400).json({ error: 'Query or message text is required' });
     }
 
-    const targetUrl = customWebhookUrl || process.env.N8N_WEBHOOK_URL || null;
+    const targetUrl = customWebhookUrl || config.n8nWebhookUrl || process.env.N8N_WEBHOOK_URL || 'https://saadkhan104.app.n8n.cloud/webhook/78c07e24-c57c-4e71-8f21-ed98b5d3c73a';
 
     if (targetUrl) {
         try {
@@ -147,17 +165,15 @@ exports.n8nWebhook = async (req, res) => {
                 timestamp: new Date().toISOString()
             }, {
                 headers: { 'Content-Type': 'application/json' },
-                timeout: 12000
+                timeout: 90000
             });
 
-            const output = webhookRes.data;
-            const replyText = typeof output === 'string' 
-                ? output 
-                : (output.reply || output.text || output.message || output.output || output.response || JSON.stringify(output));
+            const replyText = extractN8nReply(webhookRes.data);
 
             return res.json({
                 success: true,
                 reply: replyText,
+                raw: webhookRes.data,
                 source: 'n8n_webhook',
                 webhookUrl: targetUrl,
                 timestamp: new Date().toISOString()

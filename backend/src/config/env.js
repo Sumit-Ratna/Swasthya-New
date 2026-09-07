@@ -12,6 +12,7 @@ const config = {
         serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || 'placeholder-service-key'
     },
     aiServiceUrl: process.env.AI_SERVICE_URL || 'http://127.0.0.1:8001',
+    n8nWebhookUrl: process.env.N8N_WEBHOOK_URL || 'https://saadkhan104.app.n8n.cloud/webhook/78c07e24-c57c-4e71-8f21-ed98b5d3c73a',
     corsOrigins: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',').map(s => s.trim()) : ['*'],
     enableAuditChain: process.env.ENABLE_AUDIT_CHAIN !== 'false',
     demoMode: process.env.DEMO_MODE === 'true'

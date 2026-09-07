@@ -442,6 +442,82 @@ export const EMERGENCY_PROTOCOLS = {
         ],
         doNotDo: ['DO NOT give fever medications like Paracetamol or Aspirin (they do not work on heat stroke and strain kidneys).'],
         emergencyNumber: '108'
+    },
+    snake_bite: {
+        id: 'snake_bite',
+        title: 'Snake Bite Emergency First Aid',
+        hindiTitle: 'सांप के काटने (Snake Bite) पर प्राथमिक उपचार',
+        urgency: 'CRITICAL_EMERGENCY',
+        sceneSafety: 'Do NOT try to catch or kill the snake. Move to a safe distance. Call 108 immediately.',
+        steps: [
+            'Keep the victim completely STILL and calm (movement speeds up venom spread).',
+            'Immobilize the bitten limb below heart level using a splint or sling.',
+            'Gently remove rings, tight clothing, or shoes before swelling begins.',
+            'Clean wound gently with water and cover loosely with a clean, dry bandage.',
+            'Rush immediately to the nearest hospital with Anti-Snake Venom (ASV).'
+        ],
+        hindiSteps: [
+            'मरीज को पूरी तरह शांत और स्थिर रखें (हिलने से जहर तेजी से फैलता है)।',
+            'काटे हुए अंग को दिल के स्तर से नीचे रखें और स्थिर बांधें।',
+            'सूजन से पहले अंगूठी, कड़ा या जूते उतार लें।',
+            'घाव को साफ कपड़े से ढीला ढकें और तुरंत एंटी-वेनम (ASV) वाले अस्पताल ले जाएं।'
+        ],
+        doNotDo: [
+            'DO NOT cut the wound or try to suck out venom with mouth.',
+            'DO NOT tie a tight tourniquet (can cause tissue death and limb loss).',
+            'DO NOT apply ice, herbs, or electric shock.'
+        ],
+        emergencyNumber: '108'
+    },
+    electric_shock: {
+        id: 'electric_shock',
+        title: 'Electric Shock / Electrocution',
+        hindiTitle: 'बिजली का करंट लगने पर प्राथमिक उपचार',
+        urgency: 'CRITICAL_EMERGENCY',
+        sceneSafety: 'DO NOT touch the person until the power source is turned off. Turn off main circuit breaker or push wire away with dry wooden stick.',
+        steps: [
+            'Cut the power supply immediately (switch off main fuse/breaker).',
+            'If you cannot turn off power, use a non-conductive dry wooden stick or dry plastic to separate victim from source.',
+            'Call 108 emergency immediately.',
+            'Check breathing and pulse. If not breathing, start CPR immediately.',
+            'Treat electrical burn wounds with clean dry dressing (do not apply water to high-voltage burns).'
+        ],
+        hindiSteps: [
+            'सबसे पहले बिजली का मेन स्विच या पावर बंद करें।',
+            'मरीज को सीधे न छुएं; सूखी लकड़ी या प्लास्टिक की छड़ी से तार अलग करें।',
+            'तुरंत 108 एम्बुलेंस को कॉल करें।',
+            'यदि सांस न चल रही हो तो तुरंत सीपीआर शुरू करें।'
+        ],
+        doNotDo: [
+            'DO NOT touch the victim with bare hands while they are in contact with live wire.',
+            'DO NOT use wet objects or metal.'
+        ],
+        emergencyNumber: '108'
+    },
+    drowning: {
+        id: 'drowning',
+        title: 'Drowning & Submersion First Aid',
+        hindiTitle: 'पानी में डूबने पर प्राथमिक उपचार',
+        urgency: 'CRITICAL_EMERGENCY',
+        sceneSafety: 'Call 108. Do not endanger yourself if not a trained lifeguard — use a buoy, rope, or pole to pull them out.',
+        steps: [
+            'Get the person out of water safely and lay them on their back on firm ground.',
+            'Check responsiveness and breathing immediately.',
+            'If unresponsive and not breathing: Give 5 initial rescue breaths, then begin 30 chest compressions followed by 2 breaths (CPR).',
+            'Continue CPR cycles (30:2) until help arrives or normal breathing resumes.',
+            'If breathing resumes, place in recovery position on their side to drain water, and keep warm with dry blankets.'
+        ],
+        hindiSteps: [
+            'मरीज को पानी से सुरक्षित बाहर निकालकर समतल जमीन पर लिटाएं।',
+            'सांस की जांच करें। यदि सांस न चल रही हो तो तुरंत 5 बार मुंह से सांस दें, फिर 30 बार छाती दबाएं (सीपीआर)।',
+            'लगातार 30:2 का सीपीआर चक्र जारी रखें जब तक मदद न पहुंचे।',
+            'होश आने पर करवट से लिटाएं ताकि पानी बाहर निकल सके, और गर्म कपड़ों से ढकें।'
+        ],
+        doNotDo: [
+            'DO NOT perform abdominal thrusts to drain water (increases vomiting and aspiration risk).',
+            'DO NOT delay CPR to clear water from lungs.'
+        ],
+        emergencyNumber: '108'
     }
 };
 
@@ -499,19 +575,22 @@ export const VERIFIED_MEDICATIONS = {
 
 // 3. High-Confidence Emergency Keyword Matcher (Deterministic Triage)
 export const EMERGENCY_KEYWORD_MAP = [
-    { keywords: ['cpr', 'chest compression', 'heart stop', 'cardiac arrest', 'no pulse', 'not breathing'], protocolId: 'cpr_adult' },
+    { keywords: ['cpr', 'chest compression', 'heart stop', 'cardiac arrest', 'no pulse', 'not breathing', 'heart ceased'], protocolId: 'cpr_adult' },
     { keywords: ['child cpr', 'baby cpr', 'infant cpr', 'toddler not breathing'], protocolId: 'cpr_child' },
-    { keywords: ['choking', 'choke', 'food stuck', 'cannot breathe food', 'gale me fasa', 'throat blocked'], protocolId: 'choking_adult' },
-    { keywords: ['bleeding', 'blood spurting', 'cut artery', 'deep wound', 'khoon beh raha', 'hemorrhage'], protocolId: 'severe_bleeding' },
-    { keywords: ['heart attack', 'chest pain', 'chest pressure', 'left arm pain', 'dil ka daura'], protocolId: 'heart_attack' },
-    { keywords: ['stroke', 'paralysis', 'face drooping', 'slurred speech', 'arm weak', 'lakwa'], protocolId: 'stroke_fast' },
-    { keywords: ['burn', 'burned', 'hot water', 'scald', 'fire burn', 'jal gaya', 'blister burn'], protocolId: 'burns_scalds' },
+    { keywords: ['choking', 'choke', 'food stuck', 'cannot breathe food', 'gale me fasa', 'throat blocked', 'heimlich'], protocolId: 'choking_adult' },
+    { keywords: ['bleeding', 'severve bleeding', 'severe bleeding', 'heavy bleeding', 'blood spurting', 'cut artery', 'deep wound', 'khoon beh raha', 'hemorrhage', 'bleed'], protocolId: 'severe_bleeding' },
+    { keywords: ['heart attack', 'chest pain', 'chest pressure', 'left arm pain', 'dil ka daura', 'myocardial infarction'], protocolId: 'heart_attack' },
+    { keywords: ['stroke', 'paralysis', 'face drooping', 'slurred speech', 'arm weak', 'lakwa', 'brain stroke'], protocolId: 'stroke_fast' },
+    { keywords: ['burn', 'burned', 'hot water', 'scald', 'fire burn', 'jal gaya', 'blister burn', 'acid burn'], protocolId: 'burns_scalds' },
     { keywords: ['seizure', 'convulsion', 'fit', 'mirgi', 'epilepsy spasm', 'jerking'], protocolId: 'seizures_convulsions' },
-    { keywords: ['anaphylaxis', 'allergic reaction', 'throat swelling', 'epipen', 'peanut allergy'], protocolId: 'anaphylaxis' },
+    { keywords: ['anaphylaxis', 'allergic reaction', 'throat swelling', 'epipen', 'peanut allergy', 'severe allergy'], protocolId: 'anaphylaxis' },
     { keywords: ['asthma', 'wheezing', 'inhaler', 'shortness of breath', 'saans phoolna', 'dama'], protocolId: 'asthma_attack' },
+    { keywords: ['snake bite', 'snakebite', 'saanp ne kata', 'snake venom'], protocolId: 'snake_bite' },
+    { keywords: ['electric shock', 'electrocution', 'current lag gaya', 'electric wire'], protocolId: 'electric_shock' },
+    { keywords: ['drowning', 'drowned', 'paani me doob', 'submersion'], protocolId: 'drowning' },
     { keywords: ['nosebleed', 'nose bleed', 'blood from nose', 'nakseer', 'epistaxis'], protocolId: 'nosebleed' },
     { keywords: ['faint', 'fainted', 'dizzy collapsed', 'unconscious fall', 'behosh'], protocolId: 'fainting' },
-    { keywords: ['poison', 'swallowed chemical', 'phenyl', 'insecticide', 'zahar', 'toxic'], protocolId: 'poisoning' },
+    { keywords: ['poison', 'poisoning', 'swallowed chemical', 'phenyl', 'insecticide', 'zahar', 'toxic'], protocolId: 'poisoning' },
     { keywords: ['fracture', 'broken bone', 'bone snapped', 'haddi toot gayi', 'deformed bone'], protocolId: 'fractures' },
     { keywords: ['sprain', 'twisted ankle', 'moch', 'ligament stretch', 'swollen wrist'], protocolId: 'sprains_rice' },
     { keywords: ['heat stroke', 'loo lagna', 'sun stroke', 'hyperthermia', 'extreme heat'], protocolId: 'heat_stroke' }

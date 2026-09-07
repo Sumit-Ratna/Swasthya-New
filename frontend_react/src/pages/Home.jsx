@@ -23,7 +23,6 @@ const Home = () => {
     const [facilities, setFacilities] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
-    const [emergencySent, setEmergencySent] = useState(false);
 
     useEffect(() => {
         fetchInitialData();
@@ -109,9 +108,15 @@ const Home = () => {
         }
     };
 
-    const handleEmergencySos = () => {
-        setEmergencySent(true);
-        setTimeout(() => setEmergencySent(false), 5000);
+    const callEmergency108 = (e) => {
+        if (e) {
+            e.stopPropagation();
+        }
+        try {
+            window.location.href = 'tel:108';
+        } catch (error) {
+            console.error('[SOS] Unable to open emergency dialer:', error);
+        }
     };
 
     const coreFeatures = [
@@ -219,13 +224,17 @@ const Home = () => {
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     {/* Emergency 108 Quick Trigger */}
-                    <motion.button 
+                    <motion.a 
+                        href="tel:108"
+                        onClick={callEmergency108}
+                        aria-label="Call emergency services 108"
+                        role="button"
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        onClick={handleEmergencySos}
                         style={{
                             background: '#dc2626',
                             color: '#fff',
+                            textDecoration: 'none',
                             border: 'none',
                             padding: '7px 12px',
                             borderRadius: '16px',
@@ -235,11 +244,13 @@ const Home = () => {
                             display: 'flex',
                             alignItems: 'center',
                             gap: '4px',
-                            boxShadow: '0 2px 8px rgba(220, 38, 38, 0.3)'
+                            boxShadow: '0 2px 8px rgba(220, 38, 38, 0.3)',
+                            userSelect: 'none',
+                            WebkitTapHighlightColor: 'transparent'
                         }}
                     >
                         <Phone size={14} /> 108 SOS
-                    </motion.button>
+                    </motion.a>
 
                     {/* Feedback Button */}
                     <motion.div 
@@ -298,37 +309,6 @@ const Home = () => {
                     </div>
                 </div>
             </header>
-
-            {/* Emergency SOS Banner Alert */}
-            <AnimatePresence>
-                {emergencySent && (
-                    <motion.div 
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        style={{
-                            background: '#dc2626',
-                            color: '#fff',
-                            padding: '14px 18px',
-                            borderRadius: '16px',
-                            marginBottom: '20px',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            boxShadow: '0 8px 24px rgba(220, 38, 38, 0.4)'
-                        }}
-                    >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <ShieldAlert size={24} />
-                            <div>
-                                <strong>108 AMBULANCE & HOSPITAL SOS BROADCASTED!</strong>
-                                <div style={{ fontSize: '12px', opacity: 0.9 }}>Emergency medical team and nearby hospital desk notified with GPS coordinates.</div>
-                            </div>
-                        </div>
-                        <span style={{ fontSize: '11px', background: 'rgba(255,255,255,0.2)', padding: '4px 8px', borderRadius: '6px' }}>Token #SOS-911</span>
-                    </motion.div>
-                )}
-            </AnimatePresence>
 
             {/* Feedback Modal */}
             <FeedbackModal 
