@@ -156,7 +156,46 @@ const DoctorDashboard = () => {
                 </button>
             </div>
 
-            {/* Recent Patients */}
+            {/* Facility & ASHA Clinical Collaboration Ribbon */}
+            <div style={{
+                background: '#fff',
+                borderRadius: '16px',
+                padding: '14px 18px',
+                marginBottom: '24px',
+                border: '1px solid var(--border-color)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '10px'
+            }}>
+                <div>
+                    <strong style={{ fontSize: '13px', color: '#0f172a' }}>🏥 Hospital Network & Field Collaboration</strong>
+                    <div style={{ fontSize: '11px', color: '#64748b' }}>Check inpatient bed availability, incoming ASHA triage cases, or system audit ledger</div>
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                    <button 
+                        onClick={() => navigate('/facility-dashboard')}
+                        style={{ background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', padding: '6px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}
+                    >
+                        🏥 Facility Bed Grid
+                    </button>
+                    <button 
+                        onClick={() => navigate('/asha')}
+                        style={{ background: '#ccfbf1', color: '#0f766e', border: '1px solid #99f6e4', padding: '6px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}
+                    >
+                        👩‍⚕️ ASHA Field Hub
+                    </button>
+                    <button 
+                        onClick={() => navigate('/admin')}
+                        style={{ background: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1', padding: '6px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}
+                    >
+                        🛡️ Admin Ledger
+                    </button>
+                </div>
+            </div>
+
+            {/* Content Section */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
                 <div>
                     <h3 style={{ marginBottom: '16px', color: 'var(--text-primary)' }}>Recent Patients</h3>

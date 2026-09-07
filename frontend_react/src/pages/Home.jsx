@@ -102,6 +102,33 @@ const Home = () => {
             link: '/records'
         },
         {
+            title: '👩‍⚕️ ASHA / ANM Frontline Worker Hub',
+            tag: 'Field Operations',
+            desc: 'Mother & child RCH tracking, NIS immunizations, field triage, and DBT incentives.',
+            icon: <HeartPulse size={26} color="#0d9488" />,
+            bgColor: '#ccfbf1',
+            badgeColor: '#0f766e',
+            link: '/asha'
+        },
+        {
+            title: '👨‍👩‍👧 Caregiver Command Hub',
+            tag: 'Family Proxy',
+            desc: 'Multi-dependent vitals radar, smart pillbox adherence, and 1-click Emergency SOS panic.',
+            icon: <Users size={26} color="#db2777" />,
+            bgColor: '#fce7f3',
+            badgeColor: '#be185d',
+            link: '/caregiver'
+        },
+        {
+            title: '🏥 Hospital & Facility Operations',
+            tag: 'Command Center',
+            desc: 'Live bed & ICU grid, inbound triage queue, duty doctor roster & oxygen manifold.',
+            icon: <Building2 size={26} color="#0284c7" />,
+            bgColor: '#e0f2fe',
+            badgeColor: '#0369a1',
+            link: '/facility-dashboard'
+        },
+        {
             title: 'Guardian AI Drug Safety',
             tag: 'Interaction Shield',
             desc: 'Cross-checks prescriptions against allergies & chronic conditions.',
@@ -129,9 +156,9 @@ const Home = () => {
             link: '/family'
         },
         {
-            title: 'Cryptographic Audit Ledger',
+            title: '🛡️ Health Authority Admin Center',
             tag: 'SHA-256 Chained',
-            desc: 'Tamper-evident logs & state-wide healthcare KPI oversight.',
+            desc: 'Tamper-evident logs, district load metrics, and disease outbreak radar.',
             icon: <Lock size={26} color="#475569" />,
             bgColor: '#f1f5f9',
             badgeColor: '#334155',
@@ -201,6 +228,71 @@ const Home = () => {
                 isOpen={isFeedbackOpen} 
                 onClose={() => setIsFeedbackOpen(false)} 
             />
+
+            {/* Quick Multi-Role Dashboard Switcher Bar */}
+            <div style={{
+                marginBottom: '22px',
+                background: '#fff',
+                borderRadius: '18px',
+                padding: '14px',
+                border: '1px solid #e2e8f0',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.03)'
+            }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Sparkles size={16} color="#0d9488" />
+                        <span style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a' }}>
+                            Healthcare Role Portals
+                        </span>
+                    </div>
+                    <span 
+                        onClick={() => navigate('/roles')}
+                        style={{ fontSize: '12px', fontWeight: 700, color: '#0d9488', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px' }}
+                    >
+                        View All Roles <ArrowRight size={14} />
+                    </span>
+                </div>
+
+                <div style={{
+                    display: 'flex',
+                    gap: '10px',
+                    overflowX: 'auto',
+                    paddingBottom: '4px'
+                }}>
+                    {[
+                        { title: 'ASHA / ANM', icon: '👩‍⚕️', bg: '#ccfbf1', color: '#0f766e', link: '/asha' },
+                        { title: 'Caregiver Hub', icon: '👨‍👩‍👧', bg: '#fce7f3', color: '#be185d', link: '/caregiver' },
+                        { title: 'Facility Ops', icon: '🏥', bg: '#e0f2fe', color: '#0369a1', link: '/facility-dashboard' },
+                        { title: 'Admin Command', icon: '🛡️', bg: '#f1f5f9', color: '#334155', link: '/admin' },
+                        { title: 'Doctor OPD', icon: '🩺', bg: '#fef3c7', color: '#b45309', link: '/doctor/dashboard' }
+                    ].map((p, idx) => (
+                        <motion.button
+                            key={idx}
+                            whileHover={{ scale: 1.04 }}
+                            whileTap={{ scale: 0.96 }}
+                            onClick={() => navigate(p.link)}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                background: p.bg,
+                                color: p.color,
+                                border: 'none',
+                                padding: '8px 14px',
+                                borderRadius: '12px',
+                                cursor: 'pointer',
+                                fontWeight: 700,
+                                fontSize: '12px',
+                                whiteSpace: 'nowrap',
+                                boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
+                            }}
+                        >
+                            <span>{p.icon}</span>
+                            <span>{p.title}</span>
+                        </motion.button>
+                    ))}
+                </div>
+            </div>
 
             {/* Active Referral Live Journey Widget */}
             <motion.div

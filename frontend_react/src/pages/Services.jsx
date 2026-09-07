@@ -205,8 +205,48 @@ const Services = () => {
                 )}
             </motion.div>
 
-            <h3 style={{ marginBottom: '16px', color: 'var(--text-primary)' }}>Swasthya Rural Coordination & Referrals</h3>
+            <h3 style={{ marginBottom: '16px', color: 'var(--text-primary)' }}>Swasthya Healthcare & Multi-Role Hub</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '14px', marginBottom: '24px' }}>
+                <motion.div
+                    className="card"
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => navigate('/asha')}
+                    style={{ border: '1px solid #99f6e4', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '130px', background: '#f0fdf4', cursor: 'pointer' }}
+                >
+                    <span style={{ fontSize: '28px', marginBottom: '6px' }}>👩‍⚕️</span>
+                    <span style={{ fontWeight: 700, color: '#0f766e', fontSize: '13px', textAlign: 'center' }}>ASHA Field Hub</span>
+                </motion.div>
+
+                <motion.div
+                    className="card"
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => navigate('/caregiver')}
+                    style={{ border: '1px solid #fbcfe8', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '130px', background: '#fff1f2', cursor: 'pointer' }}
+                >
+                    <span style={{ fontSize: '28px', marginBottom: '6px' }}>👨‍👩‍👧</span>
+                    <span style={{ fontWeight: 700, color: '#be185d', fontSize: '13px', textAlign: 'center' }}>Caregiver Hub</span>
+                </motion.div>
+
+                <motion.div
+                    className="card"
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => navigate('/facility-dashboard')}
+                    style={{ border: '1px solid #bae6fd', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '130px', background: '#f0f9ff', cursor: 'pointer' }}
+                >
+                    <span style={{ fontSize: '28px', marginBottom: '6px' }}>🏥</span>
+                    <span style={{ fontWeight: 700, color: '#0369a1', fontSize: '13px', textAlign: 'center' }}>Facility Ops</span>
+                </motion.div>
+
+                <motion.div
+                    className="card"
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => navigate('/admin')}
+                    style={{ border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '130px', background: '#f8fafc', cursor: 'pointer' }}
+                >
+                    <span style={{ fontSize: '28px', marginBottom: '6px' }}>🛡️</span>
+                    <span style={{ fontWeight: 700, color: '#334155', fontSize: '13px', textAlign: 'center' }}>Admin Center</span>
+                </motion.div>
+
                 <motion.div
                     className="card"
                     whileTap={{ scale: 0.95 }}
@@ -240,11 +280,11 @@ const Services = () => {
                 <motion.div
                     className="card"
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => navigate('/admin')}
-                    style={{ border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '130px', background: 'rgba(99, 102, 241, 0.08)', cursor: 'pointer' }}
+                    onClick={() => navigate('/roles')}
+                    style={{ border: '1px solid #fde68a', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '130px', background: '#fef3c7', cursor: 'pointer' }}
                 >
-                    <ShieldCheck size={28} color="#6366F1" style={{ marginBottom: '8px' }} />
-                    <span style={{ fontWeight: 600, color: '#6366F1', fontSize: '13px', textAlign: 'center' }}>Authority Oversight</span>
+                    <span style={{ fontSize: '28px', marginBottom: '6px' }}>🔀</span>
+                    <span style={{ fontWeight: 700, color: '#b45309', fontSize: '13px', textAlign: 'center' }}>Switch Role Portal</span>
                 </motion.div>
             </div>
 
