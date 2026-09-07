@@ -59,14 +59,14 @@ const RoleSelection = () => {
         },
         {
             role: 'facility_staff',
-            title: 'Hospital Operations',
-            badge: 'Bed & ICU Grid',
+            title: 'Hospital Facility',
+            badge: 'Beds, Services & Bookings',
             badgeColor: '#d97706',
             badgeBg: '#fef3c7',
-            desc: 'Live beds, triage stream & duty roster',
+            desc: 'Bed bookings, live tracking & 24x7 hospital facilities directory',
             icon: <Building2 size={28} color="#0284c7" />,
             gradient: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
-            actionText: 'Facility Hub',
+            actionText: 'Hospital Facility Hub',
             onClick: () => {
                 guestLogin('facility_coordinator');
                 navigate('/facility-dashboard');

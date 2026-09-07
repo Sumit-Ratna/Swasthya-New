@@ -127,8 +127,8 @@ const Login = () => {
         },
         {
             id: 'facility_coordinator',
-            label: 'Facility',
-            title: 'Facility Staff & Coordinator',
+            label: 'Hospital Facility',
+            title: 'Hospital Facility & Bed Operations',
             icon: <Building2 size={20} color="#d97706" />,
             badgeBg: '#fef3c7',
             badgeColor: '#b45309',
