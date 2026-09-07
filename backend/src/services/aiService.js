@@ -93,7 +93,7 @@ function getGeminiClient() {
 // NVIDIA Nemotron / OpenAI-compatible API Helper
 async function callNemotronAI(userPrompt, systemPrompt = "You are a professional medical AI assistant. Analyze medical reports, medicines, and clinical data accurately without giving uncertified prescription directives.") {
     const apiKey = process.env.NEMOTRON_API_KEY || process.env.NVIDIA_API_KEY || process.env.OPENAI_API_KEY;
-    if (!apiKey) return null;
+    if (!apiKey || apiKey.includes('YOUR_') || apiKey.includes('HERE')) return null;
 
     const baseUrl = process.env.NEMOTRON_BASE_URL || process.env.NVIDIA_BASE_URL || 'https://integrate.api.nvidia.com/v1';
     const model = process.env.NEMOTRON_MODEL || 'nvidia/llama-3.1-nemotron-70b-instruct';
@@ -568,6 +568,78 @@ Keep it professional, concise, and medically accurate.`;
 };
 
 /**
+ * Local Storyboard Generator Helper
+ */
+function generateLocalExplainerStoryboard(medicineName, patientProfile) {
+    const medLower = (medicineName || '').toLowerCase();
+    let desc = "essential medical treatment";
+    let icon = "tablet";
+    let dosageNote = "Follow the exact timing and frequency indicated by your medical practitioner.";
+
+    if (medLower.includes('paracetamol') || medLower.includes('crocin') || medLower.includes('dolo') || medLower.includes('calpol')) {
+        desc = "antipyretic and pain-relieving medicine used to reduce fever and alleviate body pain";
+        dosageNote = "Take after food with water. Maintain a minimum 4-6 hour gap between doses.";
+    } else if (medLower.includes('amoxicillin') || medLower.includes('azithromycin') || medLower.includes('cipro') || medLower.includes('augmentin') || medLower.includes('antibiotic')) {
+        desc = "broad-spectrum antibiotic prescribed to eradicate bacterial infections";
+        dosageNote = "Take at evenly spaced intervals and finish the entire prescribed duration without skipping.";
+    } else if (medLower.includes('metformin') || medLower.includes('glim') || medLower.includes('insulin')) {
+        desc = "antidiabetic medication designed to maintain balanced blood glucose levels";
+        icon = "blood_vessel";
+        dosageNote = "Take with or immediately after meals to avoid gastrointestinal discomfort.";
+    } else if (medLower.includes('amlodipine') || medLower.includes('telmisartan') || medLower.includes('atenolol') || medLower.includes('losartan')) {
+        desc = "cardiovascular medication to manage and stabilize arterial blood pressure";
+        icon = "heart";
+        dosageNote = "Take once daily at the same time every morning. Do not stop abruptly.";
+    } else if (medLower.includes('omeprazole') || medLower.includes('pantoprazole') || medLower.includes('rabeprazole')) {
+        desc = "gastro-protective acid reducer for acidity, reflux, and gastric ulcer healing";
+        icon = "stomach";
+        dosageNote = "Take on an empty stomach in the morning 30 minutes before breakfast.";
+    } else if (medLower.includes('cetirizine') || medLower.includes('levocet') || medLower.includes('allegra') || medLower.includes('montair')) {
+        desc = "antihistamine to relieve allergic rhinitis, skin itching, and seasonal allergy symptoms";
+        dosageNote = "Preferably take at night as it may induce mild drowsiness.";
+    }
+
+    return [
+        {
+            scene_number: 1,
+            title: `Introduction to ${medicineName}`,
+            narration: `${medicineName} is an ${desc}. It acts directly inside your body to alleviate symptoms and restore wellness.`,
+            visual_description: `3D visual animation of ${medicineName} entering the system and interacting with target tissues.`,
+            animation_type: "fade_in",
+            main_icon: icon,
+            duration_seconds: 6
+        },
+        {
+            scene_number: 2,
+            title: "Proper Dosage & Schedule",
+            narration: `${dosageNote} Always swallow tablets whole with a full glass of clean water.`,
+            visual_description: "Step-by-step dosage clock animation showing water intake and daily reminder schedule.",
+            animation_type: "slide_right",
+            main_icon: "shield",
+            duration_seconds: 6
+        },
+        {
+            scene_number: 3,
+            title: "Important Safety Guidelines",
+            narration: "Store in a dry location below 25°C away from heat and moisture. Inform your doctor if you have liver or kidney conditions.",
+            visual_description: "Medical safety seal animation highlighting safe storage and hydration.",
+            animation_type: "pulse",
+            main_icon: "shield",
+            duration_seconds: 6
+        },
+        {
+            scene_number: 4,
+            title: "Clinical Safety Disclaimer",
+            narration: CLINICAL_SAFETY_DISCLAIMER,
+            visual_description: "Ayushman Bharat certified medical verification shield and consultation advisory.",
+            animation_type: "zoom_in",
+            main_icon: "check",
+            duration_seconds: 5
+        }
+    ];
+}
+
+/**
  * Explainer Video Storyboard Generation
  */
 exports.generateMedicalExplainer = async (medicineName, patientProfile, reportContext) => {
@@ -607,65 +679,38 @@ Return ONLY A VALID JSON ARRAY of scene objects (no markdown, no other text):
   }
 ]`;
 
-    // Try Nemotron first
+    // 1. Try Nemotron AI first
     try {
         const nemotronResult = await callNemotronAI(prompt, "You are an expert medical video storyboard animation AI. Always return strict valid JSON arrays only.");
         if (nemotronResult) {
             let cleanJson = nemotronResult.replace(/```json/g, '').replace(/```/g, '').trim();
             const parsed = JSON.parse(cleanJson);
-            if (Array.isArray(parsed)) return parsed;
+            if (Array.isArray(parsed) && parsed.length > 0) return parsed;
         }
     } catch (e) {
-        console.warn("[NEMOTRON_EXPLAINER_NOTICE] Nemotron explainer failed, trying Gemini:", e.message);
+        console.warn("[NEMOTRON_EXPLAINER_NOTICE] Nemotron explainer failed, trying fallback:", e.message);
     }
 
+    // 2. Try Gemini if configured
     const genAI = getGeminiClient();
-    if (!genAI) {
-        // Fallback default storyboard if no API is available
-        return [
-            {
-                scene_number: 1,
-                title: `Understanding ${medicineName}`,
-                narration: `${medicineName} has been prescribed to manage your clinical condition. Take strictly as directed by your physician.`,
-                visual_description: `Visual overview of ${medicineName} tablet and its therapeutic action.`,
-                animation_type: "fade_in",
-                main_icon: "tablet",
-                duration_seconds: 6
-            },
-            {
-                scene_number: 2,
-                title: "Dosage & Usage Instructions",
-                narration: "Take this medicine at regular intervals with water. Do not skip doses or double up if missed.",
-                visual_description: "Patient drinking water and following regular schedule.",
-                animation_type: "slide_right",
-                main_icon: "shield",
-                duration_seconds: 6
-            },
-            {
-                scene_number: 3,
-                title: "Important Safety Disclaimer",
-                narration: CLINICAL_SAFETY_DISCLAIMER,
-                visual_description: "Clinical safety shield and doctor consultation recommendation.",
-                animation_type: "pulse",
-                main_icon: "check",
-                duration_seconds: 6
-            }
-        ];
+    if (genAI) {
+        try {
+            const model = genAI.getGenerativeModel({
+                model: "gemini-3-flash-preview",
+                generationConfig: { responseMimeType: "application/json" }
+            });
+
+            const result = await model.generateContent(prompt);
+            const response = await result.response;
+            let text = response.text().replace(/```json/g, '').replace(/```/g, '').trim();
+
+            const parsed = JSON.parse(text);
+            if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        } catch (geminiErr) {
+            console.warn("[GEMINI_EXPLAINER_NOTICE] Gemini failed or blocked (e.g. 403 / leaked key):", geminiErr.message);
+        }
     }
 
-    try {
-        const model = genAI.getGenerativeModel({
-            model: "gemini-3-flash-preview",
-            generationConfig: { responseMimeType: "application/json" }
-        });
-
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        let text = response.text().replace(/```json/g, '').replace(/```/g, '').trim();
-
-        return JSON.parse(text);
-    } catch (error) {
-        console.error("AI Explainer Error:", error);
-        throw new Error("Failed to generate explainer: " + error.message);
-    }
+    // 3. Guaranteed instant local medical storyboard fallback
+    return generateLocalExplainerStoryboard(medicineName, patientProfile);
 };
