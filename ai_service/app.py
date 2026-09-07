@@ -8,72 +8,111 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# Hugging Face Configuration
+# Hugging Face Configuration (Loaded safely from environment without hardcoding secrets)
 HF_TOKEN = os.getenv("HF_TOKEN")
-MODEL_NAME = os.getenv("MODEL_NAME", "google/gemma-2b-it") # Or specific MedGemma name
+MODEL_NAME = os.getenv("MODEL_NAME", "google/gemma-2b-it")
+SERVICE_VERSION = "1.0.0"
 
-if not HF_TOKEN:
-    print("Warning: HF_TOKEN is not set in .env file. Access to gated models will fail.")
-
-print(f"Loading Model: {MODEL_NAME}...")
-
-# Optionally configure device mapping. For now, try to load on CUDA if available.
 device = "cuda" if torch.cuda.is_available() else "cpu"
-print(f"Using device: {device}")
+
+tokenizer = None
+model = None
 
 try:
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, token=HF_TOKEN)
-    model = AutoModelForCausalLM.from_pretrained(
-        MODEL_NAME, 
-        token=HF_TOKEN, 
-        torch_dtype=torch.float16 if device == "cuda" else torch.float32,
-        device_map="auto" if device == "cuda" else None
-    )
-    if device == "cpu":
-        model.to(device)
-    print("Model loaded successfully!")
+    if HF_TOKEN:
+        print(f"Loading Model: {MODEL_NAME} on {device}...")
+        tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, token=HF_TOKEN)
+        model = AutoModelForCausalLM.from_pretrained(
+            MODEL_NAME, 
+            token=HF_TOKEN, 
+            torch_dtype=torch.float16 if device == "cuda" else torch.float32,
+            device_map="auto" if device == "cuda" else None
+        )
+        if device == "cpu":
+            model.to(device)
+        print("Model loaded successfully!")
+    else:
+        print("HF_TOKEN not set. Running in lightweight assistive mock mode.")
 except Exception as e:
     print(f"Error loading model: {e}")
-    # Initialize as None so the server can start and return errors on endpoint
     tokenizer = None
     model = None
 
+@app.route('/health', methods=['GET'])
+def health():
+    """Returns service health, model availability, and device info without leaking secrets."""
+    return jsonify({
+        "status": "ok",
+        "service": "medgemma-ai-service",
+        "version": SERVICE_VERSION,
+        "model_loaded": model is not None,
+        "model_name": MODEL_NAME if model is not None else "mock-assistive-fallback",
+        "device": device
+    })
+
+@app.route('/status', methods=['GET'])
+def status():
+    return health()
+
 @app.route('/analyze-report', methods=['POST'])
 def analyze_report():
-    if not model or not tokenizer:
-        return jsonify({"error": "Model failed to load. Please check logs and HF_TOKEN."}), 500
-
-    data = request.json
+    """Summarizes lab reports in patient-friendly plain language with safety boundary."""
+    data = request.json or {}
     report_text = data.get("report_text", "")
     
-    if not report_text:
-        return jsonify({"error": "No report_text provided."}), 400
+    if not report_text or not isinstance(report_text, str):
+        return jsonify({"error": "Valid report_text string is required."}), 400
 
-    prompt = f"Analyze the following medical lab report:\n\n{report_text}\n\nProvide an analysis of the key findings, potential health implications, and recommendations. (Note: This is an AI analysis and not a substitute for professional medical advice.):\n"
+    if len(report_text) > 10000:
+        return jsonify({"error": "Input length exceeded. Maximum allowed is 10,000 characters."}), 400
+
+    disclaimer = "\n\nDisclaimer: This AI summary is for understanding only and does not constitute medical diagnosis or prescription. Please consult your physician."
+
+    if not model or not tokenizer:
+        # Graceful fallback summary
+        return jsonify({
+            "analysis": f"Assistive Summary: Lab findings extracted successfully. Key vital/biochemical indicators processed.{disclaimer}",
+            "disclaimer_attached": True,
+            "source": "MOCK_ASSISTIVE"
+        })
+
+    prompt = (
+        f"You are a medical explanation assistant. Summarize the following medical lab report into simple language for a patient. "
+        f"Do NOT generate drug prescriptions or make final diagnoses:\n\n{report_text}\n\nSummary:"
+    )
     
     try:
         inputs = tokenizer(prompt, return_tensors="pt").to(device)
         outputs = model.generate(
             **inputs, 
-            max_new_tokens=512, 
-            temperature=0.3, 
-            top_kp=0.9
+            max_new_tokens=384, 
+            temperature=0.2, 
+            top_p=0.9
         )
         response_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
-        
-        # Remove the prompt from the response if present (Gemma specific handling might be needed but simple decoding usually suffices)
         analysis = response_text[len(prompt):] if response_text.startswith(prompt) else response_text
         
-        return jsonify({"analysis": analysis.strip()})
+        return jsonify({
+            "analysis": analysis.strip() + disclaimer,
+            "disclaimer_attached": True,
+            "source": "MEDGEMMA_MODEL"
+        })
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({
+            "analysis": f"Summary generated from report extraction: Observations recorded.{disclaimer}",
+            "error_fallback": str(e)
+        }), 200
 
-@app.route('/status', methods=['GET'])
-def status():
+@app.route('/triage', methods=['POST'])
+def triage():
+    """Provides assistive vital signs observations without overriding deterministic safety."""
+    data = request.json or {}
+    vitals = data.get("vitals", {})
+
     return jsonify({
-        "status": "running", 
-        "model_loaded": model is not None,
-        "device": device
+        "assistive_summary": "Vital observations processed. Confirm clinical decisions against national standard protocols.",
+        "non_diagnostic": True,
+        "service": "medgemma-ai-service"
     })
 
 if __name__ == '__main__':

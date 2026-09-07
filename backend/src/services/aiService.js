@@ -1,42 +1,367 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const axios = require('axios');
+const { evaluateDeterministicTriage } = require('../domain/clinicalTriageEngine');
 require('dotenv').config();
 
-const genAI = new GoogleGenerativeAI("AIzaSyBUfU9qK2wNsKWWmdo-bNGy_BN7NpJ3C9g");
-const MEDGEMMA_URL = process.env.MEDGEMMA_URL || "http://localhost:5000/analyze-report";
+const MEDGEMMA_URL = process.env.MEDGEMMA_URL || "http://localhost:5000";
+const AI_TIMEOUT_MS = parseInt(process.env.AI_TIMEOUT_MS, 10) || 2500;
+const FAILURE_THRESHOLD = 3;
+const RECOVERY_COOLDOWN_MS = 10000;
 
-exports.analyzeTextReport = async (reportText) => {
+// Standard Clinical Safety Disclaimer
+const CLINICAL_SAFETY_DISCLAIMER = "This AI-generated summary is for clinical decision support only and does not constitute a diagnostic conclusion, prescription, or therapeutic directive. A qualified medical professional must independently review all raw findings.";
+
+// Risk Level Hierarchy for Deterministic Clamping
+const RISK_HIERARCHY = {
+    'LOW': 1,
+    'MODERATE': 2,
+    'HIGH': 3,
+    'CRITICAL': 4
+};
+
+const URGENCY_HIERARCHY = {
+    'ROUTINE': 1,
+    'PRIORITY': 2,
+    'EMERGENCY': 3
+};
+
+/**
+ * Resilient AI Circuit Breaker Pattern
+ */
+class AiCircuitBreaker {
+    constructor() {
+        this.state = 'CLOSED'; // 'CLOSED' | 'OPEN' | 'HALF_OPEN'
+        this.consecutiveFailures = 0;
+        this.lastFailureTime = null;
+        this.successCount = 0;
+    }
+
+    canExecute() {
+        const now = Date.now();
+        if (this.state === 'OPEN') {
+            if (now - this.lastFailureTime > RECOVERY_COOLDOWN_MS) {
+                this.state = 'HALF_OPEN';
+                return true;
+            }
+            return false;
+        }
+        return true;
+    }
+
+    recordSuccess() {
+        if (this.state === 'HALF_OPEN') {
+            this.state = 'CLOSED';
+        }
+        this.consecutiveFailures = 0;
+        this.successCount += 1;
+    }
+
+    recordFailure() {
+        this.consecutiveFailures += 1;
+        this.lastFailureTime = Date.now();
+        if (this.consecutiveFailures >= FAILURE_THRESHOLD || this.state === 'HALF_OPEN') {
+            this.state = 'OPEN';
+        }
+    }
+
+    getStatus() {
+        return {
+            state: this.state,
+            consecutiveFailures: this.consecutiveFailures,
+            lastFailureTime: this.lastFailureTime ? new Date(this.lastFailureTime).toISOString() : null,
+            threshold: FAILURE_THRESHOLD,
+            cooldownMs: RECOVERY_COOLDOWN_MS
+        };
+    }
+
+    reset() {
+        this.state = 'CLOSED';
+        this.consecutiveFailures = 0;
+        this.lastFailureTime = null;
+    }
+}
+
+const circuitBreaker = new AiCircuitBreaker();
+exports.circuitBreaker = circuitBreaker;
+
+function getGeminiClient() {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) return null;
+    return new GoogleGenerativeAI(apiKey);
+}
+
+/**
+ * Clamps AI triage risk and urgency against the deterministic floor.
+ * AI cannot downgrade deterministic severity.
+ */
+function clampAgainstDeterministicFloor(aiResult, deterministicResult) {
+    const aiRiskRank = RISK_HIERARCHY[aiResult?.riskLevel] || 1;
+    const detRiskRank = RISK_HIERARCHY[deterministicResult?.riskLevel] || 1;
+
+    const aiUrgencyRank = URGENCY_HIERARCHY[aiResult?.urgency] || 1;
+    const detUrgencyRank = URGENCY_HIERARCHY[deterministicResult?.urgency] || 1;
+
+    const finalRiskLevel = detRiskRank >= aiRiskRank ? deterministicResult.riskLevel : aiResult.riskLevel;
+    const finalUrgency = detUrgencyRank >= aiUrgencyRank ? deterministicResult.urgency : aiResult.urgency;
+
+    return {
+        ...deterministicResult,
+        riskLevel: finalRiskLevel,
+        urgency: finalUrgency,
+        source: 'AI_ASSISTED',
+        ai_summary: aiResult?.clinical_summary || deterministicResult.explanation,
+        actionRecommendation: aiResult?.action_recommendation || deterministicResult.actionRecommendation,
+        ai_concerns: aiResult?.key_concerns || deterministicResult.flaggedFactors,
+        disclaimer: CLINICAL_SAFETY_DISCLAIMER
+    };
+}
+
+/**
+ * AI Service Health Check
+ */
+exports.getAiServiceHealth = async () => {
+    const cbStatus = circuitBreaker.getStatus();
+    const hasApiKey = Boolean(process.env.GEMINI_API_KEY);
+    
+    let pythonServiceHealth = {
+        status: 'OFFLINE',
+        url: MEDGEMMA_URL,
+        details: null
+    };
+
     try {
-        console.log("[AI] Sending direct text to MedGemma for Deep Medical Analysis...");
-        const medGemmaResponse = await axios.post(MEDGEMMA_URL, {
-            report_text: reportText
+        const response = await axios.get(`${MEDGEMMA_URL}/health`, { timeout: 1500 });
+        if (response.status === 200) {
+            pythonServiceHealth = {
+                status: 'ONLINE',
+                url: MEDGEMMA_URL,
+                details: response.data
+            };
+        }
+    } catch (err) {
+        pythonServiceHealth.details = { error: err.message };
+    }
+
+    return {
+        status: (cbStatus.state === 'CLOSED' || pythonServiceHealth.status === 'ONLINE') ? 'OPERATIONAL' : 'DEGRADED',
+        circuitBreaker: cbStatus,
+        geminiConfigured: hasApiKey,
+        pythonMicroservice: pythonServiceHealth,
+        timeoutMs: AI_TIMEOUT_MS,
+        timestamp: new Date().toISOString()
+    };
+};
+
+/**
+ * Safe AI-Augmented Triage
+ */
+exports.triageAssessmentWithAI = async (vitals) => {
+    // 1. Establish deterministic clinical safety baseline
+    const deterministicResult = evaluateDeterministicTriage(vitals);
+
+    // If deterministic evaluation is CRITICAL / EMERGENCY, do not delay for AI
+    if (deterministicResult.urgency === 'EMERGENCY') {
+        return {
+            ...deterministicResult,
+            disclaimer: CLINICAL_SAFETY_DISCLAIMER
+        };
+    }
+
+    if (!circuitBreaker.canExecute()) {
+        console.warn("[AI_TRIAGE] Circuit breaker is OPEN. Fast-falling back to deterministic rules.");
+        return {
+            ...deterministicResult,
+            source: 'DETERMINISTIC_FALLBACK',
+            disclaimer: CLINICAL_SAFETY_DISCLAIMER
+        };
+    }
+
+    try {
+        const genAI = getGeminiClient();
+        if (!genAI) {
+            return {
+                ...deterministicResult,
+                source: 'DETERMINISTIC_FALLBACK',
+                disclaimer: CLINICAL_SAFETY_DISCLAIMER
+            };
+        }
+
+        const model = genAI.getGenerativeModel({
+            model: "gemini-3-flash-preview",
+            generationConfig: { responseMimeType: "application/json" }
         });
 
-        console.log("[SUCCESS] MedGemma Text Analysis Complete");
-        
+        const prompt = `You are a clinical decision support AI assisting community health workers.
+You MUST NOT generate autonomous disease diagnoses or drug prescriptions. Provide action-oriented guidance.
+
+PATIENT VITALS:
+- Systolic BP: ${vitals.systolic_bp || 'Not recorded'} mmHg
+- Diastolic BP: ${vitals.diastolic_bp || 'Not recorded'} mmHg
+- Pulse Rate: ${vitals.pulse_rate || 'Not recorded'} bpm
+- SpO2: ${vitals.spo2 || 'Not recorded'} %
+- Respiratory Rate: ${vitals.respiratory_rate || 'Not recorded'} breaths/min
+- Temperature: ${vitals.temperature_c ? vitals.temperature_c + '°C' : (vitals.temperature || 'Not recorded')}
+- Pregnancy: ${vitals.is_pregnant ? 'Yes' : 'No'}
+- Danger Signs / Notes: ${vitals.danger_signs || 'None'}
+
+DETERMINISTIC CLINICAL BASELINE:
+- Computed Risk Level: ${deterministicResult.riskLevel}
+- Computed Urgency: ${deterministicResult.urgency}
+- Flagged Factors: ${JSON.stringify(deterministicResult.flaggedFactors)}
+
+Return a JSON object:
+{
+  "riskLevel": "LOW | MODERATE | HIGH | CRITICAL",
+  "urgency": "ROUTINE | PRIORITY | EMERGENCY",
+  "clinical_summary": "Concise summary of vital signs without disease diagnosis",
+  "action_recommendation": "Action-oriented recommendation for next clinical step",
+  "key_concerns": ["concise list of observations"]
+}`;
+
+        let timer;
+        const timeoutPromise = new Promise((_, reject) => {
+            timer = setTimeout(() => reject(new Error("AI triage request timed out")), AI_TIMEOUT_MS);
+            if (timer && timer.unref) timer.unref();
+        });
+
+        const aiPromise = (async () => {
+            const result = await model.generateContent(prompt);
+            const response = await result.response;
+            const text = response.text().replace(/```json/g, '').replace(/```/g, '').trim();
+            return JSON.parse(text);
+        })();
+
+        const aiResponse = await Promise.race([aiPromise, timeoutPromise]);
+        if (timer) clearTimeout(timer);
+        circuitBreaker.recordSuccess();
+
+        // Enforce deterministic floor clamp
+        return clampAgainstDeterministicFloor(aiResponse, deterministicResult);
+    } catch (aiErr) {
+        circuitBreaker.recordFailure();
+        console.warn("[AI_TRIAGE_FALLBACK] AI error. Falling back to deterministic clinical rules:", aiErr.message);
         return {
-            summary_text: medGemmaResponse.data.analysis,
-            structured_data: {},
-            patient_name: "Patient",
-            mentions_medgemma: true,
-            is_direct_text: true
+            ...deterministicResult,
+            source: 'DETERMINISTIC_FALLBACK',
+            disclaimer: CLINICAL_SAFETY_DISCLAIMER
         };
-    } catch (error) {
-        console.error("[ERROR] MedGemma Text Analysis Error:", error.message);
-        throw new Error("Failed to analyze text report: " + error.message);
     }
 };
 
+/**
+ * Summarize Lab Report with zero-prescription guarantee and safety disclaimer
+ */
+exports.summarizeLabReport = async (reportText, metadata = {}) => {
+    if (!reportText || typeof reportText !== 'string') {
+        throw new Error("Invalid lab report text provided");
+    }
+
+    if (reportText.length > 10000) {
+        throw new Error("Lab report text exceeds maximum allowed length of 10,000 characters");
+    }
+
+    // Try MedGemma python service first if circuit breaker allows
+    if (circuitBreaker.canExecute()) {
+        try {
+            const response = await axios.post(`${MEDGEMMA_URL}/analyze-report`, {
+                report_text: reportText
+            }, { timeout: AI_TIMEOUT_MS });
+
+            circuitBreaker.recordSuccess();
+            return {
+                summary_text: response.data.analysis,
+                structured_data: response.data.structured_data || {},
+                patient_name: metadata.patient_name || "Patient",
+                disclaimer: CLINICAL_SAFETY_DISCLAIMER,
+                prescribing_authority: "NONE",
+                source: "MEDGEMMA"
+            };
+        } catch (err) {
+            circuitBreaker.recordFailure();
+            console.warn("[MEDGEMMA_FALLBACK] Python microservice failed, falling back to Gemini / rule extractor:", err.message);
+        }
+    }
+
+    // Fallback to Gemini if configured
+    const genAI = getGeminiClient();
+    if (genAI && circuitBreaker.canExecute()) {
+        try {
+            const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
+            const prompt = `Interpret the following medical lab report. 
+Do not prescribe medications. Highlight key abnormal indicators and state that clinical evaluation by a medical doctor is required.
+
+REPORT CONTENT:
+${reportText}
+
+Provide a structured summary:
+- Key Findings
+- Out-of-Range Indicators
+- Suggested Clinical Discussion Points`;
+
+            let timer;
+            const timeoutPromise = new Promise((_, reject) => {
+                timer = setTimeout(() => reject(new Error("Gemini report summarization timed out")), AI_TIMEOUT_MS);
+                if (timer && timer.unref) timer.unref();
+            });
+
+            const aiPromise = (async () => {
+                const result = await model.generateContent(prompt);
+                const response = await result.response;
+                return response.text();
+            })();
+
+            const textResult = await Promise.race([aiPromise, timeoutPromise]);
+            if (timer) clearTimeout(timer);
+            circuitBreaker.recordSuccess();
+
+            return {
+                summary_text: textResult,
+                structured_data: {},
+                patient_name: metadata.patient_name || "Patient",
+                disclaimer: CLINICAL_SAFETY_DISCLAIMER,
+                prescribing_authority: "NONE",
+                source: "GEMINI_FALLBACK"
+            };
+        } catch (geminiErr) {
+            circuitBreaker.recordFailure();
+            console.warn("[GEMINI_REPORT_FALLBACK] Gemini summarization failed:", geminiErr.message);
+        }
+    }
+
+    // Basic heuristic extraction fallback
+    return {
+        summary_text: `Extracted report of ${reportText.length} characters. Clinical review required.`,
+        structured_data: {},
+        patient_name: metadata.patient_name || "Patient",
+        disclaimer: CLINICAL_SAFETY_DISCLAIMER,
+        prescribing_authority: "NONE",
+        source: "HEURISTIC_FALLBACK"
+    };
+};
+
+/**
+ * Legacy support for direct text analysis
+ */
+exports.analyzeTextReport = async (reportText) => {
+    return exports.summarizeLabReport(reportText);
+};
+
+/**
+ * Image-based lab report analysis
+ */
 exports.analyzeLabReport = async (imageBuffer, mimeType) => {
+    const genAI = getGeminiClient();
+    if (!genAI) {
+        throw new Error("Gemini API key is not configured for image analysis");
+    }
+
     try {
-        // First step: Use Gemini to extract text from the report (Vision)
-        console.log("[AI] Using Gemini 1.5 Flash for Text Extraction");
         const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
 
         const extractionPrompt = `You are a medical data extraction assistant. 
-        Extract all text from this medical report and organize it into a structured summary for analysis. 
-        Also, extract structured data like test names, values, units, and reference ranges if present.
-        Return as a VALID JSON with "text_content", "structured_data", and "patient_name".`;
+Extract all text from this medical report and organize it into a structured summary for analysis. 
+Also, extract structured data like test names, values, units, and reference ranges if present.
+Return as a VALID JSON with "text_content", "structured_data", and "patient_name".`;
 
         const imagePart = {
             inlineData: {
@@ -51,41 +376,30 @@ exports.analyzeLabReport = async (imageBuffer, mimeType) => {
         extractionText = extractionText.replace(/```json/g, '').replace(/```/g, '').trim();
         const extractedJson = JSON.parse(extractionText);
 
-        // Second step: Use MedGemma (local Python service) for medical interpretation
-        console.log("[AI] Sending extracted text to MedGemma for Deep Medical Analysis...");
-        try {
-            const medGemmaResponse = await axios.post(MEDGEMMA_URL, {
-                report_text: extractedJson.text_content
-            });
+        const summary = await exports.summarizeLabReport(extractedJson.text_content, {
+            patient_name: extractedJson.patient_name
+        });
 
-            console.log("[SUCCESS] MedGemma Analysis Complete");
-            
-            return {
-                summary_text: medGemmaResponse.data.analysis,
-                structured_data: extractedJson.structured_data,
-                patient_name: extractedJson.patient_name,
-                mentions_medgemma: true
-            };
-        } catch (medGemmaErr) {
-            console.error("[WARNING] MedGemma service failed, falling back to Gemini for analysis:", medGemmaErr.message);
-            // Fallback to Gemini for full interpretation if MedGemma isn't running
-            return await this.fallbackGeminiAnalysis(extractedJson.text_content);
-        }
+        return {
+            ...summary,
+            structured_data: extractedJson.structured_data || summary.structured_data,
+            patient_name: extractedJson.patient_name || summary.patient_name
+        };
     } catch (error) {
         console.error("[ERROR] AI Vision/Analysis Error:", error.message);
         throw new Error("Failed to analyze report: " + error.message);
     }
 };
 
-exports.fallbackGeminiAnalysis = async (textContent) => {
-    const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
-    const prompt = `Interpret the following medical report text:\n\n${textContent}\n\nProvide a simple summary, key findings, and recommendations.`;
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    return { summary_text: response.text(), fallback: true };
-};
-
+/**
+ * Check Drug Interactions
+ */
 exports.checkDrugInteractions = async (newMed, patientHistory) => {
+    const genAI = getGeminiClient();
+    if (!genAI) {
+        return `[INFO] AI drug interaction check unavailable. Please check pharmacology reference manually for ${newMed}.`;
+    }
+
     try {
         const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
 
@@ -126,7 +440,15 @@ Be specific, cite the exact interaction, and be concise.`;
     }
 };
 
+/**
+ * Medical Scribe
+ */
 exports.scribeConsultation = async (audioTranscript) => {
+    const genAI = getGeminiClient();
+    if (!genAI) {
+        return `TRANSCRIPT SUMMARY:\n${audioTranscript}\n\n[Note: Clinical scribe AI model unavailable]`;
+    }
+
     try {
         const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
 
@@ -140,10 +462,10 @@ FORMAT YOUR NOTE AS:
 👤 **CHIEF COMPLAINT**
 [Patient's main concern in their words]
 
-[DEBUG] **DIAGNOSIS**
+🔍 **DIAGNOSIS**
 [Preliminary or confirmed diagnosis]
 
-[PRESCRIPTION] **PRESCRIPTION**
+💊 **PRESCRIPTION**
 1. [Medicine Name] - [Dosage] - [Frequency] - [Duration]
    [Brief indication/purpose]
 2. [Continue for all medications]
@@ -167,156 +489,64 @@ Keep it professional, concise, and medically accurate.`;
     }
 };
 
+/**
+ * Explainer Video Storyboard Generation
+ */
 exports.generateMedicalExplainer = async (medicineName, patientProfile, reportContext) => {
+    const genAI = getGeminiClient();
+    if (!genAI) {
+        throw new Error("Gemini API key is not configured for video explainer generation");
+    }
+
     try {
-        // Using Gemini 1.5 Flash for Video Storyboard (Pro model caused 404)
-        console.log("Using Gemini 1.5 Flash for Med Explainer");
         const model = genAI.getGenerativeModel({
             model: "gemini-3-flash-preview",
             generationConfig: { responseMimeType: "application/json" }
         });
 
-        // Determine profile specifics
         let audienceStyle = "general";
-        const age = patientProfile?.age || 70; // Default to elderly
+        const age = patientProfile?.age || 70;
         if (age > 60) audienceStyle = "elderly";
         else if (age < 12) audienceStyle = "child";
 
-        // Ensure reportContext is a string and not too long to avoid token limits
         const contextStr = typeof reportContext === 'string' ? reportContext : JSON.stringify(reportContext || {});
         const safeContext = contextStr.length > 5000 ? contextStr.substring(0, 5000) + "..." : contextStr;
 
         let prompt = `You are a medical animation generator.
-        
-        Context:
-        Medicine: ${medicineName}
-        Patient Age: ${age}
-        Report Context: ${safeContext}
+Context:
+Medicine: ${medicineName}
+Patient Age: ${age}
+Report Context: ${safeContext}
 
-        Task: Generate a script and visual storyboard for a 2-3 minute explainer video.
-        
-        Audience Adaptation:
-        ${audienceStyle === 'elderly' ? "- Use slower pacing, larger text, repetition." : ""}
-        ${audienceStyle === 'child' ? "- Use friendly characters, playful visuals." : ""}
-        - For Indian patients: Use culturally neutral visuals.
+Task: Generate a script and visual storyboard for a 2-3 minute explainer video.
 
-        You are a medical 3D animation generator. A patient has uploaded a medical report that mentions one or more medicines prescribed to them. Your task is to generate a calm, reassuring, and educational 2–3 minute fully 3D animated explainer video that clearly shows how the medicine mentioned in the report works inside the human body, assuming the viewer has no medical background. The animation must use realistic but simplified 3D human anatomy, with clearly labeled organs, smooth camera movements, soft lighting, and a friendly, non-alarming color palette (avoid harsh reds or blacks). The video should begin with a short introduction showing the medicine name and briefly explaining, in simple language, what condition it is commonly used for. Next, show how the medicine enters the body based on the report (tablet, injection, inhaler, etc.), followed by a 3D visualization of absorption into the bloodstream. Then, animate the medicine traveling through blood vessels in a cinematic 3D view and clearly highlight the target organ or system (such as the heart, lungs, brain, liver, or immune system). After that, demonstrate the medicine’s mechanism of action using clear 3D visual metaphors instead of chemical formulas, such as blocking harmful signals, reducing inflammation, killing bacteria, or helping an organ function more smoothly. Continue by showing expected benefits over time through visual improvements inside the body, such as smoother blood flow, relaxed airways, or reduced swelling. End the video with a mandatory safety disclaimer displayed clearly on screen: “This animation is for understanding only. Always take medicines exactly as prescribed by your doctor.” Use short, clear sentences, avoid medical jargon unless unavoidable, and visually explain any technical term if it appears. Do not claim cures, do not show emergency situations, and do not replace professional medical advice. Generate the animation strictly based on the medicine or medicines mentioned in the uploaded medical report. Optionally, adapt pacing and visuals for Indian audiences, elderly patients with slower motion and larger labels, or children with friendlier 3D elements.
-        
-        IMPORTANT RESPONSE FORMAT:
-        You must return a VALID JSON ARRAY of scene objects. Do not wrap in markdown or code blocks.
-        
-        Structure for each scene object:
-        {
-          "scene_number": integer,
-          "title": "String title of scene",
-          "narration": "The exact voiceover text to be spoken",
-          "visual_description": "Detailed description of the 3D animation for this scene",
-          "animation_type": "One of: fade_in, slide_right, pulse, flow, zoom_in",
-          "main_icon": "One of: tablet, injection, lungs, heart, brain, stomach, blood_vessel, liver, kidney, shield, check, warning",
-          "duration_seconds": integer (approx 5-10 seconds per scene)
-        }
-        `;
+Audience Adaptation:
+${audienceStyle === 'elderly' ? "- Use slower pacing, larger text, repetition." : ""}
+${audienceStyle === 'child' ? "- Use friendly characters, playful visuals." : ""}
+- For Indian patients: Use culturally neutral visuals.
+
+End the video with a mandatory safety disclaimer: "${CLINICAL_SAFETY_DISCLAIMER}"
+
+Return a VALID JSON ARRAY of scene objects:
+[
+  {
+    "scene_number": 1,
+    "title": "String title",
+    "narration": "Narration text",
+    "visual_description": "3D visual animation description",
+    "animation_type": "fade_in | slide_right | pulse | flow | zoom_in",
+    "main_icon": "tablet | injection | lungs | heart | brain | stomach | blood_vessel | liver | kidney | shield | check | warning",
+    "duration_seconds": 6
+  }
+]`;
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
-        let text = response.text();
+        let text = response.text().replace(/```json/g, '').replace(/```/g, '').trim();
 
-        // In JSON mode, we probably don't need to strip backticks, but good to be safe
-        // In JSON mode, we probably don't need to strip backticks, but good to be safe
-        const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-
-        console.log("AI Explainer JSON generated (First 100 chars):", cleanText.substring(0, 100));
-
-        try {
-            return JSON.parse(cleanText);
-        } catch (e) {
-            console.error("JSON Parse Error for Explainer:", e);
-            console.error("Raw Text:", text);
-            throw new Error("AI generated invalid JSON. Please try again.");
-        }
+        return JSON.parse(text);
     } catch (error) {
         console.error("AI Explainer Error:", error);
         throw new Error("Failed to generate explainer: " + error.message);
     }
 };
-
-/**
- * Safe AI-Augmented Triage
- * Evaluates deterministic clinical rules as ground truth.
- * Falls back transparently on any AI timeout or error without failing assessment capture.
- * Never claims autonomous disease diagnosis.
- */
-const { evaluateDeterministicTriage } = require('../domain/clinicalTriageEngine');
-
-exports.triageAssessmentWithAI = async (vitals) => {
-    // 1. Establish deterministic clinical safety baseline
-    const deterministicResult = evaluateDeterministicTriage(vitals);
-
-    // If deterministic evaluation is CRITICAL / EMERGENCY, do not delay for AI
-    if (deterministicResult.urgency === 'EMERGENCY') {
-        return deterministicResult;
-    }
-
-    try {
-        const apiKey = process.env.GEMINI_API_KEY || "AIzaSyBUfU9qK2wNsKWWmdo-bNGy_BN7NpJ3C9g";
-        if (!apiKey) {
-            return deterministicResult;
-        }
-
-        const model = genAI.getGenerativeModel({
-            model: "gemini-3-flash-preview",
-            generationConfig: { responseMimeType: "application/json" }
-        });
-
-        const prompt = `You are a clinical decision support AI assisting community health workers.
-You MUST NOT generate autonomous disease diagnoses or drug prescriptions. Provide action-oriented guidance.
-
-PATIENT VITALS:
-- Systolic BP: ${vitals.systolic_bp || 'Not recorded'} mmHg
-- Diastolic BP: ${vitals.diastolic_bp || 'Not recorded'} mmHg
-- Pulse Rate: ${vitals.pulse_rate || 'Not recorded'} bpm
-- SpO2: ${vitals.spo2 || 'Not recorded'} %
-- Respiratory Rate: ${vitals.respiratory_rate || 'Not recorded'} breaths/min
-- Temperature: ${vitals.temperature_c ? vitals.temperature_c + '°C' : (vitals.temperature || 'Not recorded')}
-- Pregnancy: ${vitals.is_pregnant ? 'Yes' : 'No'}
-- Danger Signs / Notes: ${vitals.danger_signs || 'None'}
-
-DETERMINISTIC CLINICAL BASELINE:
-- Computed Risk Level: ${deterministicResult.riskLevel}
-- Computed Urgency: ${deterministicResult.urgency}
-- Flagged Factors: ${JSON.stringify(deterministicResult.flaggedFactors)}
-
-Return a JSON object:
-{
-  "clinical_summary": "Concise summary of vital signs without disease diagnosis",
-  "action_recommendation": "Action-oriented recommendation for next clinical step",
-  "key_concerns": ["concise list of observations"]
-}`;
-
-        // Timeout promise after 2 seconds
-        const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error("AI triage request timed out")), 2000)
-        );
-
-        const aiPromise = (async () => {
-            const result = await model.generateContent(prompt);
-            const response = await result.response;
-            const text = response.text().replace(/```json/g, '').replace(/```/g, '').trim();
-            return JSON.parse(text);
-        })();
-
-        const aiResponse = await Promise.race([aiPromise, timeoutPromise]);
-
-        return {
-            ...deterministicResult,
-            source: 'AI_ASSISTED',
-            ai_summary: aiResponse.clinical_summary || deterministicResult.explanation,
-            actionRecommendation: aiResponse.action_recommendation || deterministicResult.actionRecommendation,
-            ai_concerns: aiResponse.key_concerns || deterministicResult.flaggedFactors
-        };
-    } catch (aiErr) {
-        console.warn("[AI_TRIAGE_FALLBACK] AI unavailable or timed out. Falling back to deterministic clinical rules:", aiErr.message);
-        return deterministicResult;
-    }
-};
-
