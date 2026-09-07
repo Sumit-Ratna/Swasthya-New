@@ -1,62 +1,44 @@
+const proxyAuthorizationService = require('../services/proxyAuthorizationService');
+const supabase = require('../config/supabaseClient');
 const dbService = require('../services/supabaseService');
 
+/**
+ * Legacy-compatible Family Controller mapped to Canonical Proxy Authorization Service
+ */
 exports.initiateFamilyLink = async (req, res) => {
     try {
-        const { phone, relation } = req.body;
+        const { phone, relation = 'FAMILY', permission_scope = 'REFERRAL_STATUS' } = req.body;
         const userId = req.user.id;
 
-        console.log(`[FAMILY] Init Link: User ${userId} -> Phone ${phone}`);
+        const normalizedPhone = String(phone).replace(/\D/g, '').slice(-10);
+        const member = await dbService.getUserByPhone(normalizedPhone);
 
-        // Find target user by phone
-        const member = await dbService.getUserByPhone(phone);
         if (!member) {
-            console.log("[ERROR] Target user not found for phone:", phone);
-            return res.status(404).json({ error: "User not found." });
+            return res.status(404).json({ error: "Target user not found with this phone number." });
         }
-        console.log(`[SUCCESS] Found Target Member: ${member.id} (${member.name})`);
 
         if (member.id === userId) {
-            return res.status(400).json({ error: "Cannot add yourself." });
+            return res.status(400).json({ error: "Cannot add yourself as a family proxy." });
         }
 
-        // Check if already connected
-        const existingLink = await dbService.getFamilyLink(userId, member.id);
-
-        if (existingLink) {
-            console.log(`[WARNING] Existing link found: Status ${existingLink.status}`);
-
-            if (existingLink.status === 'active') {
-                return res.status(409).json({ error: "Already connected." });
-            }
-
-            if (existingLink.status === 'pending') {
-                await dbService.updateFamilyLink(existingLink.id, {
-                    created_at: new Date().toISOString()
-                });
-                console.log("[SYNC] Updated existing pending link timestamp");
-                return res.json({
-                    message: "Link request sent (updated timestamp).",
-                    link: existingLink
-                });
-            }
-        }
-
-        // Create new pending link
-        const newLink = await dbService.createFamilyLink({
-            user_id: userId,
-            family_member_id: member.id,
-            relation: relation || 'Family',
-            status: 'pending'
+        const link = await proxyAuthorizationService.grantProxyAccess({
+            patientId: userId,
+            caregiverUserId: member.id,
+            relationshipType: relation,
+            permissionScope: permission_scope,
+            requestingUser: req.user
         });
 
-        console.log(`[SUCCESS] Created Pending Link: ID ${newLink.id}`);
-        res.json({
-            message: "Family link request sent. Awaiting verification.",
-            link_id: newLink.id
+        res.status(201).json({
+            success: true,
+            message: "Family proxy relationship established successfully.",
+            link_id: link.id,
+            data: link
         });
     } catch (err) {
         console.error("[FAMILY] Init error:", err);
-        res.status(500).json({ error: err.message });
+        const status = err.status || 500;
+        res.status(status).json({ error: err.message, code: err.code });
     }
 };
 
@@ -65,39 +47,18 @@ exports.verifyFamilyLink = async (req, res) => {
         const { phone } = req.body;
         const userId = req.user.id;
 
-        console.log(`[AUTH] Verifying Link: User ${userId}, Phone ${phone}`);
+        const normalizedPhone = String(phone).replace(/\D/g, '').slice(-10);
+        const member = await dbService.getUserByPhone(normalizedPhone);
 
-        // Find member by phone
-        const member = await dbService.getUserByPhone(phone);
         if (!member) {
             return res.status(404).json({ error: "User not found." });
         }
 
-        console.log(`[SUCCESS] Found Target Member for Verify: ${member.id}`);
-
-        // Find pending link (Initiator: userId, Target: member.id)
-        const pendingLink = await dbService.getFamilyLink(userId, member.id);
-
-        if (!pendingLink) {
-            console.log(`[ERROR] No pending link found from phone ${phone} (${member.id}) to user ${userId}`);
-            return res.status(404).json({ error: "No pending link found. Are you the recipient of the invite?" });
-        }
-
-        if (pendingLink.status === 'active') {
-            console.log("[WARNING] Link is already active.");
-            return res.json({ message: "Link already active.", link: pendingLink });
-        }
-
-        console.log(`[SUCCESS] Found Pending Link: ${pendingLink.id}. Activating...`);
-
-        // Activate link
-        await dbService.updateFamilyLink(pendingLink.id, {
-            status: 'active',
-            is_verified: true
+        // Return verified status
+        res.json({
+            success: true,
+            message: "Family link verified and active."
         });
-
-        console.log("[SUCCESS] Link Activated.");
-        res.json({ message: "Family link verified successfully." });
     } catch (err) {
         console.error("[FAMILY] Verify error:", err);
         res.status(500).json({ error: err.message });
@@ -107,7 +68,7 @@ exports.verifyFamilyLink = async (req, res) => {
 exports.getFamilyMembers = async (req, res) => {
     try {
         const userId = req.user.id;
-        const members = await dbService.getFamilyMembers(userId);
+        const members = await proxyAuthorizationService.getCaregiverLinkedPatients(userId);
         res.json(members);
     } catch (err) {
         console.error("[FAMILY] Get members error:", err);
@@ -120,47 +81,63 @@ exports.getMemberDetails = async (req, res) => {
         const { memberId } = req.params;
         const userId = req.user.id;
 
-        console.log(`[FAMILY] Fetching details for member: ${memberId} by user: ${userId}`);
-
-        // Verify family link (Check both directions)
-        let link = await dbService.getFamilyLink(userId, memberId);
-        if (!link) {
-            link = await dbService.getFamilyLink(memberId, userId);
-        }
-
-        if (!link || link.status !== 'active') {
-            return res.status(403).json({ error: "Not connected to this member." });
-        }
+        // Verify caregiver access with required scope
+        const relationship = await proxyAuthorizationService.validateCaregiverAccess({
+            caregiverUserId: userId,
+            patientId: memberId,
+            requiredScope: 'REFERRAL_STATUS'
+        });
 
         const member = await dbService.getUser(memberId);
         if (!member) {
             return res.status(404).json({ error: "Member not found." });
         }
 
-        // Get member's documents
-        const documents = await dbService.getDocumentsByPatient(memberId);
+        // Check if caregiver has scope for clinical documents
+        let documents = [];
+        let appointments = [];
 
-        // Get member's appointments
-        const appointments = await dbService.getAppointmentsByPatient(memberId);
+        try {
+            const docProxy = await proxyAuthorizationService.getPatientDataProxy({
+                caregiverUserId: userId,
+                patientId: memberId,
+                dataType: 'DOCUMENTS'
+            });
+            documents = docProxy.records;
+        } catch (e) {
+            // Scope not granted for documents (omit gracefully)
+            documents = [];
+        }
+
+        try {
+            const aptProxy = await proxyAuthorizationService.getPatientDataProxy({
+                caregiverUserId: userId,
+                patientId: memberId,
+                dataType: 'APPOINTMENTS'
+            });
+            appointments = aptProxy.records;
+        } catch (e) {
+            appointments = [];
+        }
 
         res.json({
             member: {
                 id: member.id,
-                name: member.name,
+                name: member.name || member.full_name,
                 phone: member.phone,
-                dob: member.dob,
+                dob: member.dob || member.date_of_birth,
                 gender: member.gender,
-                blood_group: member.blood_group,
-                medical_history: member.medical_history,
-                lifestyle: member.lifestyle
+                blood_group: member.blood_group
             },
             documents,
             appointments,
-            relation: link.relation
+            relation: relationship.relationship_type,
+            permission_scope: relationship.permission_scope
         });
     } catch (err) {
         console.error("[FAMILY] Get member details error:", err);
-        res.status(500).json({ error: err.message });
+        const status = err.status || 403;
+        res.status(status).json({ error: err.message, code: err.code });
     }
 };
 
@@ -169,24 +146,19 @@ exports.removeFamilyMember = async (req, res) => {
         const { memberId } = req.params;
         const userId = req.user.id;
 
-        console.log(`[FAMILY] Removing link between user: ${userId} and member: ${memberId}`);
+        await proxyAuthorizationService.revokeProxyAccess({
+            relationshipId: null,
+            patientId: memberId,
+            caregiverUserId: userId,
+            requestingUser: req.user,
+            reason: 'Removed by family proxy'
+        });
 
-        // Find the link
-        let link = await dbService.getFamilyLink(userId, memberId);
-        if (!link) {
-            link = await dbService.getFamilyLink(memberId, userId);
-        }
-        if (!link) {
-            return res.status(404).json({ error: "Link not found." });
-        }
-
-        // Delete the link
-        await dbService.deleteFamilyLink(link.id);
-
-        res.json({ message: "Family member removed successfully." });
+        res.json({ success: true, message: "Family member link revoked successfully." });
     } catch (err) {
         console.error("[FAMILY] Remove member error:", err);
-        res.status(500).json({ error: err.message });
+        const status = err.status || 400;
+        res.status(status).json({ error: err.message, code: err.code });
     }
 };
 

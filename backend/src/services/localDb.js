@@ -265,11 +265,15 @@ const INITIAL_DATA = {
     caregiver_relationships: [
         {
             id: 'cg-1',
+            caregiver_user_id: '66666666-6666-6666-6666-666666666666',
             caregiver_id: '66666666-6666-6666-6666-666666666666',
             patient_id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+            relationship_type: 'FATHER',
             relationship: 'FATHER',
             permission_scope: 'FULL_ACCESS',
-            status: 'ACTIVE'
+            status: 'ACTIVE',
+            revoked_at: null,
+            created_at: new Date(Date.now() - 3600000).toISOString()
         }
     ]
 };

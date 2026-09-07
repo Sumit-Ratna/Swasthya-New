@@ -49,21 +49,21 @@ async function recordConsultation({
         throw new ClinicalCareError(`Referral not found with ID: ${referralId}`, 'REFERRAL_NOT_FOUND', 404);
     }
 
-    // 2. Pre-condition: Referral must be in DOCTOR_ASSIGNED state
+    // 2. Authorization Check: Doctor must be authorized (role DOCTOR or ADMIN)
+    const actorRole = (doctorUser?.role || 'DOCTOR').toUpperCase();
+    const actorUserId = doctorUser?.id || null;
+
+    if (actorRole !== 'DOCTOR' && actorRole !== 'ADMIN') {
+        throw new ClinicalCareError('Only authorized medical doctors or clinical administrators can complete consultations', 'DOCTOR_UNAUTHORIZED', 403);
+    }
+
+    // 3. Pre-condition: Referral must be in DOCTOR_ASSIGNED state
     if (referral.status !== REFERRAL_STATES.DOCTOR_ASSIGNED) {
         throw new ClinicalCareError(
             `Consultation can only be completed when referral is in DOCTOR_ASSIGNED state. Current status: '${referral.status}'.`,
             'INVALID_STATE',
             409
         );
-    }
-
-    // 3. Authorization Check: Doctor must be authorized (role DOCTOR or ADMIN)
-    const actorRole = doctorUser?.role || 'DOCTOR';
-    const actorUserId = doctorUser?.id || null;
-
-    if (actorRole !== 'DOCTOR' && actorRole !== 'ADMIN') {
-        throw new ClinicalCareError('Only authorized medical doctors or clinical administrators can complete consultations', 'DOCTOR_UNAUTHORIZED', 403);
     }
 
     // 4. Clinical Safety: Verify prescription items structure (AI cannot author final medication decision)

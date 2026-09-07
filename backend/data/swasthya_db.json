@@ -612,6 +612,146 @@
       "previous_hash": "0000000000000000000000000000000000000000000000000000000000000000",
       "hash": "4c78bf543dcc72735d86cf3662ba637e2a98291a076117e0ce2d08cf02b5b6e4",
       "created_at": "2026-09-06T19:45:00.031Z"
+    },
+    {
+      "id": "e112de24-698c-4fef-ba28-7926aa9e1733",
+      "event_type": "PROXY_ACCESS_GRANTED",
+      "entity_id": "99999999-9999-9999-9999-999999999999",
+      "actor_id": "99999999-9999-9999-9999-999999999999",
+      "actor_role": "CAREGIVER_PROXY",
+      "action": "PROXY_PROXY_ACCESS_GRANTED:REFERRAL_STATUS",
+      "created_at": "2026-09-07T08:19:28.367Z",
+      "details": "{\"relationshipType\":\"DAUGHTER\",\"scope\":\"REFERRAL_STATUS\"}"
+    },
+    {
+      "id": "671a27f7-66d5-4b77-8981-dc4a77803ffd",
+      "event_type": "PROXY_ACCESS_GRANTED",
+      "entity_id": "99999999-9999-9999-9999-999999999999",
+      "actor_id": "99999999-9999-9999-9999-999999999999",
+      "actor_role": "CAREGIVER_PROXY",
+      "action": "PROXY_PROXY_ACCESS_GRANTED:SELECTED_RECORDS",
+      "created_at": "2026-09-07T08:19:30.017Z",
+      "details": "{\"relationshipType\":\"DAUGHTER\",\"scope\":\"SELECTED_RECORDS\"}"
+    },
+    {
+      "id": "6425cfa3-39d7-450f-8500-77b0211e4a36",
+      "event_type": "PROXY_ACCESS_REVOKED",
+      "entity_id": "99999999-9999-9999-9999-999999999999",
+      "actor_id": "99999999-9999-9999-9999-999999999999",
+      "actor_role": "CAREGIVER_PROXY",
+      "action": "PROXY_PROXY_ACCESS_REVOKED:REFERRAL_STATUS",
+      "created_at": "2026-09-07T08:19:31.274Z",
+      "details": "{\"reason\":\"Patient changed caregiver\",\"revokedAt\":\"2026-09-07T08:19:30.969Z\"}"
+    },
+    {
+      "id": "a413d8a1-7007-46a0-9d1f-5cb11075bb11",
+      "event_type": "PROXY_ACCESS_GRANTED",
+      "entity_id": "99999999-9999-9999-9999-999999999999",
+      "actor_id": "99999999-9999-9999-9999-999999999999",
+      "actor_role": "CAREGIVER_PROXY",
+      "action": "PROXY_PROXY_ACCESS_GRANTED:REFERRAL_STATUS",
+      "created_at": "2026-09-07T08:20:03.834Z",
+      "details": "{\"relationshipType\":\"DAUGHTER\",\"scope\":\"REFERRAL_STATUS\"}"
+    },
+    {
+      "id": "d61bde7c-89b8-4599-a9e7-283b281a2ab8",
+      "event_type": "PROXY_ACCESS_GRANTED",
+      "entity_id": "99999999-9999-9999-9999-999999999999",
+      "actor_id": "99999999-9999-9999-9999-999999999999",
+      "actor_role": "CAREGIVER_PROXY",
+      "action": "PROXY_PROXY_ACCESS_GRANTED:SELECTED_RECORDS",
+      "created_at": "2026-09-07T08:20:05.459Z",
+      "details": "{\"relationshipType\":\"DAUGHTER\",\"scope\":\"SELECTED_RECORDS\"}"
+    },
+    {
+      "id": "b5479dae-3eec-4dd0-a716-b314b4930a99",
+      "event_type": "PROXY_CLINICAL_DATA_ACCESSED",
+      "entity_id": "99999999-9999-9999-9999-999999999999",
+      "actor_id": "66666666-6666-6666-6666-666666666666",
+      "actor_role": "CAREGIVER_PROXY",
+      "action": "PROXY_PROXY_CLINICAL_DATA_ACCESSED:SELECTED_RECORDS",
+      "created_at": "2026-09-07T08:20:06.462Z",
+      "details": "{\"dataType\":\"DOCUMENTS\",\"recordCount\":0}"
+    },
+    {
+      "id": "12df7136-9f4a-40b9-af2b-08e37f0e7d2f",
+      "event_type": "PROXY_ACCESS_GRANTED",
+      "entity_id": "99999999-9999-9999-9999-999999999999",
+      "actor_id": "99999999-9999-9999-9999-999999999999",
+      "actor_role": "CAREGIVER_PROXY",
+      "action": "PROXY_PROXY_ACCESS_GRANTED:REFERRAL_STATUS",
+      "created_at": "2026-09-07T08:20:42.834Z",
+      "details": "{\"relationshipType\":\"DAUGHTER\",\"scope\":\"REFERRAL_STATUS\"}"
+    },
+    {
+      "id": "e18381b1-9b5a-481f-b5c5-8312bd4dbb12",
+      "event_type": "PROXY_ACCESS_GRANTED",
+      "entity_id": "99999999-9999-9999-9999-999999999999",
+      "actor_id": "99999999-9999-9999-9999-999999999999",
+      "actor_role": "CAREGIVER_PROXY",
+      "action": "PROXY_PROXY_ACCESS_GRANTED:SELECTED_RECORDS",
+      "created_at": "2026-09-07T08:20:44.979Z",
+      "details": "{\"relationshipType\":\"DAUGHTER\",\"scope\":\"SELECTED_RECORDS\"}"
+    },
+    {
+      "id": "61f5c7ce-9f8e-4f07-9ebe-86f683cd9f8f",
+      "event_type": "PROXY_CLINICAL_DATA_ACCESSED",
+      "entity_id": "99999999-9999-9999-9999-999999999999",
+      "actor_id": "66666666-6666-6666-6666-666666666666",
+      "actor_role": "CAREGIVER_PROXY",
+      "action": "PROXY_PROXY_CLINICAL_DATA_ACCESSED:SELECTED_RECORDS",
+      "created_at": "2026-09-07T08:20:46.216Z",
+      "details": "{\"dataType\":\"DOCUMENTS\",\"recordCount\":0}"
+    },
+    {
+      "id": "02d72b8d-692c-4ae5-ab65-b2952c4e4dc9",
+      "event_type": "PROXY_ACCESS_REVOKED",
+      "entity_id": "99999999-9999-9999-9999-999999999999",
+      "actor_id": "99999999-9999-9999-9999-999999999999",
+      "actor_role": "CAREGIVER_PROXY",
+      "action": "PROXY_PROXY_ACCESS_REVOKED:SELECTED_RECORDS",
+      "created_at": "2026-09-07T08:20:47.147Z",
+      "details": "{\"reason\":\"Patient changed caregiver\",\"revokedAt\":\"2026-09-07T08:20:46.835Z\"}"
+    },
+    {
+      "id": "aaccaa90-ac3b-4084-be40-d0c863c77c56",
+      "event_type": "PROXY_ACCESS_GRANTED",
+      "entity_id": "99999999-9999-9999-9999-999999999999",
+      "actor_id": "99999999-9999-9999-9999-999999999999",
+      "actor_role": "CAREGIVER_PROXY",
+      "action": "PROXY_PROXY_ACCESS_GRANTED:REFERRAL_STATUS",
+      "created_at": "2026-09-07T08:23:31.173Z",
+      "details": "{\"relationshipType\":\"DAUGHTER\",\"scope\":\"REFERRAL_STATUS\"}"
+    },
+    {
+      "id": "a1ade729-56bd-4b56-ba39-663fe947b087",
+      "event_type": "PROXY_ACCESS_GRANTED",
+      "entity_id": "99999999-9999-9999-9999-999999999999",
+      "actor_id": "99999999-9999-9999-9999-999999999999",
+      "actor_role": "CAREGIVER_PROXY",
+      "action": "PROXY_PROXY_ACCESS_GRANTED:SELECTED_RECORDS",
+      "created_at": "2026-09-07T08:23:33.819Z",
+      "details": "{\"relationshipType\":\"DAUGHTER\",\"scope\":\"SELECTED_RECORDS\"}"
+    },
+    {
+      "id": "8e29eaed-d235-40ad-98a8-714294102b07",
+      "event_type": "PROXY_CLINICAL_DATA_ACCESSED",
+      "entity_id": "99999999-9999-9999-9999-999999999999",
+      "actor_id": "66666666-6666-6666-6666-666666666666",
+      "actor_role": "CAREGIVER_PROXY",
+      "action": "PROXY_PROXY_CLINICAL_DATA_ACCESSED:SELECTED_RECORDS",
+      "created_at": "2026-09-07T08:23:34.803Z",
+      "details": "{\"dataType\":\"DOCUMENTS\",\"recordCount\":0}"
+    },
+    {
+      "id": "a3305129-750a-44b4-855a-658d260bcaaf",
+      "event_type": "PROXY_ACCESS_REVOKED",
+      "entity_id": "99999999-9999-9999-9999-999999999999",
+      "actor_id": "99999999-9999-9999-9999-999999999999",
+      "actor_role": "CAREGIVER_PROXY",
+      "action": "PROXY_PROXY_ACCESS_REVOKED:SELECTED_RECORDS",
+      "created_at": "2026-09-07T08:23:35.821Z",
+      "details": "{\"reason\":\"Patient changed caregiver\",\"revokedAt\":\"2026-09-07T08:23:35.462Z\"}"
     }
   ],
   "family_members": [],
@@ -623,6 +763,26 @@
       "relationship": "FATHER",
       "permission_scope": "FULL_ACCESS",
       "status": "ACTIVE"
+    },
+    {
+      "id": "e3e78802-c265-42d0-952c-971379e28c36",
+      "patient_id": "99999999-9999-9999-9999-999999999999",
+      "caregiver_user_id": "66666666-6666-6666-6666-666666666666",
+      "relationship_type": "DAUGHTER",
+      "permission_scope": "SELECTED_RECORDS",
+      "status": "REVOKED",
+      "revoked_at": "2026-09-07T08:23:35.462Z",
+      "created_at": "2026-09-07T08:20:05.146Z"
+    },
+    {
+      "id": "53aef129-1690-4e8f-aee1-d9b327dfbeed",
+      "patient_id": "99999999-9999-9999-9999-999999999999",
+      "caregiver_user_id": "66666666-6666-6666-6666-666666666666",
+      "relationship_type": "DAUGHTER",
+      "permission_scope": "SELECTED_RECORDS",
+      "status": "ACTIVE",
+      "revoked_at": null,
+      "created_at": "2026-09-07T08:19:29.707Z"
     }
   ],
   "feedbacks": [
