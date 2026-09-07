@@ -2430,15 +2430,90 @@ class SupabaseService {
         };
     }
 
-    async admitReferralPatient(referralId, bedCategory) {
-        return {
-            referralId,
-            bedCategory: bedCategory || 'General Inpatient Ward',
-            admissionStatus: 'ADMITTED_AND_BED_ALLOCATED',
-            admittedAt: new Date().toISOString(),
-            ehrSync: 'COMPLETED'
+    async getAshaWorkerByPhone(phone) {
+        let cleanPhone = String(phone).replace(/\D/g, '').slice(-10);
+        try {
+            // First check asha_workers table
+            const { data: worker, error } = await supabase
+                .from('asha_workers')
+                .select('*')
+                .or(`phone.eq.${cleanPhone},phone.eq.+91${cleanPhone}`)
+                .maybeSingle();
+
+            if (!error && worker) return worker;
+
+            // Fallback to users table with role 'health_worker'
+            const { data: userWorker } = await supabase
+                .from('users')
+                .select('*')
+                .or(`phone.eq.${cleanPhone},phone.eq.+91${cleanPhone}`)
+                .eq('role', 'health_worker')
+                .maybeSingle();
+
+            return userWorker || null;
+        } catch (err) {
+            console.warn('[SUPABASE] getAshaWorkerByPhone warning:', err.message);
+            return null;
+        }
+    }
+
+    async getAshaWorkerByWorkerId(workerId) {
+        try {
+            const { data, error } = await supabase
+                .from('asha_workers')
+                .select('*')
+                .eq('worker_id', workerId)
+                .maybeSingle();
+
+            if (!error && data) return data;
+            return null;
+        } catch (err) {
+            console.warn('[SUPABASE] getAshaWorkerByWorkerId warning:', err.message);
+            return null;
+        }
+    }
+
+    async registerAshaWorker(workerPayload) {
+        const payload = {
+            worker_id: workerPayload.worker_id || `ASHA-${Math.floor(1000 + Math.random() * 9000)}`,
+            full_name: workerPayload.full_name || workerPayload.name,
+            phone: workerPayload.phone,
+            email: workerPayload.email || null,
+            role: 'health_worker',
+            assigned_subcentre: workerPayload.assigned_subcentre || 'Shirwal Sub-Centre',
+            assigned_phc: workerPayload.assigned_phc || 'Shirwal PHC',
+            catchment_area: workerPayload.catchment_area || 'Shirwal Catchment, Ward 4',
+            jurisdiction_district: workerPayload.jurisdiction_district || 'Pune',
+            state: workerPayload.state || 'Maharashtra',
+            assigned_households: workerPayload.assigned_households || 184,
+            rch_coverage_score: workerPayload.rch_coverage_score || 94.20,
+            status: 'ACTIVE',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
         };
+
+        try {
+            const { data, error } = await supabase
+                .from('asha_workers')
+                .insert([payload])
+                .select()
+                .single();
+
+            if (!error && data) return data;
+        } catch (err) {
+            console.warn('[SUPABASE] registerAshaWorker fallback to users:', err.message);
+        }
+
+        // Also ensure present in users table for unified login
+        return await this.createUser(crypto.randomUUID(), {
+            phone: payload.phone,
+            full_name: payload.full_name,
+            email: payload.email,
+            role: 'health_worker',
+            jurisdiction_district: payload.jurisdiction_district
+        });
     }
 }
 
 module.exports = new SupabaseService();
+

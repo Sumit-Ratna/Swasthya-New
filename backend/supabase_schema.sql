@@ -239,6 +239,28 @@ CREATE TABLE IF NOT EXISTS public.feedbacks (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- 16. ASHA / ANM HEALTH WORKERS TABLE
+CREATE TABLE IF NOT EXISTS public.asha_workers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+    worker_id VARCHAR(50) UNIQUE NOT NULL, -- e.g. ASHA-DEL-8902, ASHA-MAH-4019
+    full_name VARCHAR(255) NOT NULL,
+    phone VARCHAR(30) UNIQUE NOT NULL,
+    email VARCHAR(255) UNIQUE,
+    password_hash TEXT,
+    role VARCHAR(50) NOT NULL DEFAULT 'health_worker', -- 'health_worker', 'asha', 'anm'
+    assigned_subcentre VARCHAR(255) DEFAULT 'Shirwal Sub-Centre',
+    assigned_phc VARCHAR(255) DEFAULT 'Shirwal Primary Health Centre (PHC)',
+    catchment_area VARCHAR(255) DEFAULT 'Shirwal Ward 1-4 Catchment',
+    jurisdiction_district VARCHAR(100) DEFAULT 'Pune',
+    state VARCHAR(100) DEFAULT 'Maharashtra',
+    assigned_households INT DEFAULT 184,
+    rch_coverage_score NUMERIC(5,2) DEFAULT 94.20,
+    status VARCHAR(50) NOT NULL DEFAULT 'ACTIVE',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- INDEXES for fast querying
 CREATE INDEX IF NOT EXISTS idx_users_phone ON public.users(phone);
 CREATE INDEX IF NOT EXISTS idx_users_doctor_qr_id ON public.users(doctor_qr_id);
@@ -251,9 +273,13 @@ CREATE INDEX IF NOT EXISTS idx_referrals_doctor ON public.referrals(assigned_doc
 CREATE INDEX IF NOT EXISTS idx_referral_events_ref ON public.referral_events(referral_id);
 CREATE INDEX IF NOT EXISTS idx_feedbacks_user ON public.feedbacks(user_id);
 CREATE INDEX IF NOT EXISTS idx_feedbacks_role ON public.feedbacks(user_role);
+CREATE INDEX IF NOT EXISTS idx_asha_workers_worker_id ON public.asha_workers(worker_id);
+CREATE INDEX IF NOT EXISTS idx_asha_workers_phone ON public.asha_workers(phone);
+CREATE INDEX IF NOT EXISTS idx_asha_workers_user_id ON public.asha_workers(user_id);
 
 -- Storage bucket for medical documents
 INSERT INTO storage.buckets (id, name, public) 
 VALUES ('medical-documents', 'medical-documents', true)
 ON CONFLICT (id) DO NOTHING;
+
 
