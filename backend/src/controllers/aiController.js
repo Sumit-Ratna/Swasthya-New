@@ -119,3 +119,74 @@ exports.generateExplainer = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+/**
+ * POST /api/ai/n8n-webhook
+ * Dispatches online user queries to external n8n AI agent workflows or cloud fallback.
+ */
+exports.n8nWebhook = async (req, res) => {
+    const axios = require('axios');
+    const { query, message, sessionId, userId, language, customWebhookUrl } = req.body;
+    const promptText = query || message || '';
+
+    if (!promptText.trim()) {
+        return res.status(400).json({ error: 'Query or message text is required' });
+    }
+
+    const targetUrl = customWebhookUrl || process.env.N8N_WEBHOOK_URL || null;
+
+    if (targetUrl) {
+        try {
+            console.log(`[N8N_WEBHOOK] Forwarding query to: ${targetUrl}`);
+            const webhookRes = await axios.post(targetUrl, {
+                query: promptText,
+                message: promptText,
+                sessionId: sessionId || req.id,
+                userId: userId || req.user?.id || 'guest-user',
+                language: language || 'en',
+                timestamp: new Date().toISOString()
+            }, {
+                headers: { 'Content-Type': 'application/json' },
+                timeout: 12000
+            });
+
+            const output = webhookRes.data;
+            const replyText = typeof output === 'string' 
+                ? output 
+                : (output.reply || output.text || output.message || output.output || output.response || JSON.stringify(output));
+
+            return res.json({
+                success: true,
+                reply: replyText,
+                source: 'n8n_webhook',
+                webhookUrl: targetUrl,
+                timestamp: new Date().toISOString()
+            });
+        } catch (err) {
+            console.warn('[N8N_WEBHOOK] External call failed, falling back:', err.message);
+        }
+    }
+
+    // Dynamic Cloud AI Fallback when n8n webhook URL is not configured or offline
+    try {
+        const aiTriageResult = await aiService.triageAssessmentWithAI({ symptoms: promptText });
+        const fallbackReply = `🤖 **Cloud AI Assessment (n8n Online Fallback):**\n\n` +
+            `• **Risk Tier:** **${aiTriageResult.triage?.risk_tier || 'EVALUATED'}** (Priority Score: ${aiTriageResult.triage?.priority_score || 50}/100)\n` +
+            `• **Recommended Urgency:** ${aiTriageResult.triage?.recommended_urgency || 'ROUTINE'}\n` +
+            `• **Suggested Facility:** ${aiTriageResult.triage?.suggested_facility_tier || 'Primary Health Centre / District Hospital'}\n\n` +
+            `📝 **Clinical Reasoning:** ${aiTriageResult.triage?.reasoning || 'Evaluated symptoms against safe clinical decision parameters.'}\n\n` +
+            `⚠️ *Disclaimer: Decision support only. Configure custom n8n webhook in settings for custom multi-agent execution.*`;
+
+        return res.json({
+            success: true,
+            reply: fallbackReply,
+            source: 'cloud_ai_fallback',
+            timestamp: new Date().toISOString()
+        });
+    } catch (err) {
+        return res.status(500).json({
+            success: false,
+            error: 'Failed to process online query: ' + err.message
+        });
+    }
+};

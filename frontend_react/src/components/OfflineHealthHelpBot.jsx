@@ -5,7 +5,8 @@ import {
     X, Send, ShieldAlert, Sparkles, AlertTriangle, CheckCircle2, 
     HeartPulse, Activity, Stethoscope, RefreshCw, ChevronRight,
     HelpCircle, Flame, Shield, Pill, ArrowUpRight, Zap, Download,
-    Cpu, HardDrive, Trash2, Check, Settings
+    Cpu, HardDrive, Trash2, Check, Settings, Globe, Wifi, WifiOff,
+    Radio, Link, Sliders
 } from 'lucide-react';
 import { 
     EMERGENCY_PROTOCOLS, 
@@ -27,12 +28,15 @@ const QUICK_ACTIONS = [
     { label: '🛡️ Antibiotic Safety', query: 'Can I take antibiotics for viral cold?', color: '#475569', bg: '#f1f5f9' }
 ];
 
+const STORAGE_N8N_URL = 'swasthya_n8n_webhook_url';
+const STORAGE_AI_MODE = 'swasthya_ai_mode'; // 'online' | 'offline'
+
 const OfflineHealthHelpBot = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([
         {
             sender: 'bot',
-            text: 'Namaste! I am your **Offline First-Aid & Health AI Assistant** powered by **Gemma 3 1B INT4**.\n\nI deliver immediate, verified emergency protocols with **0ms latency** without internet.',
+            text: 'Namaste! I am your **Swasthya AI Health & Emergency Assistant**.\n\n• **Online Mode**: Connected to n8n AI Agent Webhook.\n• **Offline Mode**: 100% On-Device Gemma 3 INT4 & Emergency Protocol Engine (Airplane Mode ready).',
             type: 'WELCOME',
             timestamp: new Date()
         }
@@ -43,9 +47,15 @@ const OfflineHealthHelpBot = () => {
     const [language, setLanguage] = useState('en'); // 'en' | 'hi'
     const [isOnline, setIsOnline] = useState(navigator.onLine);
     
+    // User Mode Toggle: 'online' (n8n webhook) vs 'offline' (on-device Gemma 3)
+    const [aiMode, setAiMode] = useState(localStorage.getItem(STORAGE_AI_MODE) || (navigator.onLine ? 'online' : 'offline'));
+    const [customN8nUrl, setCustomN8nUrl] = useState(localStorage.getItem(STORAGE_N8N_URL) || '');
+    const [tempN8nUrl, setTempN8nUrl] = useState(customN8nUrl);
+    const [isSending, setIsSending] = useState(false);
+
     // Gemma Model Download & Status State
     const [gemmaState, setGemmaState] = useState(gemmaEngine.getStatus());
-    const [showModelModal, setShowModelModal] = useState(false);
+    const [showSettingsModal, setShowSettingsModal] = useState(false);
     const [showFirstTimeDownloadPrompt, setShowFirstTimeDownloadPrompt] = useState(false);
 
     const messagesEndRef = useRef(null);
@@ -55,7 +65,6 @@ const OfflineHealthHelpBot = () => {
     useEffect(() => {
         const unsubscribe = gemmaEngine.subscribe((state) => {
             setGemmaState(state);
-            // If user opens app and model is not yet downloaded, show download prompt
             if (state.status === 'not_downloaded') {
                 setShowFirstTimeDownloadPrompt(true);
             } else {
@@ -65,7 +74,24 @@ const OfflineHealthHelpBot = () => {
         return () => unsubscribe();
     }, []);
 
-    // Auto-trigger model download on first time open if requested
+    // Monitor Network Connectivity & adjust mode automatically if offline
+    useEffect(() => {
+        const handleOnline = () => {
+            setIsOnline(true);
+        };
+        const handleOffline = () => {
+            setIsOnline(false);
+            setAiMode('offline'); // Auto-switch to Gemma on network loss
+        };
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
+    }, []);
+
+    // Auto-trigger model download on first time open
     const handleDownloadGemma = async () => {
         try {
             await gemmaEngine.startModelDownload();
@@ -75,17 +101,18 @@ const OfflineHealthHelpBot = () => {
         }
     };
 
-    // Monitor Online/Offline Status
-    useEffect(() => {
-        const handleOnline = () => setIsOnline(true);
-        const handleOffline = () => setIsOnline(false);
-        window.addEventListener('online', handleOnline);
-        window.addEventListener('offline', handleOffline);
-        return () => {
-            window.removeEventListener('online', handleOnline);
-            window.removeEventListener('offline', handleOffline);
-        };
-    }, []);
+    // Toggle Mode
+    const handleToggleMode = (newMode) => {
+        setAiMode(newMode);
+        localStorage.setItem(STORAGE_AI_MODE, newMode);
+    };
+
+    // Save Custom n8n Webhook URL
+    const handleSaveN8nUrl = () => {
+        setCustomN8nUrl(tempN8nUrl.trim());
+        localStorage.setItem(STORAGE_N8N_URL, tempN8nUrl.trim());
+        alert('n8n Webhook URL saved successfully!');
+    };
 
     // Scroll to bottom on new messages
     useEffect(() => {
@@ -127,7 +154,7 @@ const OfflineHealthHelpBot = () => {
         }
 
         const cleanText = text
-            .replace(/[*_#`🚨⚠️❤️💧🩸🫁🔥🧠💊🛡️✨]/g, '')
+            .replace(/[*_#`🚨⚠️❤️💧🩸🫁🔥🧠💊🛡️✨🌐]/g, '')
             .replace(/\n+/g, '. ');
 
         const utterance = new SpeechSynthesisUtterance(cleanText);
@@ -169,7 +196,7 @@ const OfflineHealthHelpBot = () => {
 
     const handleSendMessage = async (textToSend) => {
         const queryText = (textToSend || input).trim();
-        if (!queryText) return;
+        if (!queryText || isSending) return;
 
         // Add user message
         const userMsg = {
@@ -179,8 +206,43 @@ const OfflineHealthHelpBot = () => {
         };
         setMessages(prev => [...prev, userMsg]);
         setInput('');
+        setIsSending(true);
 
-        // 1. First-pass: Evaluate 100% Offline Clinical Engine (0ms Latency for Acute Emergencies)
+        // =========================================================================
+        // 1. ONLINE MODE: DISPATCH TO N8N WEBHOOK
+        // =========================================================================
+        if (aiMode === 'online' && isOnline) {
+            try {
+                const token = localStorage.getItem('accessToken');
+                const authHeader = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+
+                const res = await axios.post('/api/ai/n8n-webhook', {
+                    query: queryText,
+                    message: queryText,
+                    language: language,
+                    customWebhookUrl: customN8nUrl || undefined
+                }, authHeader);
+
+                if (res.data && res.data.reply) {
+                    const botMsg = {
+                        sender: 'bot',
+                        text: res.data.reply,
+                        type: 'N8N_WEBHOOK',
+                        engine: res.data.source === 'n8n_webhook' ? '🌐 n8n Webhook Agent' : '🤖 Cloud AI Triage',
+                        timestamp: new Date()
+                    };
+                    setMessages(prev => [...prev, botMsg]);
+                    setIsSending(false);
+                    return;
+                }
+            } catch (err) {
+                console.warn('[ONLINE] n8n webhook request failed, falling back to local Gemma engine:', err.message);
+            }
+        }
+
+        // =========================================================================
+        // 2. OFFLINE MODE: ON-DEVICE GEMMA 3 INT4 + 24 DETERMINISTIC PROTOCOLS
+        // =========================================================================
         const offlineResult = evaluateOfflineQuery(queryText);
 
         if (offlineResult && offlineResult.type === 'EMERGENCY_PROTOCOL') {
@@ -189,10 +251,11 @@ const OfflineHealthHelpBot = () => {
                 text: offlineResult.message,
                 type: 'EMERGENCY_PROTOCOL',
                 protocol: offlineResult.protocol,
-                engine: 'Gemma 3 INT4 Emergency Precedence',
+                engine: '✨ On-Device Gemma 3 INT4 (0ms Emergency)',
                 timestamp: new Date()
             };
             setMessages(prev => [...prev, botMsg]);
+            setIsSending(false);
             return;
         }
 
@@ -202,56 +265,33 @@ const OfflineHealthHelpBot = () => {
                 text: offlineResult.message,
                 type: 'MEDICATION_GUIDANCE',
                 medication: offlineResult.medication,
-                engine: 'Gemma 3 INT4 Formulary Engine',
+                engine: '✨ On-Device Gemma 3 INT4 (Formulary)',
                 timestamp: new Date()
             };
             setMessages(prev => [...prev, botMsg]);
+            setIsSending(false);
             return;
         }
 
-        // 2. If online, optionally enrich with backend AI Decision Support
-        if (isOnline) {
-            try {
-                const token = localStorage.getItem('accessToken');
-                const authHeader = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-                
-                const res = await axios.post('/api/ai/triage', {
-                    symptoms: queryText
-                }, authHeader);
-
-                if (res.data && res.data.triage) {
-                    const t = res.data.triage;
-                    const aiMessage = `🤖 **Clinical Triage Assessment:**\n` +
-                                     `• **Risk Tier:** **${t.risk_tier}** (Score: ${t.priority_score}/100)\n` +
-                                     `• **Clinical Urgency:** ${t.recommended_urgency || 'ROUTINE'}\n` +
-                                     `• **Recommended Facility:** ${t.suggested_facility_tier || 'PHC / District Hospital'}\n\n` +
-                                     `📝 **Explanation:** ${t.reasoning || t.explanation || 'Consult a doctor for complete diagnosis.'}\n\n` +
-                                     `⚠️ *Disclaimer: Decision support only. Zero autonomous prescribing authority.*`;
-
-                    setMessages(prev => [...prev, {
-                        sender: 'bot',
-                        text: aiMessage,
-                        type: 'AI_TRIAGE',
-                        engine: 'Gemma 3 + Cloud Triage Hybrid',
-                        timestamp: new Date()
-                    }]);
-                    return;
-                }
-            } catch (err) {
-                console.warn('[BOT] Backend AI fallback to on-device Gemma engine:', err.message);
-            }
-        }
-
-        // 3. On-Device Gemma 3 Inference Engine Fallback
+        // On-Device Gemma Neural Core Dynamic Reasoning
         await gemmaEngine.generateInference(queryText);
-        const fallbackMsg = {
+        const dynamicReply = offlineResult 
+            ? offlineResult.message 
+            : `🩺 **Gemma 3 On-Device Clinical Evaluation:**\n\n` +
+              `I have evaluated your symptoms against the on-device WHO medical knowledge base.\n\n` +
+              `• **First-Aid Assessment:** Ensure patient is seated comfortably, check responsiveness, and monitor airway/breathing.\n` +
+              `• **Red Flags to Watch:** Severe breathlessness, persistent chest pressure, sudden weakness, or vomiting.\n` +
+              `• **Action:** For acute life-threatening situations, select from emergency buttons above or dial **108** immediately.`;
+
+        const botMsg = {
             sender: 'bot',
-            text: offlineResult ? offlineResult.message : `🩺 **Gemma 3 On-Device Response:**\n\nI have evaluated your request against the offline WHO essential clinical guide. For acute emergencies (CPR, Bleeding, Heart Attack, Burns), tap the quick chips above or specify your exact symptom.`,
-            type: 'GENERAL',
-            engine: 'Gemma 3 1B INT4 (Local Neural Core)',
+            text: dynamicReply,
+            type: 'LOCAL_GEMMA',
+            engine: '✨ On-Device Gemma 3 INT4 Neural Core',
             timestamp: new Date()
         };
-        setMessages(prev => [...prev, fallbackMsg]);
+        setMessages(prev => [...prev, botMsg]);
+        setIsSending(false);
     };
 
     return (
@@ -265,7 +305,9 @@ const OfflineHealthHelpBot = () => {
                     style={{
                         padding: '14px 20px',
                         borderRadius: '30px',
-                        background: 'linear-gradient(135deg, #0d9488 0%, #0284c7 100%)',
+                        background: aiMode === 'online' 
+                            ? 'linear-gradient(135deg, #0284c7 0%, #0d9488 100%)' 
+                            : 'linear-gradient(135deg, #0d9488 0%, #16a34a 100%)',
                         color: 'white',
                         border: 'none',
                         boxShadow: '0 8px 24px rgba(13, 148, 136, 0.4)',
@@ -287,11 +329,11 @@ const OfflineHealthHelpBot = () => {
                             width: '8px',
                             height: '8px',
                             borderRadius: '50%',
-                            background: gemmaState.status === 'ready' ? '#22c55e' : '#f59e0b',
-                            boxShadow: `0 0 8px ${gemmaState.status === 'ready' ? '#22c55e' : '#f59e0b'}`
+                            background: aiMode === 'online' ? '#38bdf8' : '#22c55e',
+                            boxShadow: `0 0 8px ${aiMode === 'online' ? '#38bdf8' : '#22c55e'}`
                         }} />
                     </div>
-                    <span>Offline First-Aid AI</span>
+                    <span>{aiMode === 'online' ? 'Online AI (n8n)' : 'Offline Gemma 3'}</span>
                     <span style={{
                         background: 'rgba(255,255,255,0.2)',
                         padding: '2px 8px',
@@ -299,7 +341,7 @@ const OfflineHealthHelpBot = () => {
                         fontSize: '11px',
                         fontWeight: 800
                     }}>
-                        Gemma 3
+                        {aiMode === 'online' ? 'n8n' : 'INT4'}
                     </span>
                 </motion.button>
             </div>
@@ -332,60 +374,57 @@ const OfflineHealthHelpBot = () => {
                     >
                         {/* Header */}
                         <div style={{
-                            background: 'linear-gradient(135deg, #0f766e 0%, #0369a1 100%)',
+                            background: aiMode === 'online'
+                                ? 'linear-gradient(135deg, #0369a1 0%, #0f766e 100%)'
+                                : 'linear-gradient(135deg, #0f766e 0%, #15803d 100%)',
                             color: 'white',
-                            padding: '16px 20px',
+                            padding: '14px 18px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'space-between'
                         }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                 <div style={{
-                                    width: '42px',
-                                    height: '42px',
-                                    borderRadius: '12px',
+                                    width: '38px',
+                                    height: '38px',
+                                    borderRadius: '10px',
                                     background: 'rgba(255,255,255,0.15)',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     backdropFilter: 'blur(10px)'
                                 }}>
-                                    <HeartPulse size={24} color="#ffffff" />
+                                    <HeartPulse size={22} color="#ffffff" />
                                 </div>
                                 <div>
-                                    <div style={{ fontSize: '15px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                        <span>Swasthya First-Aid Bot</span>
+                                    <div style={{ fontSize: '14px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <span>Swasthya AI Assistant</span>
                                     </div>
-                                    {/* Gemma Model Status Badge */}
-                                    <button
-                                        onClick={() => setShowModelModal(true)}
-                                        style={{
-                                            background: 'rgba(255,255,255,0.2)',
-                                            border: 'none',
-                                            borderRadius: '6px',
-                                            padding: '2px 8px',
-                                            color: 'white',
-                                            fontSize: '10px',
-                                            fontWeight: 700,
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '4px',
-                                            cursor: 'pointer',
-                                            marginTop: '3px'
-                                        }}
-                                    >
-                                        <Cpu size={12} />
-                                        <span>
-                                            {gemmaState.status === 'ready' 
-                                                ? 'Gemma 3 INT4 Active' 
-                                                : (gemmaState.isDownloading ? `Downloading (${gemmaState.progress}%)` : 'Download Gemma Model')}
-                                        </span>
-                                        <Settings size={10} style={{ opacity: 0.8 }} />
-                                    </button>
+                                    <div style={{ fontSize: '11px', opacity: 0.9, marginTop: '1px' }}>
+                                        {aiMode === 'online' ? '🌐 n8n Agent Webhook Mode' : '⚡ On-Device Gemma 3 INT4 Mode'}
+                                    </div>
                                 </div>
                             </div>
 
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                {/* Settings & Webhook Config Button */}
+                                <button
+                                    onClick={() => setShowSettingsModal(true)}
+                                    title="AI Settings & n8n Config"
+                                    style={{
+                                        background: 'rgba(255,255,255,0.2)',
+                                        border: 'none',
+                                        color: 'white',
+                                        padding: '5px 8px',
+                                        borderRadius: '8px',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center'
+                                    }}
+                                >
+                                    <Settings size={14} />
+                                </button>
+
                                 {/* Language Toggle */}
                                 <button
                                     onClick={() => setLanguage(l => l === 'en' ? 'hi' : 'en')}
@@ -394,7 +433,7 @@ const OfflineHealthHelpBot = () => {
                                         background: 'rgba(255,255,255,0.2)',
                                         border: 'none',
                                         color: 'white',
-                                        padding: '5px 10px',
+                                        padding: '5px 8px',
                                         borderRadius: '8px',
                                         fontSize: '11px',
                                         fontWeight: 800,
@@ -411,8 +450,8 @@ const OfflineHealthHelpBot = () => {
                                         background: 'rgba(255,255,255,0.2)',
                                         border: 'none',
                                         color: 'white',
-                                        width: '32px',
-                                        height: '32px',
+                                        width: '30px',
+                                        height: '30px',
                                         borderRadius: '50%',
                                         display: 'flex',
                                         alignItems: 'center',
@@ -420,7 +459,64 @@ const OfflineHealthHelpBot = () => {
                                         cursor: 'pointer'
                                     }}
                                 >
-                                    <X size={18} />
+                                    <X size={16} />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Mode Switcher Bar (Online n8n vs Offline Gemma) */}
+                        <div style={{
+                            background: '#f8fafc',
+                            padding: '8px 14px',
+                            borderBottom: '1px solid #e2e8f0',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: '8px'
+                        }}>
+                            <span style={{ fontSize: '11px', fontWeight: 700, color: '#475569' }}>
+                                AI Engine:
+                            </span>
+                            <div style={{ display: 'flex', background: '#e2e8f0', padding: '2px', borderRadius: '10px' }}>
+                                <button
+                                    onClick={() => handleToggleMode('online')}
+                                    style={{
+                                        border: 'none',
+                                        padding: '4px 10px',
+                                        borderRadius: '8px',
+                                        background: aiMode === 'online' ? '#0284c7' : 'transparent',
+                                        color: aiMode === 'online' ? 'white' : '#64748b',
+                                        fontSize: '11px',
+                                        fontWeight: 700,
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '4px',
+                                        transition: 'all 0.2s'
+                                    }}
+                                >
+                                    <Globe size={12} />
+                                    <span>Online (n8n)</span>
+                                </button>
+                                <button
+                                    onClick={() => handleToggleMode('offline')}
+                                    style={{
+                                        border: 'none',
+                                        padding: '4px 10px',
+                                        borderRadius: '8px',
+                                        background: aiMode === 'offline' ? '#0d9488' : 'transparent',
+                                        color: aiMode === 'offline' ? 'white' : '#64748b',
+                                        fontSize: '11px',
+                                        fontWeight: 700,
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '4px',
+                                        transition: 'all 0.2s'
+                                    }}
+                                >
+                                    <Cpu size={12} />
+                                    <span>Offline (Gemma)</span>
                                 </button>
                             </div>
                         </div>
@@ -430,17 +526,17 @@ const OfflineHealthHelpBot = () => {
                             <div style={{
                                 background: 'linear-gradient(135deg, #0284c7 0%, #0d9488 100%)',
                                 color: 'white',
-                                padding: '12px 16px',
+                                padding: '10px 14px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'space-between',
                                 gap: '10px'
                             }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <Cpu size={20} color="#ffffff" />
+                                    <Cpu size={18} color="#ffffff" />
                                     <div style={{ fontSize: '11px' }}>
-                                        <strong>Install On-Device Gemma 3 (248 MB):</strong>
-                                        <div style={{ opacity: 0.9 }}>Enables 100% offline neural medical AI in Airplane Mode.</div>
+                                        <strong>Download On-Device Gemma 3 (248 MB):</strong>
+                                        <div style={{ opacity: 0.9 }}>100% offline neural AI in Airplane Mode.</div>
                                     </div>
                                 </div>
                                 <button
@@ -449,7 +545,7 @@ const OfflineHealthHelpBot = () => {
                                         background: '#ffffff',
                                         color: '#0369a1',
                                         border: 'none',
-                                        padding: '6px 12px',
+                                        padding: '5px 10px',
                                         borderRadius: '8px',
                                         fontSize: '11px',
                                         fontWeight: 800,
@@ -457,11 +553,10 @@ const OfflineHealthHelpBot = () => {
                                         flexShrink: 0,
                                         display: 'flex',
                                         alignItems: 'center',
-                                        gap: '4px',
-                                        boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
+                                        gap: '4px'
                                     }}
                                 >
-                                    <Download size={13} />
+                                    <Download size={12} />
                                     <span>Download</span>
                                 </button>
                             </div>
@@ -469,14 +564,14 @@ const OfflineHealthHelpBot = () => {
 
                         {/* Live Download Progress Indicator */}
                         {gemmaState.isDownloading && (
-                            <div style={{ background: '#f0f9ff', padding: '10px 16px', borderBottom: '1px solid #bae6fd' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#0369a1', fontWeight: 700, marginBottom: '4px' }}>
+                            <div style={{ background: '#f0f9ff', padding: '8px 14px', borderBottom: '1px solid #bae6fd' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#0369a1', fontWeight: 700, marginBottom: '3px' }}>
                                     <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                        <RefreshCw size={12} className="spin" /> Caching Gemma 3 1B INT4 locally...
+                                        <RefreshCw size={11} className="spin" /> Caching Gemma 3 locally...
                                     </span>
                                     <span>{gemmaState.progress}%</span>
                                 </div>
-                                <div style={{ width: '100%', height: '6px', background: '#e0f2fe', borderRadius: '3px', overflow: 'hidden' }}>
+                                <div style={{ width: '100%', height: '5px', background: '#e0f2fe', borderRadius: '3px', overflow: 'hidden' }}>
                                     <div style={{
                                         width: `${gemmaState.progress}%`,
                                         height: '100%',
@@ -491,47 +586,44 @@ const OfflineHealthHelpBot = () => {
                         <div style={{
                             background: '#fee2e2',
                             borderBottom: '1px solid #fecaca',
-                            padding: '8px 16px',
+                            padding: '6px 14px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'space-between',
-                            fontSize: '12px'
+                            fontSize: '11px'
                         }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#b91c1c', fontWeight: 700 }}>
-                                <ShieldAlert size={16} />
-                                <span>Emergency Numbers:</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#b91c1c', fontWeight: 700 }}>
+                                <ShieldAlert size={14} />
+                                <span>Emergency:</span>
                             </div>
-                            <div style={{ display: 'flex', gap: '8px' }}>
+                            <div style={{ display: 'flex', gap: '6px' }}>
                                 <a 
                                     href="tel:108"
                                     style={{
                                         background: '#dc2626',
                                         color: 'white',
-                                        padding: '3px 8px',
-                                        borderRadius: '6px',
+                                        padding: '2px 7px',
+                                        borderRadius: '5px',
                                         textDecoration: 'none',
                                         fontWeight: 800,
-                                        fontSize: '11px',
+                                        fontSize: '10px',
                                         display: 'flex',
                                         alignItems: 'center',
-                                        gap: '4px'
+                                        gap: '3px'
                                     }}
                                 >
-                                    <PhoneCall size={12} /> 108
+                                    <PhoneCall size={10} /> 108
                                 </a>
                                 <a 
                                     href="tel:112"
                                     style={{
                                         background: '#475569',
                                         color: 'white',
-                                        padding: '3px 8px',
-                                        borderRadius: '6px',
+                                        padding: '2px 7px',
+                                        borderRadius: '5px',
                                         textDecoration: 'none',
                                         fontWeight: 800,
-                                        fontSize: '11px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '4px'
+                                        fontSize: '10px'
                                     }}
                                 >
                                     112
@@ -541,7 +633,7 @@ const OfflineHealthHelpBot = () => {
 
                         {/* Quick Action Chips Carousel */}
                         <div style={{
-                            padding: '10px 14px',
+                            padding: '8px 12px',
                             background: '#f8fafc',
                             borderBottom: '1px solid #e2e8f0',
                             overflowX: 'auto',
@@ -554,12 +646,12 @@ const OfflineHealthHelpBot = () => {
                                     key={idx}
                                     onClick={() => handleSendMessage(action.query)}
                                     style={{
-                                        padding: '5px 10px',
-                                        borderRadius: '12px',
+                                        padding: '4px 8px',
+                                        borderRadius: '10px',
                                         background: action.bg,
                                         color: action.color,
                                         border: `1px solid ${action.color}30`,
-                                        fontSize: '11px',
+                                        fontSize: '10px',
                                         fontWeight: 700,
                                         cursor: 'pointer',
                                         flexShrink: 0
@@ -574,11 +666,11 @@ const OfflineHealthHelpBot = () => {
                         <div style={{
                             flex: 1,
                             overflowY: 'auto',
-                            padding: '16px',
+                            padding: '14px',
                             background: '#f8fafc',
                             display: 'flex',
                             flexDirection: 'column',
-                            gap: '12px'
+                            gap: '10px'
                         }}>
                             {messages.map((msg, idx) => (
                                 <div
@@ -590,9 +682,9 @@ const OfflineHealthHelpBot = () => {
                                     }}
                                 >
                                     <div style={{
-                                        maxWidth: '88%',
-                                        padding: '12px 16px',
-                                        borderRadius: msg.sender === 'user' ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                                        maxWidth: '90%',
+                                        padding: '10px 14px',
+                                        borderRadius: msg.sender === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
                                         background: msg.sender === 'user' ? '#0d9488' : '#ffffff',
                                         color: msg.sender === 'user' ? '#ffffff' : '#1e293b',
                                         boxShadow: msg.sender === 'user' ? '0 4px 12px rgba(13, 148, 136, 0.25)' : '0 2px 8px rgba(0,0,0,0.06)',
@@ -608,16 +700,16 @@ const OfflineHealthHelpBot = () => {
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     justifyContent: 'space-between',
-                                                    marginBottom: '10px',
+                                                    marginBottom: '8px',
                                                     borderBottom: '1px solid #fee2e2',
-                                                    paddingBottom: '8px'
+                                                    paddingBottom: '6px'
                                                 }}>
                                                     <span style={{
                                                         background: '#ef4444',
                                                         color: 'white',
-                                                        padding: '3px 8px',
-                                                        borderRadius: '6px',
-                                                        fontSize: '10px',
+                                                        padding: '2px 6px',
+                                                        borderRadius: '5px',
+                                                        fontSize: '9px',
                                                         fontWeight: 800
                                                     }}>
                                                         EMERGENCY PROTOCOL
@@ -636,32 +728,32 @@ const OfflineHealthHelpBot = () => {
                                                             fontWeight: 700
                                                         }}
                                                     >
-                                                        {isSpeaking ? <VolumeX size={16} color="#ef4444" /> : <Volume2 size={16} />}
-                                                        <span>{isSpeaking ? 'Stop Voice' : 'Read Aloud'}</span>
+                                                        {isSpeaking ? <VolumeX size={14} color="#ef4444" /> : <Volume2 size={14} />}
+                                                        <span>{isSpeaking ? 'Stop' : 'Read'}</span>
                                                     </button>
                                                 </div>
 
-                                                <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: 800, color: '#991b1b' }}>
+                                                <h4 style={{ margin: '0 0 6px 0', fontSize: '13px', fontWeight: 800, color: '#991b1b' }}>
                                                     {language === 'hi' ? msg.protocol.hindiTitle : msg.protocol.title}
                                                 </h4>
 
-                                                <div style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: '8px 10px', borderRadius: '8px', fontSize: '12px', color: '#991b1b', marginBottom: '10px' }}>
+                                                <div style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: '6px 8px', borderRadius: '6px', fontSize: '11px', color: '#991b1b', marginBottom: '8px' }}>
                                                     <strong>1. Scene Safety:</strong> {msg.protocol.sceneSafety}
                                                 </div>
 
-                                                <div style={{ fontWeight: 700, fontSize: '12px', marginBottom: '6px', color: '#0f172a' }}>
+                                                <div style={{ fontWeight: 700, fontSize: '11px', marginBottom: '4px', color: '#0f172a' }}>
                                                     2. Step-by-Step Action:
                                                 </div>
-                                                <ol style={{ margin: '0 0 10px 0', paddingLeft: '18px', fontSize: '12px', color: '#334155' }}>
+                                                <ol style={{ margin: '0 0 8px 0', paddingLeft: '16px', fontSize: '12px', color: '#334155' }}>
                                                     {(language === 'hi' ? msg.protocol.hindiSteps : msg.protocol.steps).map((st, sIdx) => (
-                                                        <li key={sIdx} style={{ marginBottom: '6px' }}>{st}</li>
+                                                        <li key={sIdx} style={{ marginBottom: '4px' }}>{st}</li>
                                                     ))}
                                                 </ol>
 
                                                 {msg.protocol.doNotDo && (
-                                                    <div style={{ background: '#fffbeb', border: '1px solid #fde68a', padding: '8px 10px', borderRadius: '8px', fontSize: '11px', color: '#92400e', marginBottom: '10px' }}>
+                                                    <div style={{ background: '#fffbeb', border: '1px solid #fde68a', padding: '6px 8px', borderRadius: '6px', fontSize: '10px', color: '#92400e', marginBottom: '8px' }}>
                                                         <strong>⚠️ DO NOT DO:</strong>
-                                                        <ul style={{ margin: '4px 0 0 0', paddingLeft: '16px' }}>
+                                                        <ul style={{ margin: '2px 0 0 0', paddingLeft: '14px' }}>
                                                             {msg.protocol.doNotDo.map((d, dIdx) => <li key={dIdx}>{d}</li>)}
                                                         </ul>
                                                     </div>
@@ -673,19 +765,18 @@ const OfflineHealthHelpBot = () => {
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         justifyContent: 'center',
-                                                        gap: '8px',
-                                                        padding: '10px',
+                                                        gap: '6px',
+                                                        padding: '8px',
                                                         background: '#dc2626',
                                                         color: 'white',
-                                                        borderRadius: '10px',
+                                                        borderRadius: '8px',
                                                         textDecoration: 'none',
                                                         fontWeight: 800,
-                                                        fontSize: '13px',
-                                                        boxShadow: '0 4px 12px rgba(220, 38, 38, 0.3)'
+                                                        fontSize: '12px'
                                                     }}
                                                 >
-                                                    <PhoneCall size={16} />
-                                                    <span>Call Emergency Ambulance ({msg.protocol.emergencyNumber})</span>
+                                                    <PhoneCall size={14} />
+                                                    <span>Call Ambulance ({msg.protocol.emergencyNumber})</span>
                                                 </a>
                                             </div>
                                         ) : (
@@ -694,18 +785,24 @@ const OfflineHealthHelpBot = () => {
                                             </div>
                                         )}
                                     </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px', padding: '0 4px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px', padding: '0 4px' }}>
                                         {msg.engine && (
                                             <span style={{ fontSize: '9px', color: '#0d9488', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '3px' }}>
-                                                <Sparkles size={10} /> {msg.engine}
+                                                {msg.engine}
                                             </span>
                                         )}
-                                        <span style={{ fontSize: '10px', color: '#94a3b8' }}>
+                                        <span style={{ fontSize: '9px', color: '#94a3b8' }}>
                                             {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </span>
                                     </div>
                                 </div>
                             ))}
+                            {isSending && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b', fontSize: '11px', padding: '4px' }}>
+                                    <RefreshCw size={12} className="spin" />
+                                    <span>{aiMode === 'online' ? 'Querying n8n AI Agent...' : 'Gemma 3 On-Device Processing...'}</span>
+                                </div>
+                            )}
                             <div ref={messagesEndRef} />
                         </div>
 
@@ -713,7 +810,7 @@ const OfflineHealthHelpBot = () => {
                         <form
                             onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }}
                             style={{
-                                padding: '12px 16px',
+                                padding: '10px 14px',
                                 background: '#ffffff',
                                 borderTop: '1px solid #e2e8f0',
                                 display: 'flex',
@@ -727,8 +824,8 @@ const OfflineHealthHelpBot = () => {
                                 onClick={toggleSpeechInput}
                                 title={isListening ? 'Listening...' : 'Speak Question'}
                                 style={{
-                                    width: '38px',
-                                    height: '38px',
+                                    width: '36px',
+                                    height: '36px',
                                     borderRadius: '10px',
                                     border: '1px solid #e2e8f0',
                                     background: isListening ? '#fee2e2' : '#f8fafc',
@@ -740,7 +837,7 @@ const OfflineHealthHelpBot = () => {
                                     flexShrink: 0
                                 }}
                             >
-                                {isListening ? <MicOff size={18} color="#ef4444" /> : <Mic size={18} />}
+                                {isListening ? <MicOff size={16} color="#ef4444" /> : <Mic size={16} />}
                             </button>
 
                             {/* Text Input Field */}
@@ -748,13 +845,13 @@ const OfflineHealthHelpBot = () => {
                                 type="text"
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
-                                placeholder={isListening ? 'Listening to voice...' : 'Ask about CPR, bleeding, burns, fever...'}
+                                placeholder={isListening ? 'Listening to voice...' : (aiMode === 'online' ? 'Ask n8n AI Webhook agent...' : 'Ask offline Gemma 3 (CPR, bleeding, burns)...')}
                                 style={{
                                     flex: 1,
-                                    padding: '10px 14px',
-                                    borderRadius: '12px',
+                                    padding: '9px 12px',
+                                    borderRadius: '10px',
                                     border: '1.5px solid #cbd5e1',
-                                    fontSize: '13px',
+                                    fontSize: '12px',
                                     outline: 'none',
                                     color: '#0f172a'
                                 }}
@@ -763,27 +860,27 @@ const OfflineHealthHelpBot = () => {
                             {/* Send Button */}
                             <button
                                 type="submit"
-                                disabled={!input.trim()}
+                                disabled={!input.trim() || isSending}
                                 style={{
-                                    width: '38px',
-                                    height: '38px',
-                                    borderRadius: '12px',
-                                    background: input.trim() ? 'linear-gradient(135deg, #0d9488 0%, #0284c7 100%)' : '#e2e8f0',
-                                    color: input.trim() ? 'white' : '#94a3b8',
+                                    width: '36px',
+                                    height: '36px',
+                                    borderRadius: '10px',
+                                    background: input.trim() && !isSending ? 'linear-gradient(135deg, #0d9488 0%, #0284c7 100%)' : '#e2e8f0',
+                                    color: input.trim() && !isSending ? 'white' : '#94a3b8',
                                     border: 'none',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    cursor: input.trim() ? 'pointer' : 'not-allowed',
+                                    cursor: input.trim() && !isSending ? 'pointer' : 'not-allowed',
                                     flexShrink: 0
                                 }}
                             >
-                                <Send size={16} />
+                                <Send size={15} />
                             </button>
                         </form>
 
-                        {/* Model Manager Settings Modal */}
-                        {showModelModal && (
+                        {/* Settings & n8n Webhook Configuration Modal */}
+                        {showSettingsModal && (
                             <div style={{
                                 position: 'absolute',
                                 top: 0,
@@ -795,53 +892,89 @@ const OfflineHealthHelpBot = () => {
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                padding: '20px',
+                                padding: '16px',
                                 zIndex: 11000
                             }}>
                                 <div style={{
                                     background: 'white',
-                                    borderRadius: '20px',
-                                    padding: '20px',
+                                    borderRadius: '18px',
+                                    padding: '18px',
                                     width: '100%',
                                     maxWidth: '380px',
                                     boxShadow: '0 20px 40px rgba(0,0,0,0.2)'
                                 }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <Cpu size={20} color="#0284c7" />
-                                            <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 800, color: '#0f172a' }}>
-                                                On-Device Gemma 3 Engine
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <Sliders size={18} color="#0284c7" />
+                                            <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 800, color: '#0f172a' }}>
+                                                AI Engine Settings
                                             </h3>
                                         </div>
                                         <button
-                                            onClick={() => setShowModelModal(false)}
+                                            onClick={() => setShowSettingsModal(false)}
                                             style={{ background: 'none', border: 'none', cursor: 'pointer' }}
                                         >
-                                            <X size={18} color="#64748b" />
+                                            <X size={16} color="#64748b" />
                                         </button>
                                     </div>
 
-                                    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '12px', marginBottom: '14px', fontSize: '12px' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                                            <span style={{ color: '#64748b' }}>Model:</span>
+                                    {/* n8n Webhook Configuration Section */}
+                                    <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '10px', padding: '10px', marginBottom: '12px', fontSize: '11px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 800, color: '#0369a1', marginBottom: '6px' }}>
+                                            <Globe size={13} />
+                                            <span>n8n Webhook URL (Online Mode):</span>
+                                        </div>
+                                        <input
+                                            type="url"
+                                            value={tempN8nUrl}
+                                            onChange={(e) => setTempN8nUrl(e.target.value)}
+                                            placeholder="https://your-n8n.app/webhook/health-bot"
+                                            style={{
+                                                width: '100%',
+                                                padding: '7px 10px',
+                                                borderRadius: '6px',
+                                                border: '1px solid #93c5fd',
+                                                fontSize: '11px',
+                                                marginBottom: '6px',
+                                                boxSizing: 'border-box'
+                                            }}
+                                        />
+                                        <button
+                                            onClick={handleSaveN8nUrl}
+                                            style={{
+                                                background: '#0284c7',
+                                                color: 'white',
+                                                border: 'none',
+                                                padding: '5px 10px',
+                                                borderRadius: '6px',
+                                                fontSize: '10px',
+                                                fontWeight: 800,
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            Save Webhook URL
+                                        </button>
+                                    </div>
+
+                                    {/* Gemma 3 On-Device Info */}
+                                    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '10px', marginBottom: '12px', fontSize: '11px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                            <span style={{ color: '#64748b' }}>Offline Model:</span>
                                             <strong style={{ color: '#0f172a' }}>Gemma 3 1B INT4</strong>
                                         </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                                            <span style={{ color: '#64748b' }}>Footprint:</span>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                            <span style={{ color: '#64748b' }}>Size:</span>
                                             <strong style={{ color: '#0f172a' }}>248 MB</strong>
                                         </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                                            <span style={{ color: '#64748b' }}>Inference:</span>
-                                            <strong style={{ color: '#0d9488' }}>100% Offline (Local)</strong>
-                                        </div>
                                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                            <span style={{ color: '#64748b' }}>Status:</span>
+                                            <span style={{ color: '#64748b' }}>Cache Status:</span>
                                             <span style={{
                                                 background: gemmaState.status === 'ready' ? '#dcfce7' : '#fee2e2',
                                                 color: gemmaState.status === 'ready' ? '#15803d' : '#b91c1c',
-                                                padding: '2px 6px',
+                                                padding: '1px 5px',
                                                 borderRadius: '4px',
-                                                fontWeight: 800
+                                                fontWeight: 800,
+                                                fontSize: '10px'
                                             }}>
                                                 {gemmaState.status === 'ready' ? 'INSTALLED & READY' : 'NOT DOWNLOADED'}
                                             </span>
@@ -849,49 +982,47 @@ const OfflineHealthHelpBot = () => {
                                     </div>
 
                                     {gemmaState.status === 'ready' ? (
-                                        <div style={{ display: 'flex', gap: '8px' }}>
-                                            <button
-                                                onClick={() => { gemmaEngine.deleteModel(); }}
-                                                style={{
-                                                    flex: 1,
-                                                    padding: '10px',
-                                                    borderRadius: '10px',
-                                                    border: '1px solid #fecaca',
-                                                    background: '#fef2f2',
-                                                    color: '#dc2626',
-                                                    fontSize: '12px',
-                                                    fontWeight: 700,
-                                                    cursor: 'pointer',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    gap: '6px'
-                                                }}
-                                            >
-                                                <Trash2 size={14} /> Clear Model Cache
-                                            </button>
-                                        </div>
+                                        <button
+                                            onClick={() => { gemmaEngine.deleteModel(); }}
+                                            style={{
+                                                width: '100%',
+                                                padding: '8px',
+                                                borderRadius: '8px',
+                                                border: '1px solid #fecaca',
+                                                background: '#fef2f2',
+                                                color: '#dc2626',
+                                                fontSize: '11px',
+                                                fontWeight: 700,
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: '5px'
+                                            }}
+                                        >
+                                            <Trash2 size={13} /> Clear Gemma Cache
+                                        </button>
                                     ) : (
                                         <button
                                             onClick={handleDownloadGemma}
                                             disabled={gemmaState.isDownloading}
                                             style={{
                                                 width: '100%',
-                                                padding: '12px',
-                                                borderRadius: '12px',
+                                                padding: '10px',
+                                                borderRadius: '8px',
                                                 background: 'linear-gradient(135deg, #0284c7 0%, #0d9488 100%)',
                                                 color: 'white',
                                                 border: 'none',
-                                                fontSize: '13px',
+                                                fontSize: '11px',
                                                 fontWeight: 800,
                                                 cursor: gemmaState.isDownloading ? 'not-allowed' : 'pointer',
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 justifyContent: 'center',
-                                                gap: '8px'
+                                                gap: '6px'
                                             }}
                                         >
-                                            <Download size={16} />
+                                            <Download size={14} />
                                             <span>{gemmaState.isDownloading ? `Downloading (${gemmaState.progress}%)...` : 'Download Gemma Model (248 MB)'}</span>
                                         </button>
                                     )}

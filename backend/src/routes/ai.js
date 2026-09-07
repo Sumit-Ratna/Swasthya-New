@@ -18,4 +18,7 @@ router.post('/safety-check', aiController.checkSafety);
 router.post('/scribe', aiController.scribe);
 router.post('/explainer', aiController.generateExplainer);
 
+// n8n Webhook Online Dispatcher
+router.post('/n8n-webhook', aiController.n8nWebhook);
+
 module.exports = router;
