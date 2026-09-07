@@ -4,3 +4,4 @@ uploads/
 service-account.json
 *.log
 .DS_Store
+.vercel
