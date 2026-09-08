@@ -3,7 +3,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { 
     Home, Activity, FileText, LayoutGrid, User, 
     HeartPulse, Stethoscope, Building2, Users, Shield, 
-    GitBranch, Pill, Layers, Lock, Sparkles
+    GitBranch, Pill, Layers, Lock, Sparkles, ClipboardList, MapPin
 } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -22,14 +22,14 @@ const Navbar = () => {
         transform: 'translateX(-50%)',
         width: '100%',
         maxWidth: '520px',
-        backgroundColor: 'var(--glass-bg)',
+        backgroundColor: 'rgba(255, 255, 255, 0.92)',
         backdropFilter: 'blur(20px)',
-        borderTop: '1px solid var(--glass-border)',
+        borderTop: '1px solid rgba(226, 232, 240, 0.9)',
         display: 'flex',
         justifyContent: 'space-around',
-        padding: '10px 0 20px',
+        padding: '10px 6px 18px',
         zIndex: 1000,
-        boxShadow: '0 -4px 20px rgba(0,0,0,0.05)'
+        boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.04)'
     };
 
     const linkStyle = ({ isActive }) => ({
@@ -37,11 +37,12 @@ const Navbar = () => {
         flexDirection: 'column',
         alignItems: 'center',
         textDecoration: 'none',
-        color: isActive ? 'var(--primary-color)' : 'var(--text-secondary)',
+        color: isActive ? '#0d9488' : '#64748b',
         fontSize: '10px',
         fontWeight: isActive ? 700 : 500,
         transition: 'all 0.2s ease',
-        minWidth: '54px'
+        minWidth: '58px',
+        position: 'relative'
     });
 
     // Configure role-specific nav items with multilingual labels
@@ -90,22 +91,16 @@ const Navbar = () => {
                 icon: GitBranch,
                 highlight: true 
             },
-            { path: '/records', label: t('navMedHistory', 'Medical History'), icon: Lock },
+            { path: '/medical-history', label: t('navMedHistory', 'Medical History'), icon: ClipboardList },
             { path: '/profile', label: t('navProfile', 'Profile'), icon: User }
         ];
     } else {
-        // Default Citizen / Patient
+        // Default Citizen / Patient: Home, Nearest Facility, Medical History, Track Referral
         navItems = [
             { path: '/home', label: t('navHome', 'Home'), icon: Home },
-            { path: '/status', label: t('navStatus', 'Status'), icon: Activity },
-            { 
-                path: '/records', 
-                label: t('navRecords', 'Records'), 
-                icon: FileText,
-                highlight: true 
-            },
-            { path: '/referrals', label: t('navReferrals', 'Track Referrals'), icon: GitBranch },
-            { path: '/profile', label: t('navProfile', 'Profile'), icon: User }
+            { path: '/facilities', label: t('navNearestFacility', 'Nearest Facility'), icon: Building2 },
+            { path: '/medical-history', label: t('navMedHistory', 'Medical History'), icon: ClipboardList },
+            { path: '/referrals', label: t('navTrackReferral', 'Track Referral'), icon: GitBranch }
         ];
     }
 
@@ -113,16 +108,18 @@ const Navbar = () => {
         <nav style={navStyle}>
             {navItems.map((item, idx) => {
                 const Icon = item.icon;
-                const isActive = location.pathname === item.path || (item.path !== '/home' && item.path !== '/' && location.pathname.startsWith(item.path));
+                const isActive = location.pathname === item.path || 
+                    (item.path !== '/home' && item.path !== '/' && location.pathname.startsWith(item.path)) ||
+                    (item.path === '/medical-history' && (location.pathname === '/history' || location.pathname === '/records'));
 
                 if (item.highlight) {
                     return (
                         <NavLink key={idx} to={item.path} style={linkStyle}>
                             <div style={{
-                                backgroundColor: 'var(--primary-color)',
+                                backgroundColor: '#0d9488',
                                 borderRadius: '50%',
                                 padding: '10px',
-                                marginTop: '-26px',
+                                marginTop: '-24px',
                                 boxShadow: '0 8px 16px rgba(13, 148, 136, 0.35)',
                                 color: 'white',
                                 display: 'flex',
@@ -138,8 +135,19 @@ const Navbar = () => {
 
                 return (
                     <NavLink key={idx} to={item.path} style={linkStyle}>
-                        <Icon size={22} strokeWidth={isActive ? 2.5 : 2} style={{ marginBottom: 4 }} />
-                        <span>{item.label}</span>
+                        <Icon size={21} strokeWidth={isActive ? 2.5 : 1.8} style={{ marginBottom: 3 }} />
+                        <span style={{ textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '78px' }}>
+                            {item.label}
+                        </span>
+                        {isActive && (
+                            <div style={{
+                                width: '4px',
+                                height: '4px',
+                                borderRadius: '50%',
+                                backgroundColor: '#0d9488',
+                                marginTop: '3px'
+                            }} />
+                        )}
                     </NavLink>
                 );
             })}

@@ -447,13 +447,24 @@ const ReferralTracker = () => {
     };
 
     // Google search fallback URL generator for hospital contact
-    const getGoogleSearchUrl = (facility) => {
+const getGoogleSearchUrl = (facility) => {
         const query = `${facility.name || 'Hospital'} ${facility.address || ''} phone number contact`;
         return `https://www.google.com/search?q=${encodeURIComponent(query.trim())}`;
     };
 
+    const formatSlotTime = (timeStr) => {
+        if (!timeStr) return 'Scheduled on Arrival';
+        try {
+            const d = new Date(timeStr);
+            if (isNaN(d.getTime())) return timeStr;
+            return d.toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }) + ' • ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        } catch {
+            return timeStr;
+        }
+    };
+
     return (
-        <div style={{ padding: '24px 16px', maxWidth: '1040px', margin: '0 auto', color: 'var(--text-primary)' }}>
+        <div style={{ padding: '16px 14px 28px', maxWidth: '820px', margin: '0 auto', color: 'var(--text-primary)' }}>
             {/* Toast Feedback */}
             <AnimatePresence>
                 {toastMessage && (
@@ -463,52 +474,97 @@ const ReferralTracker = () => {
                         exit={{ opacity: 0, y: -20 }}
                         style={{
                             position: 'fixed',
-                            top: '20px',
-                            right: '20px',
+                            top: '16px',
+                            left: '50%',
+                            transform: 'translateX(-50%)',
                             zIndex: 9999,
                             backgroundColor: toastMessage.type === 'error' ? '#DC2626' : '#0D9488',
                             color: '#ffffff',
-                            padding: '12px 20px',
-                            borderRadius: '10px',
+                            padding: '10px 18px',
+                            borderRadius: '12px',
                             boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '10px',
-                            fontSize: '14px',
+                            gap: '8px',
+                            fontSize: '13px',
                             fontWeight: '600'
                         }}
                     >
-                        <CheckCircle2 size={18} />
+                        <CheckCircle2 size={16} />
                         <span>{toastMessage.msg}</span>
                     </motion.div>
                 )}
             </AnimatePresence>
 
-            {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
-                <div>
-                    <h1 style={{ fontSize: '24px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <Activity color="var(--primary-color)" size={28} />
-                        Closed-Loop Referral Tracking
-                    </h1>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginTop: '4px' }}>
-                        End-to-end accountability from nearby health centre selection to verified consultation
-                    </p>
+            {/* Compact Header */}
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '14px',
+                background: 'rgba(255, 255, 255, 0.95)',
+                padding: '12px 14px',
+                borderRadius: '14px',
+                border: '1px solid #e2e8f0',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.02)'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{
+                        width: '34px',
+                        height: '34px',
+                        borderRadius: '10px',
+                        background: 'linear-gradient(135deg, #0d9488 0%, #0284c7 100%)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#ffffff'
+                    }}>
+                        <Activity size={18} />
+                    </div>
+                    <div>
+                        <h1 style={{ fontSize: '16px', fontWeight: '800', margin: 0, color: '#0f172a', lineHeight: 1.2 }}>
+                            Referral Tracker
+                        </h1>
+                        <div style={{ fontSize: '11px', color: '#64748b' }}>
+                            {referrals.length} active {referrals.length === 1 ? 'case' : 'cases'} • Closed-Loop ABDM
+                        </div>
+                    </div>
                 </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <div style={{ display: 'flex', gap: '6px' }}>
                     <button 
-                        className="btn-outline" 
                         onClick={() => navigate('/facilities')}
-                        style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', fontSize: '13px' }}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                            padding: '7px 12px',
+                            fontSize: '11.5px',
+                            fontWeight: 700,
+                            borderRadius: '9px',
+                            border: '1.5px solid #ccfbf1',
+                            background: '#f0fdfa',
+                            color: '#0f766e',
+                            cursor: 'pointer'
+                        }}
                     >
-                        <Building2 size={15} color="var(--primary-color)" /> Find Health Centres
+                        <Plus size={14} /> New Visit
                     </button>
                     <button 
-                        className="btn-outline" 
-                        onClick={fetchReferrals} 
-                        style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', fontSize: '13px' }}
+                        onClick={fetchReferrals}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '7px 10px',
+                            borderRadius: '9px',
+                            border: '1px solid #e2e8f0',
+                            background: '#ffffff',
+                            color: '#64748b',
+                            cursor: 'pointer'
+                        }}
+                        title="Refresh"
                     >
-                        <RefreshCw size={15} /> Refresh
+                        <RefreshCw size={14} className={loading ? 'spin' : ''} />
                     </button>
                 </div>
             </div>
@@ -519,25 +575,23 @@ const ReferralTracker = () => {
             <AnimatePresence>
                 {incomingHospital && (
                     <motion.div
-                        initial={{ opacity: 0, y: -12 }}
+                        initial={{ opacity: 0, y: -8 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -12 }}
-                        className="card"
+                        exit={{ opacity: 0, y: -8 }}
                         style={{
-                            padding: '20px',
+                            padding: '14px',
                             borderRadius: '14px',
-                            border: '2px solid var(--primary-color)',
-                            backgroundColor: 'rgba(13, 148, 136, 0.04)',
-                            marginBottom: '28px',
-                            boxShadow: '0 4px 16px rgba(13, 148, 136, 0.08)'
+                            border: '1.5px solid #0d9488',
+                            backgroundColor: '#f0fdfa',
+                            marginBottom: '14px'
                         }}
                     >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
-                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px' }}>
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
                                 <div style={{
-                                    width: '44px',
-                                    height: '44px',
-                                    borderRadius: '12px',
+                                    width: '36px',
+                                    height: '36px',
+                                    borderRadius: '10px',
                                     backgroundColor: '#ccfbf1',
                                     display: 'flex',
                                     alignItems: 'center',
@@ -545,452 +599,353 @@ const ReferralTracker = () => {
                                     color: '#0d9488',
                                     flexShrink: 0
                                 }}>
-                                    <Building2 size={24} />
+                                    <Building2 size={18} />
                                 </div>
                                 <div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                                        <span style={{
-                                            fontSize: '11px',
-                                            fontWeight: '800',
-                                            textTransform: 'uppercase',
-                                            backgroundColor: '#0d9488',
-                                            color: '#ffffff',
-                                            padding: '2px 8px',
-                                            borderRadius: '6px'
-                                        }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                                        <span style={{ fontSize: '10px', fontWeight: '800', backgroundColor: '#0d9488', color: '#ffffff', padding: '1px 6px', borderRadius: '4px' }}>
                                             {incomingHospital.typeLabel || 'Selected Facility'}
                                         </span>
                                         {incomingHospital.distanceFormatted && (
-                                            <span style={{ fontSize: '12px', fontWeight: '700', color: '#0f766e', background: '#ccfbf1', padding: '2px 8px', borderRadius: '6px' }}>
+                                            <span style={{ fontSize: '10.5px', fontWeight: '700', color: '#0f766e' }}>
                                                 📍 {incomingHospital.distanceFormatted} away
                                             </span>
                                         )}
-                                        {incomingHospital.emergency_capable && (
-                                            <span style={{ fontSize: '11px', fontWeight: '800', color: '#dc2626', background: '#fee2e2', padding: '2px 8px', borderRadius: '6px' }}>
-                                                🚨 24x7 Emergency
-                                            </span>
-                                        )}
                                     </div>
-                                    <h2 style={{ fontSize: '18px', fontWeight: '800', margin: '6px 0 4px', color: 'var(--text-primary)' }}>
+                                    <h3 style={{ fontSize: '15px', fontWeight: '800', margin: '4px 0 2px', color: '#0f172a' }}>
                                         {incomingHospital.name}
-                                    </h2>
-                                    <p style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px', margin: 0 }}>
-                                        <MapPin size={14} style={{ flexShrink: 0 }} />
-                                        <span>{incomingHospital.address || 'Address provided via OpenStreetMap'}</span>
+                                    </h3>
+                                    <p style={{ fontSize: '11.5px', color: '#64748b', margin: 0 }}>
+                                        {incomingHospital.address || 'Address provided via OpenStreetMap'}
                                     </p>
                                 </div>
                             </div>
 
                             <button 
                                 onClick={() => { setIncomingHospital(null); setBookingStep(null); }}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', padding: '4px' }}
-                                title="Dismiss selection"
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: '2px' }}
                             >
-                                <X size={20} />
+                                <X size={18} />
                             </button>
                         </div>
 
-                        {/* Hospital Contact Action Bar */}
-                        <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid rgba(13, 148, 136, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-                            <div>
-                                <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)' }}>
-                                    Facility Contact:
-                                </span>
-                                {incomingHospital.phone ? (
-                                    <span style={{ marginLeft: '6px', fontSize: '13px', fontWeight: '700', color: '#0284c7' }}>
-                                        📞 {incomingHospital.phone}
-                                    </span>
-                                ) : (
-                                    <span style={{ marginLeft: '6px', fontSize: '12px', color: '#64748b' }}>
-                                        Phone not listed on map
-                                    </span>
-                                )}
+                        {/* Booking Details Flow */}
+                        {bookingStep === 'ASK_STATUS' && (
+                            <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #ccfbf1', display: 'flex', gap: '8px' }}>
+                                <button
+                                    onClick={() => setBookingStep('FILL_DETAILS')}
+                                    style={{
+                                        flex: 1,
+                                        padding: '9px 12px',
+                                        background: '#0d9488',
+                                        color: '#fff',
+                                        border: 'none',
+                                        borderRadius: '8px',
+                                        fontSize: '12px',
+                                        fontWeight: 700,
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    Book OPD Appointment Slot
+                                </button>
+                                <button
+                                    onClick={() => handleFastTrackReferral(incomingHospital)}
+                                    style={{
+                                        padding: '9px 12px',
+                                        background: '#ffffff',
+                                        color: '#0f766e',
+                                        border: '1px solid #0d9488',
+                                        borderRadius: '8px',
+                                        fontSize: '12px',
+                                        fontWeight: 700,
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    Quick Link
+                                </button>
                             </div>
+                        )}
 
-                            <div style={{ display: 'flex', gap: '8px' }}>
-                                {incomingHospital.phone ? (
-                                    <a
-                                        href={`tel:${incomingHospital.phone}`}
-                                        className="btn-primary"
-                                        style={{
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: '6px',
-                                            padding: '8px 14px',
-                                            fontSize: '13px',
-                                            borderRadius: '8px',
-                                            textDecoration: 'none'
-                                        }}
-                                    >
-                                        <Phone size={15} /> Call Hospital
-                                    </a>
-                                ) : (
-                                    <a
-                                        href={getGoogleSearchUrl(incomingHospital)}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="btn-outline"
-                                        style={{
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: '6px',
-                                            padding: '8px 14px',
-                                            fontSize: '13px',
-                                            borderRadius: '8px',
-                                            textDecoration: 'none',
-                                            borderColor: 'var(--primary-color)',
-                                            color: 'var(--primary-color)',
-                                            fontWeight: '600'
-                                        }}
-                                    >
-                                        <Search size={15} /> Find Hospital Contact <ExternalLink size={12} />
-                                    </a>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* "Was the appointment booked?" Questionnaire */}
-                        <div style={{ marginTop: '16px', padding: '16px', background: '#ffffff', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-                            {bookingStep === 'ASK_STATUS' && (
-                                <div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                                        <CalendarCheck size={18} color="var(--primary-color)" />
-                                        <h4 style={{ fontSize: '15px', fontWeight: '700', margin: 0 }}>
-                                            Was the appointment booked with {incomingHospital.name}?
-                                        </h4>
+                        {bookingStep === 'FILL_DETAILS' && (
+                            <form onSubmit={handleConfirmBooking} style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                                    <div>
+                                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '3px' }}>Date *</label>
+                                        <input
+                                            type="date"
+                                            required
+                                            value={bookingDate}
+                                            min={new Date().toISOString().split('T')[0]}
+                                            onChange={(e) => setBookingDate(e.target.value)}
+                                            style={{ width: '100%', padding: '7px 9px', borderRadius: '7px', border: '1px solid #cbd5e1', fontSize: '12px', boxSizing: 'border-box' }}
+                                        />
                                     </div>
-                                    <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '14px' }}>
-                                        Confirming your booking creates an active referral tracking token so your visit is recorded.
-                                    </p>
-                                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                                        <button
-                                            className="btn-primary"
-                                            onClick={() => setBookingStep('FILL_DETAILS')}
-                                            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 18px', fontSize: '13px', borderRadius: '8px' }}
-                                        >
-                                            <Check size={16} /> Yes, I Booked Appointment
-                                        </button>
-                                        <button
-                                            className="btn-outline"
-                                            onClick={() => navigate('/facilities')}
-                                            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 18px', fontSize: '13px', borderRadius: '8px' }}
-                                        >
-                                            <ArrowRight size={16} /> No, Choose Another Facility
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-
-                            {bookingStep === 'FILL_DETAILS' && (
-                                <form onSubmit={handleConfirmBooking}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                                        <h4 style={{ fontSize: '15px', fontWeight: '700', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                            <Calendar size={17} color="var(--primary-color)" />
-                                            Enter Appointment Schedule Details
-                                        </h4>
-                                        <button 
-                                            type="button" 
-                                            onClick={() => setBookingStep('ASK_STATUS')}
-                                            style={{ background: 'none', border: 'none', color: 'var(--primary-color)', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}
-                                        >
-                                            Back
-                                        </button>
-                                    </div>
-
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px', marginBottom: '14px' }}>
-                                        <div>
-                                            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                                                Scheduled Date *
-                                            </label>
-                                            <input
-                                                type="date"
-                                                required
-                                                value={bookingDate}
-                                                min={new Date().toISOString().split('T')[0]}
-                                                onChange={(e) => setBookingDate(e.target.value)}
-                                                style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '13px' }}
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                                                Time Slot / OPD Session *
-                                            </label>
-                                            <input
-                                                type="text"
-                                                required
-                                                value={bookingTime}
-                                                placeholder="e.g. 10:30 AM or Morning OPD"
-                                                onChange={(e) => setBookingTime(e.target.value)}
-                                                style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '13px' }}
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                                                Urgency Level
-                                            </label>
-                                            <select
-                                                value={bookingUrgency}
-                                                onChange={(e) => setBookingUrgency(e.target.value)}
-                                                style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '13px' }}
-                                            >
-                                                <option value="ROUTINE">Routine OPD Consultation</option>
-                                                <option value="PRIORITY">Priority / Fast-Track</option>
-                                                <option value="EMERGENCY">Emergency / Critical</option>
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    <div style={{ marginBottom: '16px' }}>
-                                        <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                                            Primary Complaint / Reason for Visit *
-                                        </label>
+                                    <div>
+                                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '3px' }}>Slot *</label>
                                         <input
                                             type="text"
                                             required
-                                            value={bookingComplaint}
-                                            placeholder="e.g. Follow-up consultation for hypertension and chest pain evaluation"
-                                            onChange={(e) => setBookingComplaint(e.target.value)}
-                                            style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '13px' }}
+                                            value={bookingTime}
+                                            placeholder="10:30 AM"
+                                            onChange={(e) => setBookingTime(e.target.value)}
+                                            style={{ width: '100%', padding: '7px 9px', borderRadius: '7px', border: '1px solid #cbd5e1', fontSize: '12px', boxSizing: 'border-box' }}
                                         />
                                     </div>
-
-                                    <div style={{ display: 'flex', gap: '10px' }}>
-                                        <button
-                                            type="submit"
-                                            disabled={isSubmittingBooking}
-                                            className="btn-primary"
-                                            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 20px', fontSize: '13px', borderRadius: '8px', fontWeight: '700' }}
-                                        >
-                                            <CheckCircle2 size={16} />
-                                            {isSubmittingBooking ? 'Saving Referral...' : 'Confirm & Save Active Referral'}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setBookingStep('ASK_STATUS')}
-                                            className="btn-outline"
-                                            style={{ padding: '10px 16px', fontSize: '13px', borderRadius: '8px' }}
-                                        >
-                                            Cancel
-                                        </button>
-                                    </div>
-                                </form>
-                            )}
-                        </div>
+                                </div>
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '3px' }}>Complaint / Reason *</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={bookingComplaint}
+                                        onChange={(e) => setBookingComplaint(e.target.value)}
+                                        style={{ width: '100%', padding: '7px 9px', borderRadius: '7px', border: '1px solid #cbd5e1', fontSize: '12px', boxSizing: 'border-box' }}
+                                    />
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                                    <button
+                                        type="submit"
+                                        disabled={isSubmittingBooking}
+                                        style={{
+                                            flex: 1,
+                                            padding: '8px 14px',
+                                            background: '#0d9488',
+                                            color: '#ffffff',
+                                            border: 'none',
+                                            borderRadius: '8px',
+                                            fontSize: '12px',
+                                            fontWeight: 700,
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        {isSubmittingBooking ? 'Saving...' : 'Confirm Appointment'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setBookingStep('ASK_STATUS')}
+                                        style={{ padding: '8px 12px', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '8px', fontSize: '12px', cursor: 'pointer' }}
+                                    >
+                                        Back
+                                    </button>
+                                </div>
+                            </form>
+                        )}
                     </motion.div>
                 )}
             </AnimatePresence>
 
             {/* ------------------------------------------------------------- */}
-            {/* REFERRAL TRACKER MAIN VIEW & STATE MACHINE */}
+            {/* REFERRAL TRACKER MAIN VIEW & HORIZONTAL TABS */}
             {/* ------------------------------------------------------------- */}
             {loading ? (
-                <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-secondary)' }}>
-                    <RefreshCw size={28} className="spin" style={{ margin: '0 auto 12px', color: 'var(--primary-color)' }} />
-                    <p>Loading active referral tracking cases...</p>
+                <div style={{ textAlign: 'center', padding: '40px 0', color: '#64748b' }}>
+                    <RefreshCw size={24} className="spin" style={{ margin: '0 auto 8px', color: '#0d9488' }} />
+                    <p style={{ fontSize: '13px' }}>Loading active referrals...</p>
                 </div>
             ) : referrals.length === 0 ? (
-                <div className="card" style={{ textAlign: 'center', padding: '48px 24px', border: '1px dashed var(--border-color)' }}>
-                    <AlertCircle size={44} color="var(--primary-color)" style={{ margin: '0 auto 14px' }} />
-                    <h3 style={{ fontSize: '18px', fontWeight: '700' }}>No Active Referrals Found</h3>
-                    <p style={{ color: 'var(--text-secondary)', marginTop: '8px', fontSize: '14px', maxWidth: '500px', margin: '8px auto 20px' }}>
-                        You do not have any open referral cases. Pick a nearby hospital or clinic from HealthCentres to book and track your visit.
+                <div style={{ textAlign: 'center', padding: '36px 18px', background: '#ffffff', borderRadius: '16px', border: '1.5px dashed #cbd5e1' }}>
+                    <AlertCircle size={36} color="#0d9488" style={{ margin: '0 auto 10px' }} />
+                    <h3 style={{ fontSize: '16px', fontWeight: '800', margin: '0 0 6px', color: '#0f172a' }}>No Active Referrals</h3>
+                    <p style={{ color: '#64748b', fontSize: '12.5px', maxWidth: '380px', margin: '0 auto 16px' }}>
+                        Select a nearby health centre to schedule and track your closed-loop consultation visit.
                     </p>
                     <button
-                        className="btn-primary"
                         onClick={() => navigate('/facilities')}
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '10px', fontSize: '14px' }}
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '9px 18px',
+                            borderRadius: '10px',
+                            fontSize: '13px',
+                            fontWeight: 700,
+                            background: '#0d9488',
+                            color: '#ffffff',
+                            border: 'none',
+                            cursor: 'pointer'
+                        }}
                     >
-                        <Building2 size={18} /> Browse Nearby Health Centres
+                        <Building2 size={15} /> Find Health Centres
                     </button>
                 </div>
             ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
-                    {/* Left: Referrals List */}
-                    <div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                            <h3 style={{ fontSize: '16px', fontWeight: '700' }}>Active Referrals ({referrals.length})</h3>
-                            <button
-                                onClick={() => navigate('/facilities')}
-                                style={{ background: 'none', border: 'none', color: 'var(--primary-color)', fontSize: '12.5px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-                            >
-                                <Plus size={14} /> Add from Map
-                            </button>
-                        </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {/* Horizontal Referral Carousel / Tab Strip */}
+                    <div style={{
+                        display: 'flex',
+                        gap: '8px',
+                        overflowX: 'auto',
+                        paddingBottom: '4px',
+                        scrollbarWidth: 'none',
+                        WebkitOverflowScrolling: 'touch'
+                    }}>
+                        {referrals.map((ref, i) => {
+                            const isSelected = selectedReferral?.id === ref.id;
+                            const isCompleted = ref.status === 'COMPLETED';
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                            {referrals.map(ref => {
-                                const isSelected = selectedReferral?.id === ref.id;
-                                const isCompleted = ref.status === 'COMPLETED';
-                                const isCancelled = ref.status === 'CANCELLED';
-
-                                return (
-                                    <div 
-                                        key={ref.id}
-                                        onClick={() => loadReferralDetails(ref.id)}
-                                        className="card"
-                                        style={{
-                                            cursor: 'pointer',
-                                            padding: '16px',
-                                            borderRadius: '12px',
-                                            border: isSelected ? '2px solid var(--primary-color)' : '1px solid var(--border-color)',
-                                            backgroundColor: isSelected ? 'rgba(13, 148, 136, 0.05)' : 'var(--card-bg)',
-                                            transition: 'all 0.2s ease'
-                                        }}
-                                    >
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                            <div>
-                                                <span style={{
-                                                    fontSize: '11px',
-                                                    fontWeight: '800',
-                                                    padding: '3px 8px',
-                                                    borderRadius: '6px',
-                                                    backgroundColor: ref.urgency === 'EMERGENCY' ? '#FEE2E2' : '#E0F2FE',
-                                                    color: ref.urgency === 'EMERGENCY' ? '#DC2626' : '#0284C7'
-                                                }}>
-                                                    {ref.urgency || 'ROUTINE'}
-                                                </span>
-                                                <h4 style={{ fontSize: '15px', fontWeight: '700', marginTop: '8px' }}>
-                                                    {ref.specialty_required || 'General Consultation'}
-                                                </h4>
-                                                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                                                    🏥 {ref.facilities?.name || ref.facility_name || 'Selected Facility'}
-                                                </p>
-                                            </div>
-                                            <span style={{
-                                                fontSize: '11px',
-                                                fontWeight: '800',
-                                                color: isCompleted ? '#16A34A' : isCancelled ? '#DC2626' : '#D97706',
-                                                backgroundColor: isCompleted ? '#DCFCE7' : isCancelled ? '#FEE2E2' : '#FEF3C7',
-                                                padding: '4px 8px',
-                                                borderRadius: '6px'
-                                            }}>
-                                                {ref.status?.replace(/_/g, ' ')}
-                                            </span>
-                                        </div>
-
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '12px', fontSize: '12px', color: 'var(--text-secondary)', borderTop: '1px solid var(--border-color)', paddingTop: '8px' }}>
-                                            <span>Token: <strong>{ref.slot_token || 'N/A'}</strong></span>
-                                            <span>{new Date(ref.created_at).toLocaleDateString()}</span>
-                                        </div>
+                            return (
+                                <div 
+                                    key={ref.id}
+                                    onClick={() => loadReferralDetails(ref.id)}
+                                    style={{
+                                        cursor: 'pointer',
+                                        padding: '10px 12px',
+                                        borderRadius: '12px',
+                                        border: isSelected ? '2px solid #0d9488' : '1px solid #e2e8f0',
+                                        backgroundColor: isSelected ? '#f0fdfa' : '#ffffff',
+                                        minWidth: '150px',
+                                        flexShrink: 0,
+                                        boxShadow: isSelected ? '0 3px 10px rgba(13, 148, 136, 0.12)' : '0 1px 3px rgba(0,0,0,0.02)',
+                                        transition: 'all 0.2s ease'
+                                    }}
+                                >
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                                        <span style={{
+                                            fontSize: '9.5px',
+                                            fontWeight: '800',
+                                            padding: '2px 5px',
+                                            borderRadius: '4px',
+                                            backgroundColor: isSelected ? '#0d9488' : '#e2e8f0',
+                                            color: isSelected ? '#ffffff' : '#475569'
+                                        }}>
+                                            #{ref.slot_token || `REF-${i+1}`}
+                                        </span>
+                                        <span style={{
+                                            fontSize: '9px',
+                                            fontWeight: '800',
+                                            color: isCompleted ? '#16a34a' : '#d97706'
+                                        }}>
+                                            {isCompleted ? '✓ Done' : (ref.status?.replace(/_/g, ' ') || 'Active')}
+                                        </span>
                                     </div>
-                                );
-                            })}
-                        </div>
+                                    <div style={{ fontSize: '12px', fontWeight: '700', color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                        {ref.facilities?.name || ref.facility_name || 'Health Centre'}
+                                    </div>
+                                    <div style={{ fontSize: '10.5px', color: '#64748b', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                        {ref.specialty_required || 'General OPD'}
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
 
-                    {/* Right: Selected Referral Detail & State Machine Lifecycle */}
+                    {/* Selected Referral Active Detail Card */}
                     {selectedReferral && (
-                        <div className="card" style={{ padding: '24px', borderRadius: '14px', border: '1px solid var(--border-color)' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px', borderBottom: '1px solid var(--border-color)', paddingBottom: '16px', marginBottom: '20px' }}>
+                        <div style={{
+                            background: '#ffffff',
+                            borderRadius: '16px',
+                            border: '1px solid #e2e8f0',
+                            padding: '16px',
+                            boxShadow: '0 4px 16px rgba(15, 23, 42, 0.04)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '12px'
+                        }}>
+                            {/* Header Row: Token Badge & Complaint */}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: '10px' }}>
                                 <div>
-                                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                                        Referral ID: {selectedReferral.id.substring(0, 12)}
-                                    </span>
-                                    <h2 style={{ fontSize: '18px', fontWeight: '800', marginTop: '4px' }}>
-                                        {selectedReferral.primary_complaint || selectedReferral.specialty_required}
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <span style={{ fontSize: '10px', fontWeight: 800, background: '#ccfbf1', color: '#0f766e', padding: '2px 6px', borderRadius: '5px' }}>
+                                            TOKEN {selectedReferral.slot_token || 'OPD-101'}
+                                        </span>
+                                        <span style={{ fontSize: '10px', fontWeight: 700, color: '#94a3b8' }}>
+                                            ID: {selectedReferral.id?.substring(0, 8)}
+                                        </span>
+                                    </div>
+                                    <h2 style={{ fontSize: '15px', fontWeight: '800', margin: '4px 0 0', color: '#0f172a' }}>
+                                        {selectedReferral.primary_complaint || selectedReferral.specialty_required || 'Doctor Consultation'}
                                     </h2>
                                 </div>
-                                <div style={{ textAlign: 'right' }}>
-                                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Queue Token</span>
-                                    <div style={{ fontSize: '18px', fontWeight: '800', color: 'var(--primary-color)' }}>
-                                        {selectedReferral.slot_token || 'Token #14'}
-                                    </div>
-                                </div>
+                                <span style={{
+                                    fontSize: '10.5px',
+                                    fontWeight: '800',
+                                    color: selectedReferral.status === 'COMPLETED' ? '#16A34A' : '#d97706',
+                                    backgroundColor: selectedReferral.status === 'COMPLETED' ? '#DCFCE7' : '#FEF3C7',
+                                    padding: '4px 8px',
+                                    borderRadius: '6px'
+                                }}>
+                                    {selectedReferral.status?.replace(/_/g, ' ')}
+                                </span>
                             </div>
 
-                            {/* Destination Facility & Assigned Specialist */}
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '20px' }}>
-                                <div style={{ padding: '14px', borderRadius: '10px', backgroundColor: 'var(--bg-color)', border: '1px solid var(--border-color)' }}>
-                                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                        <MapPin size={14} color="var(--primary-color)" /> Receiving Facility
+                            {/* 2-Column Compact Info: Facility & Slot */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                                <div style={{ padding: '10px', borderRadius: '10px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                                    <div style={{ fontSize: '10.5px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '3px', fontWeight: 700 }}>
+                                        <MapPin size={12} color="#0d9488" /> Facility
                                     </div>
-                                    <div style={{ fontWeight: '700', fontSize: '14px', marginTop: '4px' }}>
+                                    <div style={{ fontWeight: '700', fontSize: '12.5px', marginTop: '2px', color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                         {selectedReferral.facilities?.name || selectedReferral.facility_name || 'District Hospital'}
                                     </div>
-                                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                                        {selectedReferral.facilities?.address || selectedReferral.facility_address || 'Main Health Campus'}
-                                    </div>
                                     {selectedReferral.facilities?.phone && (
-                                        <a href={`tel:${selectedReferral.facilities.phone}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: '#0284c7', marginTop: '6px', textDecoration: 'none', fontWeight: '600' }}>
-                                            <Phone size={12} /> {selectedReferral.facilities.phone}
+                                        <a href={`tel:${selectedReferral.facilities.phone}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: '11px', color: '#0284c7', marginTop: '3px', textDecoration: 'none', fontWeight: '600' }}>
+                                            <Phone size={10} /> Call Clinic
                                         </a>
                                     )}
                                 </div>
 
-                                <div style={{ padding: '14px', borderRadius: '10px', backgroundColor: 'var(--bg-color)', border: '1px solid var(--border-color)' }}>
-                                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                        <Stethoscope size={14} color="var(--primary-color)" /> Assigned Doctor / OPD
+                                <div style={{ padding: '10px', borderRadius: '10px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                                    <div style={{ fontSize: '10.5px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '3px', fontWeight: 700 }}>
+                                        <Clock size={12} color="#0284c7" /> OPD / Slot
                                     </div>
-                                    <div style={{ fontWeight: '700', fontSize: '14px', marginTop: '4px' }}>
+                                    <div style={{ fontWeight: '700', fontSize: '12.5px', marginTop: '2px', color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                         {selectedReferral.doctors?.name || 'Assigned on Arrival'}
                                     </div>
-                                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                                        {selectedReferral.specialty_required || 'Specialist OPD'}
+                                    <div style={{ fontSize: '10.5px', color: '#0f766e', fontWeight: '600', marginTop: '3px' }}>
+                                        {formatSlotTime(selectedReferral.appointment_slot_time)}
                                     </div>
-                                    {selectedReferral.appointment_slot_time && (
-                                        <div style={{ fontSize: '12px', color: '#0f766e', fontWeight: '600', marginTop: '6px' }}>
-                                            ⏰ Slot: {selectedReferral.appointment_slot_time}
-                                        </div>
-                                    )}
                                 </div>
                             </div>
 
-                            {/* ------------------------------------------------------------- */}
-                            {/* ATTENDANCE CONFIRMATION CARD (EXPLICIT ATTENDANCE LIFECYCLE) */}
-                            {/* ------------------------------------------------------------- */}
+                            {/* Attendance Verification Strip */}
                             {selectedReferral.status !== 'COMPLETED' && selectedReferral.status !== 'CANCELLED' && (
                                 <div style={{
-                                    marginBottom: '24px',
-                                    padding: '16px',
-                                    borderRadius: '12px',
-                                    backgroundColor: '#F0FDFA',
-                                    border: '1.5px solid #0D9488',
-                                    boxShadow: '0 2px 8px rgba(13,148,136,0.08)'
+                                    padding: '10px 12px',
+                                    borderRadius: '10px',
+                                    backgroundColor: '#f0fdfa',
+                                    border: '1px solid #99f6e4',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    flexWrap: 'wrap',
+                                    gap: '8px'
                                 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                                        <ShieldCheck size={20} color="#0D9488" />
-                                        <h4 style={{ fontSize: '14.5px', fontWeight: '800', margin: 0, color: '#0F766E' }}>
-                                            Attendance Verification
-                                        </h4>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <ShieldCheck size={16} color="#0d9488" />
+                                        <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#0f766e' }}>
+                                            Did you attend this consultation?
+                                        </span>
                                     </div>
-                                    <p style={{ fontSize: '13px', color: '#334155', margin: '0 0 12px', lineHeight: '1.4' }}>
-                                        Did you attend your consultation at <strong>{selectedReferral.facilities?.name || selectedReferral.facility_name || 'the facility'}</strong>?
-                                    </p>
-                                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                                    <div style={{ display: 'flex', gap: '6px' }}>
                                         <button
                                             onClick={handleConfirmAttendance}
-                                            className="btn-primary"
                                             style={{
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                gap: '6px',
-                                                padding: '8px 16px',
-                                                fontSize: '12.5px',
-                                                borderRadius: '8px',
-                                                fontWeight: '700'
+                                                padding: '5px 10px',
+                                                fontSize: '11px',
+                                                borderRadius: '6px',
+                                                fontWeight: '700',
+                                                background: '#0d9488',
+                                                color: '#fff',
+                                                border: 'none',
+                                                cursor: 'pointer'
                                             }}
                                         >
-                                            <CheckCircle2 size={15} /> Yes, I Attended (Save to History)
+                                            ✓ Attended
                                         </button>
                                         <button
                                             onClick={handleMissedAppointment}
                                             style={{
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                gap: '6px',
-                                                padding: '8px 14px',
-                                                fontSize: '12.5px',
-                                                borderRadius: '8px',
+                                                padding: '5px 8px',
+                                                fontSize: '11px',
+                                                borderRadius: '6px',
                                                 background: '#fee2e2',
                                                 color: '#dc2626',
-                                                border: '1px solid #fecaca',
+                                                border: 'none',
                                                 fontWeight: '700',
                                                 cursor: 'pointer'
                                             }}
                                         >
-                                            <X size={15} /> No, Missed / Cancelled
+                                            ✕ Missed
                                         </button>
                                     </div>
                                 </div>
@@ -998,98 +953,96 @@ const ReferralTracker = () => {
 
                             {selectedReferral.status === 'COMPLETED' && (
                                 <div style={{
-                                    marginBottom: '24px',
-                                    padding: '14px 16px',
-                                    borderRadius: '12px',
+                                    padding: '8px 12px',
+                                    borderRadius: '10px',
                                     backgroundColor: '#DCFCE7',
                                     border: '1px solid #86EFAC',
                                     display: 'flex',
                                     alignItems: 'center',
-                                    gap: '10px',
-                                    color: '#166534'
+                                    gap: '6px',
+                                    color: '#166534',
+                                    fontSize: '11.5px',
+                                    fontWeight: '700'
                                 }}>
-                                    <CheckCircle2 size={20} color="#16A34A" />
-                                    <div>
-                                        <div style={{ fontWeight: '800', fontSize: '13.5px' }}>Closed-Loop Referral Completed</div>
-                                        <div style={{ fontSize: '12px', marginTop: '2px' }}>
-                                            Consultation verified and recorded in your Medical History & EHR records.
-                                        </div>
-                                    </div>
+                                    <CheckCircle2 size={15} color="#16A34A" />
+                                    <span>Closed-Loop Completed & Saved to Medical History</span>
                                 </div>
                             )}
 
-                            {/* State Machine Progress Bar */}
-                            <h4 style={{ fontSize: '14px', fontWeight: '700', marginBottom: '16px' }}>Referral Lifecycle State</h4>
-                            <div style={{ position: 'relative', marginBottom: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minWidth: '420px', position: 'relative', zIndex: 2 }}>
-                                    {STATUS_STEPS.map((step, idx) => {
-                                        const currentIdx = getStepIndex(selectedReferral.status);
-                                        const isStepCompleted = idx <= currentIdx;
-                                        return (
-                                            <div key={step.key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', width: '48px' }}>
-                                                <div style={{
-                                                    width: '24px',
-                                                    height: '24px',
-                                                    borderRadius: '50%',
-                                                    backgroundColor: isStepCompleted ? 'var(--primary-color)' : 'var(--border-color)',
-                                                    color: 'white',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    fontSize: '11px',
-                                                    fontWeight: '700',
-                                                    marginBottom: '6px'
-                                                }}>
-                                                    {isStepCompleted ? '✓' : idx + 1}
-                                                </div>
-                                                <span style={{ fontSize: '10px', color: isStepCompleted ? 'var(--text-primary)' : 'var(--text-secondary)', fontWeight: isStepCompleted ? '700' : '400' }}>
-                                                    {step.label}
-                                                </span>
-                                            </div>
-                                        );
-                                    })}
+                            {/* Lifecycle Progress Bar */}
+                            <div style={{ background: '#fafbfc', padding: '10px 12px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                                    <span style={{ fontSize: '11px', fontWeight: 800, color: '#334155' }}>
+                                        Lifecycle Stage
+                                    </span>
+                                    <span style={{ fontSize: '10.5px', color: '#0d9488', fontWeight: 700 }}>
+                                        Step {getStepIndex(selectedReferral.status) + 1} of {STATUS_STEPS.length}
+                                    </span>
+                                </div>
+                                
+                                {/* Progress Bar Track */}
+                                <div style={{ width: '100%', height: '5px', borderRadius: '3px', background: '#e2e8f0', overflow: 'hidden', marginBottom: '8px' }}>
+                                    <div style={{
+                                        width: `${((getStepIndex(selectedReferral.status) + 1) / STATUS_STEPS.length) * 100}%`,
+                                        height: '100%',
+                                        background: 'linear-gradient(90deg, #0d9488 0%, #0284c7 100%)',
+                                        borderRadius: '3px',
+                                        transition: 'width 0.3s ease'
+                                    }} />
+                                </div>
+
+                                {/* Quick Stage Buttons */}
+                                <div style={{ display: 'flex', gap: '4px', overflowX: 'auto', paddingBottom: '2px', scrollbarWidth: 'none' }}>
+                                    <button 
+                                        onClick={() => handleUpdateStatus('PATIENT_IN_TRANSIT', 'Patient traveling to healthcare centre')}
+                                        style={{ flex: 1, padding: '5px 6px', fontSize: '10px', fontWeight: 700, borderRadius: '6px', border: '1px solid #cbd5e1', background: '#ffffff', color: '#334155', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                                    >
+                                        🚗 In Transit
+                                    </button>
+                                    <button 
+                                        onClick={() => handleUpdateStatus('PATIENT_REACHED', 'Patient checked in at hospital desk')}
+                                        style={{ flex: 1, padding: '5px 6px', fontSize: '10px', fontWeight: 700, borderRadius: '6px', border: '1px solid #cbd5e1', background: '#ffffff', color: '#334155', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                                    >
+                                        🏥 Arrived
+                                    </button>
+                                    <button 
+                                        onClick={() => handleUpdateStatus('TREATMENT_COMPLETED', 'Doctor consultation completed')}
+                                        style={{ flex: 1, padding: '5px 6px', fontSize: '10px', fontWeight: 700, borderRadius: '6px', border: '1px solid #cbd5e1', background: '#ffffff', color: '#334155', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                                    >
+                                        💊 Treated
+                                    </button>
+                                    <button 
+                                        onClick={handleConfirmAttendance}
+                                        style={{ flex: 1, padding: '5px 6px', fontSize: '10px', fontWeight: 800, borderRadius: '6px', border: 'none', background: '#0d9488', color: '#ffffff', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                                    >
+                                        ✓ Close
+                                    </button>
                                 </div>
                             </div>
 
-                            {/* State Transition Actions */}
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '24px', padding: '14px', backgroundColor: 'var(--bg-color)', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
-                                <span style={{ width: '100%', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)' }}>
-                                    Advance Lifecycle Status:
-                                </span>
-                                <button className="btn-outline" style={{ fontSize: '12px', padding: '6px 12px' }} onClick={() => handleUpdateStatus('PATIENT_IN_TRANSIT', 'Patient traveling to healthcare centre')}>
-                                    In-Transit 🚗
-                                </button>
-                                <button className="btn-outline" style={{ fontSize: '12px', padding: '6px 12px' }} onClick={() => handleUpdateStatus('PATIENT_REACHED', 'Patient checked in at hospital desk')}>
-                                    Arrival Confirmed 🏥
-                                </button>
-                                <button className="btn-outline" style={{ fontSize: '12px', padding: '6px 12px' }} onClick={() => handleUpdateStatus('TREATMENT_COMPLETED', 'Doctor consultation and advice completed')}>
-                                    Treatment Done 💊
-                                </button>
-                                <button className="btn-primary" style={{ fontSize: '12px', padding: '6px 12px' }} onClick={handleConfirmAttendance}>
-                                    Close Loop ✅
-                                </button>
-                            </div>
-
-                            {/* Timeline of Events */}
-                            <h4 style={{ fontSize: '14px', fontWeight: '700', marginBottom: '12px' }}>Event Audit History</h4>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                {timeline.length === 0 ? (
-                                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>No audit events recorded yet.</p>
-                                ) : (
-                                    timeline.map(ev => (
-                                        <div key={ev.id} style={{ display: 'flex', gap: '10px', fontSize: '12px', alignItems: 'flex-start' }}>
-                                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--primary-color)', marginTop: '4px' }}></div>
-                                            <div style={{ flex: 1 }}>
-                                                <span style={{ fontWeight: '700' }}>{ev.to_status?.replace(/_/g, ' ')}</span>
-                                                <span style={{ color: 'var(--text-secondary)', marginLeft: '6px' }}>({ev.actor_role})</span>
-                                                <p style={{ color: 'var(--text-secondary)', margin: '2px 0 0' }}>{ev.reason || 'Status updated'}</p>
+                            {/* Timeline of Events (Audit History) */}
+                            <div>
+                                <div style={{ fontSize: '11px', fontWeight: 800, color: '#475569', marginBottom: '6px' }}>
+                                    Audit History
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                    {timeline.length === 0 ? (
+                                        <p style={{ fontSize: '11px', color: '#94a3b8', margin: 0 }}>No audit events recorded yet.</p>
+                                    ) : (
+                                        timeline.slice(0, 3).map(ev => (
+                                            <div key={ev.id} style={{ display: 'flex', gap: '6px', fontSize: '11px', alignItems: 'center', background: '#f8fafc', padding: '5px 8px', borderRadius: '6px' }}>
+                                                <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#0d9488', flexShrink: 0 }} />
+                                                <div style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                    <strong style={{ color: '#0f172a' }}>{ev.to_status?.replace(/_/g, ' ')}</strong>
+                                                    <span style={{ color: '#64748b', marginLeft: '4px' }}>- {ev.reason || 'Status updated'}</span>
+                                                </div>
+                                                <span style={{ color: '#94a3b8', fontSize: '10px', flexShrink: 0 }}>
+                                                    {ev.created_at ? new Date(ev.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                                                </span>
                                             </div>
-                                            <span style={{ color: 'var(--text-secondary)', fontSize: '11px' }}>
-                                                {ev.created_at ? new Date(ev.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                                            </span>
-                                        </div>
-                                    ))
-                                )}
+                                        ))
+                                    )}
+                                </div>
                             </div>
                         </div>
                     )}

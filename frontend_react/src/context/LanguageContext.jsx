@@ -17,6 +17,9 @@ export const translations = {
         
         // Navigation & Bottom Bar
         navHome: 'Home',
+        navNearestFacility: 'Nearest Facility',
+        navMedHistory: 'Medical History',
+        navTrackReferral: 'Track Referral',
         navStatus: 'Status',
         navRecords: 'Records',
         navReferrals: 'Track Referrals',
@@ -32,7 +35,6 @@ export const translations = {
         navDocRoster: 'Doc Roster',
         navCommandHub: 'Command Hub',
         navBedsLive: 'Beds Live',
-        navMedHistory: 'Medical History',
         navSupport: 'Support',
         navNotifications: 'Notifications',
 
@@ -314,6 +316,9 @@ export const translations = {
 
         // Navigation & Bottom Bar
         navHome: 'होम',
+        navNearestFacility: 'निकटतम अस्पताल',
+        navMedHistory: 'मेडिकल हिस्ट्री',
+        navTrackReferral: 'रेफरल ट्रैकर',
         navStatus: 'स्थिति',
         navRecords: 'दस्तावेज़',
         navReferrals: 'रेफरल ट्रैकर',
@@ -329,7 +334,6 @@ export const translations = {
         navDocRoster: 'डॉक्टर रोस्टर',
         navCommandHub: 'कमांड हब',
         navBedsLive: 'लाइव बेड्स',
-        navMedHistory: 'मेडिकल हिस्ट्री',
         navSupport: 'सहायता',
         navNotifications: 'सूचनाएं',
 
@@ -610,6 +614,9 @@ export const translations = {
         abdmStandard: 'आयुष्मान भारत डिजिटल मिशन (ABDM) • FHIR मानके • मल्टी-डिव्हाइस सिंक',
 
         navHome: 'मुख्यपृष्ठ',
+        navNearestFacility: 'जवळचे रुग्णालय',
+        navMedHistory: 'वैद्यकीय इतिहास',
+        navTrackReferral: 'रेफरल ट्रॅकर',
         navStatus: 'स्थिती',
         navRecords: 'नोंदी',
         navReferrals: 'रेफरल ट्रॅकर',
@@ -625,7 +632,6 @@ export const translations = {
         navDocRoster: 'डॉक्टर रोस्टर',
         navCommandHub: 'कमांड हब',
         navBedsLive: 'लाइव्ह बेड्स',
-        navMedHistory: 'वैद्यकीय इतिहास',
         navSupport: 'मदत',
         navNotifications: 'सूचना',
 
