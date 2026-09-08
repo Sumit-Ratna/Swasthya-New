@@ -345,55 +345,82 @@ const OfflineHealthHelpBot = () => {
 
     return (
         <>
-            {/* 1. Floating Pulse Trigger Button on Homepage */}
-            <div style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 9999 }}>
-                <motion.button
-                    whileHover={{ scale: 1.08 }}
-                    whileTap={{ scale: 0.94 }}
-                    onClick={() => setIsOpen(true)}
+            {/* 1. Compact, Draggable Floating Pulse Trigger Button */}
+            <motion.div
+                drag
+                dragMomentum={false}
+                dragElastic={0.15}
+                whileHover={{ scale: 1.08 }}
+                whileTap={{ scale: 0.94 }}
+                whileDrag={{ scale: 1.12, cursor: 'grabbing', zIndex: 10001 }}
+                onClick={() => setIsOpen(true)}
+                title="Swasthya AI Assistant • Drag to move, Click to open"
+                style={{
+                    position: 'fixed',
+                    bottom: '80px',
+                    right: '20px',
+                    zIndex: 9999,
+                    cursor: 'grab',
+                    touchAction: 'none',
+                    userSelect: 'none'
+                }}
+            >
+                <div
                     style={{
-                        padding: '14px 20px',
-                        borderRadius: '30px',
+                        height: '44px',
+                        padding: '0 12px 0 10px',
+                        borderRadius: '24px',
                         background: aiMode === 'online' 
                             ? 'linear-gradient(135deg, #0284c7 0%, #0d9488 100%)' 
                             : 'linear-gradient(135deg, #0d9488 0%, #16a34a 100%)',
                         color: 'white',
-                        border: 'none',
-                        boxShadow: '0 8px 24px rgba(13, 148, 136, 0.4)',
+                        border: '1.5px solid rgba(255, 255, 255, 0.4)',
+                        boxShadow: '0 8px 24px rgba(13, 148, 136, 0.45), 0 2px 6px rgba(0, 0, 0, 0.15)',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '10px',
-                        cursor: 'pointer',
-                        fontWeight: 700,
-                        fontSize: '14px',
-                        letterSpacing: '0.3px'
+                        gap: '7px',
+                        backdropFilter: 'blur(8px)',
+                        transition: 'box-shadow 0.2s ease'
                     }}
                 >
-                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                        <HeartPulse size={22} color="#ffffff" />
+                    {/* Glowing Pulse Heartbeat Icon */}
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <HeartPulse size={20} color="#ffffff" />
                         <span style={{
                             position: 'absolute',
-                            top: '-3px',
-                            right: '-3px',
-                            width: '8px',
-                            height: '8px',
+                            top: '-2px',
+                            right: '-2px',
+                            width: '7px',
+                            height: '7px',
                             borderRadius: '50%',
                             background: aiMode === 'online' ? '#38bdf8' : '#22c55e',
                             boxShadow: `0 0 8px ${aiMode === 'online' ? '#38bdf8' : '#22c55e'}`
                         }} />
                     </div>
-                    <span>{aiMode === 'online' ? 'Online AI (n8n)' : 'Offline Gemma 1.5'}</span>
+
+                    {/* Compact Label & Badge */}
                     <span style={{
-                        background: 'rgba(255,255,255,0.2)',
-                        padding: '2px 8px',
-                        borderRadius: '10px',
-                        fontSize: '11px',
-                        fontWeight: 800
+                        fontSize: '12px',
+                        fontWeight: 800,
+                        letterSpacing: '0.2px',
+                        whiteSpace: 'nowrap'
+                    }}>
+                        AI
+                    </span>
+
+                    <span style={{
+                        background: 'rgba(255,255,255,0.22)',
+                        padding: '2px 6px',
+                        borderRadius: '8px',
+                        fontSize: '10px',
+                        fontWeight: 800,
+                        letterSpacing: '0.3px',
+                        lineHeight: 1
                     }}>
                         {aiMode === 'online' ? 'n8n' : 'INT4'}
                     </span>
-                </motion.button>
-            </div>
+                </div>
+            </motion.div>
 
             {/* 2. Interactive First-Aid & Health Assistant Modal Drawer */}
             <AnimatePresence>
