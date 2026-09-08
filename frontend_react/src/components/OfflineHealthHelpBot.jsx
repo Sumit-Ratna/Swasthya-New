@@ -602,140 +602,82 @@ const OfflineHealthHelpBot = () => {
                                     }}
                                 >
                                     <Cpu size={12} />
-                                    <span>Offline (Gemma LiteRT)</span>
+                                    <span>Offline ({gemmaState.name || 'Gemma Neural'})</span>
                                 </button>
                             </div>
                         </div>
 
-                        {/* FIRST-TIME SETUP DIALOG: One-Time Offline Gemma 3n E2B Download */}
-                        {gemmaState.status !== 'READY' && (
+                        {/* OFFLINE MODEL SETUP CARD (Only shown in Offline Mode when model is not ready) */}
+                        {aiMode === 'offline' && gemmaState.status !== 'READY' && (
                             <div style={{
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                bottom: 0,
-                                background: 'rgba(15, 23, 42, 0.88)',
-                                backdropFilter: 'blur(8px)',
+                                background: '#f0fdfa',
+                                borderBottom: '1px solid #ccfbf1',
+                                padding: '12px 14px',
                                 display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                padding: '20px',
-                                zIndex: 10050
+                                flexDirection: 'column',
+                                gap: '8px'
                             }}>
-                                <div style={{
-                                    background: 'white',
-                                    borderRadius: '20px',
-                                    padding: '24px 20px',
-                                    maxWidth: '340px',
-                                    width: '100%',
-                                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
-                                    textAlign: 'center'
-                                }}>
-                                    <div style={{
-                                        width: '54px',
-                                        height: '54px',
-                                        borderRadius: '16px',
-                                        background: 'linear-gradient(135deg, #0284c7 0%, #0d9488 100%)',
-                                        color: 'white',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        margin: '0 auto 14px',
-                                        boxShadow: '0 8px 16px rgba(13, 148, 136, 0.3)'
-                                    }}>
-                                        <Cpu size={26} />
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <Cpu size={16} color="#0d9488" />
+                                        <span style={{ fontSize: '12px', fontWeight: 800, color: '#0f766e' }}>
+                                            On-Device Neural Model Required
+                                        </span>
                                     </div>
+                                    <span style={{ fontSize: '11px', fontWeight: 700, color: '#64748b' }}>
+                                        {gemmaState.size}
+                                    </span>
+                                </div>
 
-                                    <h3 style={{ margin: '0 0 8px', fontSize: '17px', fontWeight: 800, color: '#0f172a' }}>
-                                        Offline AI Model
-                                    </h3>
-                                    <p style={{ margin: '0 0 14px', fontSize: '12px', color: '#475569', lineHeight: 1.5 }}>
-                                        Download the offline AI model to use Health Assistance without an internet connection.
-                                    </p>
-
-                                    <div style={{
-                                        background: '#f8fafc',
-                                        border: '1px solid #e2e8f0',
-                                        borderRadius: '10px',
-                                        padding: '9px 12px',
-                                        fontSize: '11px',
-                                        color: '#64748b',
-                                        marginBottom: '16px'
-                                    }}>
-                                        💾 Requires <strong>~48 MB</strong> device storage before downloading.
+                                {gemmaState.status === 'DOWNLOADING' ? (
+                                    <div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 700, color: '#0f766e', marginBottom: '4px' }}>
+                                            <span style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                {gemmaState.currentFile ? `Downloading: ${gemmaState.currentFile}` : 'Initializing weights...'}
+                                            </span>
+                                            <span>{gemmaState.progress}%</span>
+                                        </div>
+                                        <div style={{ width: '100%', height: '7px', background: '#ccfbf1', borderRadius: '4px', overflow: 'hidden', marginBottom: '4px' }}>
+                                            <div style={{
+                                                width: `${gemmaState.progress}%`,
+                                                height: '100%',
+                                                background: 'linear-gradient(90deg, #0d9488 0%, #0284c7 100%)',
+                                                transition: 'width 0.2s ease'
+                                            }} />
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#64748b' }}>
+                                            <span>{gemmaState.loadedFormatted || '0 MB'} / {gemmaState.size}</span>
+                                            <span>{gemmaState.speedMBs && gemmaState.speedMBs !== '0.0' ? `${gemmaState.speedMBs} MB/s` : 'Connecting CDN...'}</span>
+                                        </div>
                                     </div>
-
-                                    {gemmaState.status === 'DOWNLOADING' ? (
-                                        <div>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 700, color: '#0284c7', marginBottom: '6px' }}>
-                                                <span>Downloading {gemmaState.currentFile || 'Gemma 3n E2B'}...</span>
-                                                <span>{gemmaState.progress}%</span>
-                                            </div>
-                                            <div style={{ width: '100%', height: '8px', background: '#e0f2fe', borderRadius: '4px', overflow: 'hidden', marginBottom: '6px' }}>
-                                                <div style={{
-                                                    width: `${gemmaState.progress}%`,
-                                                    height: '100%',
-                                                    background: 'linear-gradient(90deg, #0284c7 0%, #0d9488 100%)',
-                                                    transition: 'width 0.2s ease'
-                                                }} />
-                                            </div>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#64748b' }}>
-                                                <span>{gemmaState.loadedFormatted || '0 MB'} / {gemmaState.size}</span>
-                                                <span>{gemmaState.speedMBs ? `${gemmaState.speedMBs} MB/s` : 'Connecting...'}</span>
-                                            </div>
-                                        </div>
-                                    ) : gemmaState.status === 'FAILED' ? (
-                                        <div>
-                                            <div style={{ color: '#dc2626', fontSize: '11px', fontWeight: 700, marginBottom: '12px' }}>
-                                                Offline model download failed. Please try again.
-                                            </div>
-                                            <button
-                                                onClick={handleDownloadGemma}
-                                                style={{
-                                                    width: '100%',
-                                                    padding: '11px',
-                                                    borderRadius: '10px',
-                                                    background: 'linear-gradient(135deg, #0284c7 0%, #0d9488 100%)',
-                                                    color: 'white',
-                                                    border: 'none',
-                                                    fontSize: '12px',
-                                                    fontWeight: 800,
-                                                    cursor: 'pointer',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    gap: '6px'
-                                                }}
-                                            >
-                                                <RefreshCw size={14} />
-                                                <span>Retry Download</span>
-                                            </button>
-                                        </div>
-                                    ) : (
+                                ) : (
+                                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                        <p style={{ margin: 0, fontSize: '11px', color: '#475569', flex: 1, lineHeight: 1.35 }}>
+                                            Download <strong>{gemmaState.name} ({gemmaState.size})</strong> for 100% genuine on-device AI answers without internet.
+                                        </p>
                                         <button
                                             onClick={handleDownloadGemma}
                                             style={{
-                                                width: '100%',
-                                                padding: '12px',
-                                                borderRadius: '12px',
-                                                background: 'linear-gradient(135deg, #0284c7 0%, #0d9488 100%)',
+                                                background: 'linear-gradient(135deg, #0d9488 0%, #0284c7 100%)',
                                                 color: 'white',
                                                 border: 'none',
-                                                fontSize: '13px',
+                                                padding: '7px 12px',
+                                                borderRadius: '8px',
+                                                fontSize: '11px',
                                                 fontWeight: 800,
                                                 cursor: 'pointer',
                                                 display: 'flex',
                                                 alignItems: 'center',
-                                                justifyContent: 'center',
-                                                gap: '8px'
+                                                gap: '5px',
+                                                flexShrink: 0,
+                                                boxShadow: '0 2px 6px rgba(13, 148, 136, 0.3)'
                                             }}
                                         >
-                                            <Download size={16} />
-                                            <span>Download Offline Model</span>
+                                            <Download size={13} />
+                                            <span>Download</span>
                                         </button>
-                                    )}
-                                </div>
+                                    </div>
+                                )}
                             </div>
                         )}
 
@@ -1113,27 +1055,51 @@ const OfflineHealthHelpBot = () => {
                                         </button>
                                     </div>
 
-                                    {/* Gemma LiteRT On-Device Info */}
+                                    {/* On-Device Neural Model Info & Selector */}
                                     <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '10px', marginBottom: '12px', fontSize: '11px' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                                            <span style={{ color: '#64748b' }}>Offline Model:</span>
-                                            <strong style={{ color: '#0f172a' }}>Gemma LiteRT</strong>
+                                        <div style={{ fontWeight: 800, color: '#0f172a', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                            <Cpu size={14} color="#0d9488" />
+                                            <span>On-Device Neural Model (Offline):</span>
                                         </div>
+
+                                        <select
+                                            value={gemmaState.id}
+                                            onChange={(e) => gemmaEngine.setModel(e.target.value)}
+                                            disabled={gemmaState.isDownloading}
+                                            style={{
+                                                width: '100%',
+                                                padding: '6px 8px',
+                                                borderRadius: '6px',
+                                                border: '1px solid #cbd5e1',
+                                                fontSize: '11px',
+                                                fontWeight: 700,
+                                                marginBottom: '8px',
+                                                color: '#0f172a',
+                                                background: '#ffffff'
+                                            }}
+                                        >
+                                            {(gemmaState.models || []).map(m => (
+                                                <option key={m.id} value={m.id}>
+                                                    {m.name} ({m.sizeFormatted}) {m.recommended ? '★ Recommended' : ''}
+                                                </option>
+                                            ))}
+                                        </select>
+
                                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                                            <span style={{ color: '#64748b' }}>Target Size:</span>
-                                            <strong style={{ color: '#0f172a' }}>48 MB (Mobile Fast)</strong>
+                                            <span style={{ color: '#64748b' }}>Download Size:</span>
+                                            <strong style={{ color: '#0f172a' }}>{gemmaState.size}</strong>
                                         </div>
                                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                            <span style={{ color: '#64748b' }}>Installation Status:</span>
+                                            <span style={{ color: '#64748b' }}>Status:</span>
                                             <span style={{
                                                 background: gemmaState.status === 'READY' ? '#dcfce7' : '#fee2e2',
                                                 color: gemmaState.status === 'READY' ? '#15803d' : '#b91c1c',
-                                                padding: '1px 5px',
+                                                padding: '1px 6px',
                                                 borderRadius: '4px',
                                                 fontWeight: 800,
                                                 fontSize: '10px'
                                             }}>
-                                                {gemmaState.status === 'READY' ? 'INSTALLED & READY' : 'NOT INSTALLED'}
+                                                {gemmaState.status === 'READY' ? 'READY (CACHED)' : (gemmaState.status === 'DOWNLOADING' ? `DOWNLOADING (${gemmaState.progress}%)` : 'NOT INSTALLED')}
                                             </span>
                                         </div>
                                     </div>
@@ -1157,7 +1123,7 @@ const OfflineHealthHelpBot = () => {
                                                 gap: '5px'
                                             }}
                                         >
-                                            <Trash2 size={13} /> Reinstall / Clear Gemma LiteRT Cache
+                                            <Trash2 size={13} /> Delete Model & Clear Storage
                                         </button>
                                     ) : (
                                         <button
@@ -1167,10 +1133,10 @@ const OfflineHealthHelpBot = () => {
                                                 width: '100%',
                                                 padding: '10px',
                                                 borderRadius: '8px',
-                                                background: 'linear-gradient(135deg, #0284c7 0%, #0d9488 100%)',
+                                                background: 'linear-gradient(135deg, #0d9488 0%, #0284c7 100%)',
                                                 color: 'white',
                                                 border: 'none',
-                                                fontSize: '11px',
+                                                fontSize: '11.5px',
                                                 fontWeight: 800,
                                                 cursor: gemmaState.isDownloading ? 'not-allowed' : 'pointer',
                                                 display: 'flex',
@@ -1180,7 +1146,7 @@ const OfflineHealthHelpBot = () => {
                                             }}
                                         >
                                             <Download size={14} />
-                                            <span>{gemmaState.isDownloading ? `Downloading (${gemmaState.progress}%)...` : 'Download Gemma LiteRT (48 MB)'}</span>
+                                            <span>{gemmaState.isDownloading ? `Downloading (${gemmaState.progress}%)...` : `Download ${gemmaState.name} (${gemmaState.size})`}</span>
                                         </button>
                                     )}
                                 </div>
