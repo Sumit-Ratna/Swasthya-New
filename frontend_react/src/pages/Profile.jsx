@@ -420,12 +420,51 @@ const Profile = () => {
                                                 />
                                             </div>
                                             <div>
-                                                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>{t('emailAddress', 'EMAIL')}</label>
+                                                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>{t('emailAddress', 'EMAIL ADDRESS')}</label>
                                                 <input
                                                     type="email"
                                                     name="email"
                                                     value={formData.email}
                                                     onChange={handleChange}
+                                                    style={{ width: '100%', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '13px', boxSizing: 'border-box' }}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '14px' }}>
+                                            <div>
+                                                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>{t('phoneNumber', 'MOBILE NUMBER')}</label>
+                                                <input
+                                                    type="tel"
+                                                    name="phone"
+                                                    value={formData.phone}
+                                                    onChange={handleChange}
+                                                    placeholder="10-digit mobile"
+                                                    style={{ width: '100%', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '13px', boxSizing: 'border-box' }}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>{t('bloodGroup', 'BLOOD GROUP')}</label>
+                                                <select
+                                                    name="blood_group"
+                                                    value={formData.blood_group}
+                                                    onChange={handleChange}
+                                                    style={{ width: '100%', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '13px', boxSizing: 'border-box' }}
+                                                >
+                                                    {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(bg => (
+                                                        <option key={bg} value={bg}>{bg}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>{t('aadhaarLast4', 'AADHAAR (LAST 4)')}</label>
+                                                <input
+                                                    type="text"
+                                                    name="aadhaar_last4"
+                                                    maxLength={4}
+                                                    value={formData.aadhaar_last4}
+                                                    onChange={handleChange}
+                                                    placeholder="e.g. 5660"
                                                     style={{ width: '100%', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '13px', boxSizing: 'border-box' }}
                                                 />
                                             </div>
@@ -476,19 +515,46 @@ const Profile = () => {
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f1f5f9', fontSize: '13px' }}>
                                             <span style={{ color: 'var(--text-secondary)' }}>{t('fullName', 'Full Name')}</span>
-                                            <strong style={{ color: 'var(--text-primary)' }}>{formData.name || 'Swasthya Member'}</strong>
+                                            <strong style={{ color: 'var(--text-primary)' }}>{formData.name || user?.name || 'Aditya Singh'}</strong>
                                         </div>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f1f5f9', fontSize: '13px' }}>
-                                            <span style={{ color: 'var(--text-secondary)' }}>{t('emailAddress', 'Email')} / {t('phoneNumber', 'Phone')}</span>
-                                            <strong style={{ color: 'var(--text-primary)' }}>{formData.email || formData.phone || '+91 9822012345'}</strong>
+                                            <span style={{ color: 'var(--text-secondary)' }}>{t('emailAddress', 'Email Address')}</span>
+                                            <strong style={{ color: 'var(--text-primary)' }}>{formData.email || user?.email || 'aditya.singh@example.com'}</strong>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f1f5f9', fontSize: '13px' }}>
+                                            <span style={{ color: 'var(--text-secondary)' }}>{t('phoneNumber', 'Mobile No.')}</span>
+                                            <strong style={{ color: 'var(--text-primary)' }}>{formData.phone || user?.phone || '+91 7080135660'}</strong>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f1f5f9', fontSize: '13px' }}>
+                                            <span style={{ color: 'var(--text-secondary)' }}>{t('aadhaarNo', 'Aadhaar No.')}</span>
+                                            <strong style={{ color: 'var(--text-primary)', fontFamily: 'monospace' }}>
+                                                {formData.aadhaar_last4 ? `XXXX-XXXX-${formData.aadhaar_last4}` : (formData.aadhaar_no || 'XXXX-XXXX-5660')}
+                                            </strong>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f1f5f9', fontSize: '13px' }}>
+                                            <span style={{ color: 'var(--text-secondary)' }}>{t('bloodGroup', 'Blood Group')}</span>
+                                            <strong style={{ 
+                                                color: '#e11d48', 
+                                                background: '#fff1f2', 
+                                                padding: '2px 8px', 
+                                                borderRadius: '6px',
+                                                border: '1px solid #fecdd3',
+                                                fontWeight: 800
+                                            }}>
+                                                {formData.blood_group || user?.blood_group || 'B+'}
+                                            </strong>
                                         </div>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f1f5f9', fontSize: '13px' }}>
                                             <span style={{ color: 'var(--text-secondary)' }}>{t('city', 'Location & District')}</span>
-                                            <strong style={{ color: 'var(--text-primary)' }}>{formData.address_city}, {formData.address_state} - {formData.pincode}</strong>
+                                            <strong style={{ color: 'var(--text-primary)' }}>
+                                                {formData.address_city || 'Lucknow'}, {formData.address_state || 'Uttar Pradesh'} - {formData.pincode || '226001'}
+                                            </strong>
                                         </div>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', fontSize: '13px' }}>
                                             <span style={{ color: 'var(--text-secondary)' }}>{t('abhaId', 'ABHA / ABDM ID')}</span>
-                                            <strong style={{ color: '#0f766e', fontFamily: 'monospace' }}>{formData.abha_id}</strong>
+                                            <strong style={{ color: '#0f766e', fontFamily: 'monospace' }}>
+                                                {formData.abha_id || '91-5660-4589-7080'}
+                                            </strong>
                                         </div>
                                     </div>
                                 )}

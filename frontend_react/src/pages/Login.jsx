@@ -528,104 +528,75 @@ const Login = () => {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '28px 16px 44px',
-            background: 'radial-gradient(ellipse at 50% 0%, rgba(13, 148, 136, 0.14) 0%, rgba(2, 132, 199, 0.06) 45%, #f8fafc 100%)',
+            padding: '16px 14px 28px',
+            background: 'radial-gradient(ellipse at 50% 0%, rgba(13, 148, 136, 0.10) 0%, rgba(2, 132, 199, 0.04) 45%, #f8fafc 100%)',
             position: 'relative',
             overflow: 'hidden'
         }}>
-            {/* Background Ambient Aura Blobs */}
+            {/* Ambient Background Aura */}
             <div style={{
                 position: 'absolute',
-                top: '-80px',
+                top: '-60px',
                 left: '50%',
                 transform: 'translateX(-50%)',
-                width: '600px',
-                height: '350px',
-                background: 'radial-gradient(circle, rgba(13, 148, 136, 0.16) 0%, rgba(2, 132, 199, 0.08) 50%, transparent 80%)',
-                filter: 'blur(60px)',
+                width: '500px',
+                height: '260px',
+                background: 'radial-gradient(circle, rgba(13, 148, 136, 0.12) 0%, rgba(2, 132, 199, 0.05) 50%, transparent 80%)',
+                filter: 'blur(50px)',
                 pointerEvents: 'none',
                 zIndex: 0
             }} />
 
-            {/* Header Title & Language Toggle */}
+            {/* Header & Language Switcher */}
             <motion.div
-                initial={{ opacity: 0, y: -18 }}
+                initial={{ opacity: 0, y: -12 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.35, ease: 'easeOut' }}
+                transition={{ duration: 0.3 }}
                 style={{
                     textAlign: 'center',
-                    marginBottom: '20px',
-                    maxWidth: (step === 3 || step === 4) ? '620px' : '480px',
+                    marginBottom: '14px',
+                    maxWidth: (step === 3 || step === 4) ? '620px' : '440px',
                     width: '100%',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    gap: '12px',
                     position: 'relative',
                     zIndex: 1
                 }}
             >
-                {/* Floating Top Nav: Language & ABDM Trust Badge */}
+                {/* Clean Top-Right Language Switcher */}
                 <div style={{
                     width: '100%',
                     display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '0 4px'
+                    justifyContent: 'flex-end',
+                    marginBottom: '6px'
                 }}>
-                    <div style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        padding: '4px 10px',
-                        background: 'rgba(255, 255, 255, 0.85)',
-                        backdropFilter: 'blur(8px)',
-                        borderRadius: '20px',
-                        border: '1px solid rgba(226, 232, 240, 0.9)',
-                        fontSize: '11px',
-                        fontWeight: 700,
-                        color: '#0f766e',
-                        boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
-                    }}>
-                        <ShieldCheck size={13} color="#0d9488" />
-                        <span>ABDM Integrated</span>
-                    </div>
-
-                    <div style={{
-                        background: 'rgba(255, 255, 255, 0.85)',
-                        backdropFilter: 'blur(8px)',
-                        borderRadius: '20px',
-                        border: '1px solid rgba(226, 232, 240, 0.9)',
-                        boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
-                    }}>
-                        <LanguageSwitcher mode="compact" />
-                    </div>
+                    <LanguageSwitcher mode="compact" />
                 </div>
 
-                {/* Main Hero Logo Card */}
+                {/* Main Hero Logo */}
                 <div style={{
                     display: 'flex',
                     flexDirection: 'column',
-                    alignItems: 'center',
-                    marginTop: '4px'
+                    alignItems: 'center'
                 }}>
-                    <SwasthyaLogo size="large" showTagline={true} />
+                    <SwasthyaLogo size="normal" showTagline={false} />
                 </div>
             </motion.div>
 
-            {/* Main Interactive Card */}
+            {/* Main Compact Card */}
             <motion.div
-                initial={{ opacity: 0, scale: 0.97 }}
+                initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.35, delay: 0.05 }}
+                transition={{ duration: 0.3 }}
                 style={{
                     background: 'rgba(255, 255, 255, 0.98)',
                     backdropFilter: 'blur(16px)',
-                    borderRadius: '26px',
-                    padding: '24px 22px',
+                    borderRadius: '20px',
+                    padding: '18px 18px 20px',
                     width: '100%',
-                    maxWidth: (step === 3 || step === 4) ? '620px' : '480px',
-                    boxShadow: '0 20px 45px -10px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(226, 232, 240, 0.85)',
+                    maxWidth: (step === 3 || step === 4) ? '620px' : '440px',
+                    boxShadow: '0 12px 30px -4px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(226, 232, 240, 0.85)',
                     boxSizing: 'border-box',
                     position: 'relative',
                     zIndex: 1
@@ -633,14 +604,13 @@ const Login = () => {
             >
                 {step !== 3 && step !== 4 && (
                     <>
-                        {/* 1. Auth Mode Tabs: Sign In vs New User Register */}
+                        {/* 1. Auth Mode Tabs: Sign In vs Register */}
                         <div style={{
                             display: 'flex',
                             background: '#f1f5f9',
-                            padding: '4px',
-                            borderRadius: '16px',
-                            marginBottom: '20px',
-                            position: 'relative'
+                            padding: '3px',
+                            borderRadius: '12px',
+                            marginBottom: '14px'
                         }}>
                             <button
                                 type="button"
@@ -653,24 +623,24 @@ const Login = () => {
                                 }}
                                 style={{
                                     flex: 1,
-                                    padding: '10px 14px',
-                                    borderRadius: '12px',
+                                    padding: '8px 12px',
+                                    borderRadius: '9px',
                                     border: 'none',
                                     background: authMode === 'login' ? '#ffffff' : 'transparent',
                                     color: authMode === 'login' ? '#0f172a' : '#64748b',
                                     fontWeight: 700,
-                                    fontSize: '13px',
-                                    boxShadow: authMode === 'login' ? '0 4px 12px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(0,0,0,0.04)' : 'none',
+                                    fontSize: '12.5px',
+                                    boxShadow: authMode === 'login' ? '0 2px 8px rgba(15, 23, 42, 0.06)' : 'none',
                                     cursor: 'pointer',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    gap: '7px',
-                                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
+                                    gap: '6px',
+                                    transition: 'all 0.15s ease'
                                 }}
                             >
-                                <LogIn size={16} color={authMode === 'login' ? '#0d9488' : '#64748b'} />
-                                <span>Sign In (लॉग इन)</span>
+                                <LogIn size={15} color={authMode === 'login' ? '#0d9488' : '#64748b'} />
+                                <span>Sign In</span>
                             </button>
                             <button
                                 type="button"
@@ -682,337 +652,110 @@ const Login = () => {
                                 }}
                                 style={{
                                     flex: 1,
-                                    padding: '10px 14px',
-                                    borderRadius: '12px',
+                                    padding: '8px 12px',
+                                    borderRadius: '9px',
                                     border: 'none',
                                     background: authMode === 'register' ? '#ffffff' : 'transparent',
                                     color: authMode === 'register' ? '#0f172a' : '#64748b',
                                     fontWeight: 700,
-                                    fontSize: '13px',
-                                    boxShadow: authMode === 'register' ? '0 4px 12px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(0,0,0,0.04)' : 'none',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '7px',
-                                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
-                                }}
-                            >
-                                <UserPlus size={16} color={authMode === 'register' ? '#0284c7' : '#64748b'} />
-                                <span>Register (नया खाता)</span>
-                            </button>
-                        </div>
-
-                        {/* 2. Choose Persona Role with Modern Micro-Card Grid */}
-                        <div style={{ marginBottom: '18px' }}>
-                            <div style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                marginBottom: '10px'
-                            }}>
-                                <label style={{
-                                    fontSize: '12px',
-                                    fontWeight: 800,
-                                    color: '#334155',
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.5px'
-                                }}>
-                                    Select Portal Role (भूमिका चुनें):
-                                </label>
-                                <span style={{
-                                    fontSize: '11px',
-                                    fontWeight: 700,
-                                    color: currentRole.color,
-                                    background: currentRole.bg,
-                                    padding: '2px 8px',
-                                    borderRadius: '8px',
-                                    border: `1px solid ${currentRole.border}`
-                                }}>
-                                    {currentRole.tag}
-                                </span>
-                            </div>
-
-                            {/* 5-Persona Grid (3 in Top Row, 2 in Bottom Row) */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
-                                    {rolesConfig.slice(0, 3).map((r) => {
-                                        const isSelected = selectedRole === r.id;
-                                        return (
-                                            <button
-                                                key={r.id}
-                                                type="button"
-                                                onClick={() => {
-                                                    setSelectedRole(r.id);
-                                                    if (authMode === 'login') {
-                                                        setPhoneNumber(r.demoPhone.replace('+91', ''));
-                                                        if (loginMethod === 'email' && !email) {
-                                                            setEmail(r.demoEmail);
-                                                        }
-                                                    }
-                                                }}
-                                                style={{
-                                                    padding: '12px 6px',
-                                                    borderRadius: '14px',
-                                                    border: isSelected ? `2px solid ${r.color}` : '1.5px solid #e2e8f0',
-                                                    background: isSelected ? r.bg : '#ffffff',
-                                                    cursor: 'pointer',
-                                                    display: 'flex',
-                                                    flexDirection: 'column',
-                                                    alignItems: 'center',
-                                                    gap: '6px',
-                                                    position: 'relative',
-                                                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                                                    boxShadow: isSelected ? `0 4px 12px ${r.color}25` : '0 1px 3px rgba(0,0,0,0.02)',
-                                                    transform: isSelected ? 'scale(1.02)' : 'scale(1)'
-                                                }}
-                                            >
-                                                {isSelected && (
-                                                    <div style={{
-                                                        position: 'absolute',
-                                                        top: '4px',
-                                                        right: '4px',
-                                                        width: '14px',
-                                                        height: '14px',
-                                                        borderRadius: '50%',
-                                                        background: r.color,
-                                                        color: 'white',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center'
-                                                    }}>
-                                                        <Check size={9} strokeWidth={3} />
-                                                    </div>
-                                                )}
-                                                <div style={{
-                                                    width: '32px',
-                                                    height: '32px',
-                                                    borderRadius: '10px',
-                                                    background: isSelected ? '#ffffff' : r.bg,
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    color: r.color,
-                                                    boxShadow: isSelected ? '0 2px 6px rgba(0,0,0,0.06)' : 'none'
-                                                }}>
-                                                    {r.icon}
-                                                </div>
-                                                <div style={{ textAlign: 'center' }}>
-                                                    <span style={{
-                                                        fontSize: '11.5px',
-                                                        fontWeight: isSelected ? 800 : 600,
-                                                        color: isSelected ? '#0f172a' : '#475569',
-                                                        display: 'block',
-                                                        lineHeight: '1.2'
-                                                    }}>
-                                                        {r.shortLabel}
-                                                    </span>
-                                                </div>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
-                                    {rolesConfig.slice(3, 5).map((r) => {
-                                        const isSelected = selectedRole === r.id;
-                                        return (
-                                            <button
-                                                key={r.id}
-                                                type="button"
-                                                onClick={() => {
-                                                    setSelectedRole(r.id);
-                                                    if (authMode === 'login') {
-                                                        setPhoneNumber(r.demoPhone.replace('+91', ''));
-                                                        if (loginMethod === 'email' && !email) {
-                                                            setEmail(r.demoEmail);
-                                                        }
-                                                    }
-                                                }}
-                                                style={{
-                                                    padding: '10px 12px',
-                                                    borderRadius: '14px',
-                                                    border: isSelected ? `2px solid ${r.color}` : '1.5px solid #e2e8f0',
-                                                    background: isSelected ? r.bg : '#ffffff',
-                                                    cursor: 'pointer',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '10px',
-                                                    position: 'relative',
-                                                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                                                    boxShadow: isSelected ? `0 4px 12px ${r.color}25` : '0 1px 3px rgba(0,0,0,0.02)',
-                                                    transform: isSelected ? 'scale(1.02)' : 'scale(1)'
-                                                }}
-                                            >
-                                                {isSelected && (
-                                                    <div style={{
-                                                        position: 'absolute',
-                                                        top: '4px',
-                                                        right: '4px',
-                                                        width: '14px',
-                                                        height: '14px',
-                                                        borderRadius: '50%',
-                                                        background: r.color,
-                                                        color: 'white',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center'
-                                                    }}>
-                                                        <Check size={9} strokeWidth={3} />
-                                                    </div>
-                                                )}
-                                                <div style={{
-                                                    width: '30px',
-                                                    height: '30px',
-                                                    borderRadius: '10px',
-                                                    background: isSelected ? '#ffffff' : r.bg,
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    color: r.color,
-                                                    flexShrink: 0
-                                                }}>
-                                                    {r.icon}
-                                                </div>
-                                                <div style={{ textAlign: 'left', flex: 1, minWidth: 0 }}>
-                                                    <span style={{
-                                                        fontSize: '11.5px',
-                                                        fontWeight: isSelected ? 800 : 600,
-                                                        color: isSelected ? '#0f172a' : '#475569',
-                                                        display: 'block',
-                                                        whiteSpace: 'nowrap',
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis'
-                                                    }}>
-                                                        {r.shortLabel}
-                                                    </span>
-                                                    <span style={{ fontSize: '10px', color: '#64748b' }}>
-                                                        {r.tag}
-                                                    </span>
-                                                </div>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-
-                            {/* Active Role Explainer Banner with Demo Quick-Fill */}
-                            <div style={{
-                                marginTop: '10px',
-                                padding: '9px 12px',
-                                borderRadius: '12px',
-                                background: currentRole.bg,
-                                border: `1px solid ${currentRole.border}`,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                gap: '8px'
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
-                                    <span style={{ color: currentRole.color, display: 'flex', alignItems: 'center' }}>
-                                        <Sparkles size={14} />
-                                    </span>
-                                    <span style={{
-                                        fontSize: '11px',
-                                        fontWeight: 600,
-                                        color: '#334155',
-                                        whiteSpace: 'nowrap',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis'
-                                    }}>
-                                        {currentRole.desc}
-                                    </span>
-                                </div>
-                                {authMode === 'login' && (
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            if (loginMethod === 'email') {
-                                                setEmail(currentRole.demoEmail);
-                                                setPassword('password123');
-                                            } else {
-                                                setPhoneNumber(currentRole.demoPhone.replace('+91', ''));
-                                            }
-                                        }}
-                                        style={{
-                                            background: '#ffffff',
-                                            border: `1px solid ${currentRole.border}`,
-                                            color: currentRole.color,
-                                            padding: '3px 8px',
-                                            borderRadius: '6px',
-                                            fontSize: '10.5px',
-                                            fontWeight: 700,
-                                            cursor: 'pointer',
-                                            flexShrink: 0,
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '3px',
-                                            boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
-                                        }}
-                                    >
-                                        <Zap size={11} fill={currentRole.color} />
-                                        <span>Auto-fill</span>
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* 3. Auth Method Toggle (Gmail ID Primary vs Mobile OTP Optional) */}
-                        <div style={{
-                            display: 'flex',
-                            gap: '8px',
-                            marginBottom: '18px',
-                            background: '#f8fafc',
-                            padding: '3px',
-                            borderRadius: '12px',
-                            border: '1px solid #e2e8f0'
-                        }}>
-                            <button
-                                type="button"
-                                onClick={() => { setLoginMethod('email'); setLoginError(''); }}
-                                style={{
-                                    flex: 1.2,
-                                    padding: '8px',
-                                    borderRadius: '9px',
-                                    border: loginMethod === 'email' ? '1px solid #bae6fd' : 'none',
-                                    background: loginMethod === 'email' ? '#ffffff' : 'transparent',
-                                    color: loginMethod === 'email' ? '#0369a1' : '#64748b',
-                                    fontSize: '12px',
-                                    fontWeight: 700,
+                                    fontSize: '12.5px',
+                                    boxShadow: authMode === 'register' ? '0 2px 8px rgba(15, 23, 42, 0.06)' : 'none',
                                     cursor: 'pointer',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     gap: '6px',
-                                    boxShadow: loginMethod === 'email' ? '0 2px 6px rgba(0,0,0,0.04)' : 'none'
+                                    transition: 'all 0.15s ease'
                                 }}
                             >
-                                <Mail size={14} color={loginMethod === 'email' ? '#0284c7' : '#94a3b8'} />
-                                <span>Gmail / Email (Primary)</span>
+                                <UserPlus size={15} color={authMode === 'register' ? '#0284c7' : '#64748b'} />
+                                <span>Register</span>
                             </button>
-                            <button
-                                type="button"
-                                onClick={() => { setLoginMethod('phone'); setLoginError(''); }}
-                                style={{
-                                    flex: 0.8,
-                                    padding: '8px',
-                                    borderRadius: '9px',
-                                    border: loginMethod === 'phone' ? '1px solid #99f6e4' : 'none',
-                                    background: loginMethod === 'phone' ? '#ffffff' : 'transparent',
-                                    color: loginMethod === 'phone' ? '#0f766e' : '#64748b',
-                                    fontSize: '12px',
-                                    fontWeight: 700,
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '6px',
-                                    boxShadow: loginMethod === 'phone' ? '0 2px 6px rgba(0,0,0,0.04)' : 'none'
-                                }}
-                            >
-                                <Phone size={14} color={loginMethod === 'phone' ? '#0d9488' : '#94a3b8'} />
-                                <span>Mobile OTP</span>
-                            </button>
+                        </div>
+
+                        {/* 2. Choose Persona Role: Sleek Minimal 5-Card Row */}
+                        <div style={{ marginBottom: '16px' }}>
+                            <label style={{
+                                fontSize: '11px',
+                                fontWeight: 800,
+                                color: '#475569',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.4px',
+                                display: 'block',
+                                marginBottom: '8px'
+                            }}>
+                                Select Role:
+                            </label>
+
+                            {/* Minimal 5-Grid Persona Selector */}
+                            <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(5, 1fr)',
+                                gap: '6px'
+                            }}>
+                                {rolesConfig.map((r) => {
+                                    const isSelected = selectedRole === r.id;
+                                    return (
+                                        <button
+                                            key={r.id}
+                                            type="button"
+                                            onClick={() => {
+                                                setSelectedRole(r.id);
+                                                if (authMode === 'login') {
+                                                    setPhoneNumber(r.demoPhone.replace('+91', ''));
+                                                    if (!email) {
+                                                        setEmail(r.demoEmail);
+                                                    }
+                                                }
+                                            }}
+                                            style={{
+                                                padding: '8px 2px',
+                                                borderRadius: '11px',
+                                                border: isSelected ? `2px solid ${r.color}` : '1.5px solid #e2e8f0',
+                                                background: isSelected ? r.bg : '#ffffff',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: '4px',
+                                                position: 'relative',
+                                                transition: 'all 0.18s cubic-bezier(0.4, 0, 0.2, 1)',
+                                                boxShadow: isSelected ? `0 3px 10px ${r.color}25` : 'none',
+                                                transform: isSelected ? 'translateY(-1px)' : 'none'
+                                            }}
+                                        >
+                                            <div style={{
+                                                width: '28px',
+                                                height: '28px',
+                                                borderRadius: '8px',
+                                                background: isSelected ? '#ffffff' : r.bg,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                color: r.color,
+                                                boxShadow: isSelected ? '0 1px 4px rgba(0,0,0,0.06)' : 'none'
+                                            }}>
+                                                {React.cloneElement(r.icon, { size: 16 })}
+                                            </div>
+                                            <span style={{
+                                                fontSize: '10.5px',
+                                                fontWeight: isSelected ? 800 : 600,
+                                                color: isSelected ? '#0f172a' : '#64748b',
+                                                display: 'block',
+                                                lineHeight: '1.1',
+                                                textAlign: 'center',
+                                                whiteSpace: 'nowrap',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                maxWidth: '100%'
+                                            }}>
+                                                {r.shortLabel}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </div>
                     </>
                 )}
@@ -1850,50 +1593,6 @@ const Login = () => {
                         patientName={profileData.name || email.split('@')[0]}
                     />
                 )}
-
-                {/* Bottom Persona Switcher Link */}
-                {step !== 4 && (
-                    <div style={{
-                        marginTop: '20px',
-                        textAlign: 'center',
-                        borderTop: '1px solid #f1f5f9',
-                        paddingTop: '16px'
-                    }}>
-                        <button
-                            type="button"
-                            onClick={() => navigate('/roles')}
-                            style={{
-                                background: 'none',
-                                border: 'none',
-                                color: '#0f766e',
-                                fontSize: '12px',
-                                fontWeight: 700,
-                                cursor: 'pointer',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px'
-                            }}
-                        >
-                            <span>Explore All 6 Personas Grid</span>
-                            <ChevronRight size={14} />
-                        </button>
-                    </div>
-                )}
-
-                {/* Footer Security Badge */}
-                <div style={{
-                    marginTop: '16px',
-                    paddingTop: '12px',
-                    borderTop: '1px solid #f8fafc',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px',
-                    fontSize: '10px',
-                    color: '#94a3b8'
-                }}>
-                    <span>Secured by Supabase PostgreSQL • ABDM FHIR Standards • Multi-Device Sync</span>
-                </div>
             </motion.div>
 
             {/* Forgot Password / Gmail Reset Modal */}
