@@ -8,7 +8,7 @@ import {
     Building2, ShieldAlert, Sparkles, CheckCircle2, ArrowRight, 
     RefreshCw, KeyRound, AlertCircle, ChevronRight, UserCheck,
     User, Calendar, MapPin, Heart, Shield, ShieldCheck, Activity, FileText,
-    UserPlus, LogIn, HelpCircle
+    UserPlus, LogIn, HelpCircle, Eye, EyeOff, Check, Zap
 } from 'lucide-react';
 import SwasthyaLogo from '../components/SwasthyaLogo';
 import LanguageSwitcher from '../components/LanguageSwitcher';
@@ -46,6 +46,7 @@ const Login = () => {
     const [authMode, setAuthMode] = useState('login'); // 'login' | 'register'
     // Login Method: 'email' (primary) or 'phone' (optional)
     const [loginMethod, setLoginMethod] = useState('email'); 
+    const [showPassword, setShowPassword] = useState(false); 
 
     // Default role from location state or 'patient'
     const [selectedRole, setSelectedRole] = useState(location.state?.role || 'patient');
@@ -101,58 +102,83 @@ const Login = () => {
 
     const rolesConfig = [
         {
-            id: 'health_worker',
-            label: 'ASHA / ANM / Caregiver',
-            title: 'ASHA / ANM & Caregiver Proxy',
-            icon: <HeartPulse size={20} color="#0d9488" />,
-            badgeBg: '#ccfbf1',
-            badgeColor: '#0f766e',
-            targetRoute: '/asha',
-            demoPhone: '+919876543210'
-        },
-        {
             id: 'patient',
             label: 'Patient',
+            shortLabel: 'Patient',
+            tag: 'Self-Service',
             title: 'Patient Self-Service',
-            icon: <Fingerprint size={20} color="#2563eb" />,
-            badgeBg: '#dbeafe',
-            badgeColor: '#1d4ed8',
+            desc: 'Book OPD, manage EHR records, family health & emergency SOS',
+            icon: <Fingerprint size={20} />,
+            color: '#0d9488',
+            bg: '#f0fdfa',
+            border: '#99f6e4',
             targetRoute: '/home',
-            demoPhone: '+917080135660'
+            demoPhone: '+917080135660',
+            demoEmail: 'aditya.singh@example.com'
         },
         {
             id: 'doctor',
             label: 'Doctor',
+            shortLabel: 'Doctor',
+            tag: 'Clinical OPD',
             title: 'Doctor & Medical Officer',
-            icon: <Stethoscope size={20} color="#0284c7" />,
-            badgeBg: '#e0f2fe',
-            badgeColor: '#0369a1',
+            desc: 'Clinical EHR history, e-prescriptions & AI scribe notes',
+            icon: <Stethoscope size={20} />,
+            color: '#0284c7',
+            bg: '#f0f9ff',
+            border: '#bae6fd',
             targetRoute: '/doctor/dashboard',
-            demoPhone: '+919123456780'
+            demoPhone: '+919123456780',
+            demoEmail: 'dr.sharma@swasthya.gov.in'
+        },
+        {
+            id: 'health_worker',
+            label: 'ASHA / ANM / Caregiver',
+            shortLabel: 'ASHA / ANM',
+            tag: 'Community',
+            title: 'ASHA / ANM & Caregiver Proxy',
+            desc: 'Rural health surveys, maternal care & referral coordination',
+            icon: <HeartPulse size={20} />,
+            color: '#e11d48',
+            bg: '#fff1f2',
+            border: '#fecdd3',
+            targetRoute: '/asha',
+            demoPhone: '+919876543210',
+            demoEmail: 'asha.sunita@swasthya.gov.in'
         },
         {
             id: 'facility_coordinator',
             label: 'Hospital Facility',
+            shortLabel: 'Hospital',
+            tag: 'Beds & ER',
             title: 'Hospital Facility & Bed Operations',
-            icon: <Building2 size={20} color="#d97706" />,
-            badgeBg: '#fef3c7',
-            badgeColor: '#b45309',
+            desc: 'Live ICU beds, ward occupancy & incoming ambulance triage',
+            icon: <Building2 size={20} />,
+            color: '#d97706',
+            bg: '#fffbeb',
+            border: '#fde68a',
             targetRoute: '/facility-dashboard',
-            demoPhone: '+919800000001'
+            demoPhone: '+919800000001',
+            demoEmail: 'civil.hospital@swasthya.gov.in'
         },
         {
             id: 'admin',
-            label: 'Admin',
+            label: 'State Authority & Admin',
+            shortLabel: 'Admin',
+            tag: 'Governance',
             title: 'State Health Authority & Admin',
-            icon: <Lock size={20} color="#475569" />,
-            badgeBg: '#f1f5f9',
-            badgeColor: '#334155',
+            desc: 'State health analytics, doctor verification & platform governance',
+            icon: <Lock size={20} />,
+            color: '#475569',
+            bg: '#f8fafc',
+            border: '#cbd5e1',
             targetRoute: '/admin',
-            demoPhone: '+919999999999'
+            demoPhone: '+919999999999',
+            demoEmail: 'admin.health@swasthya.gov.in'
         }
     ];
 
-    const currentRole = rolesConfig.find(r => r.id === selectedRole) || rolesConfig[1];
+    const currentRole = rolesConfig.find(r => r.id === selectedRole) || rolesConfig[0];
 
     useEffect(() => {
         let interval;
@@ -502,45 +528,119 @@ const Login = () => {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '24px 16px 40px',
-            background: 'linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%)'
+            padding: '28px 16px 44px',
+            background: 'radial-gradient(ellipse at 50% 0%, rgba(13, 148, 136, 0.14) 0%, rgba(2, 132, 199, 0.06) 45%, #f8fafc 100%)',
+            position: 'relative',
+            overflow: 'hidden'
         }}>
+            {/* Background Ambient Aura Blobs */}
+            <div style={{
+                position: 'absolute',
+                top: '-80px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: '600px',
+                height: '350px',
+                background: 'radial-gradient(circle, rgba(13, 148, 136, 0.16) 0%, rgba(2, 132, 199, 0.08) 50%, transparent 80%)',
+                filter: 'blur(60px)',
+                pointerEvents: 'none',
+                zIndex: 0
+            }} />
+
             {/* Header Title & Language Toggle */}
             <motion.div
-                initial={{ opacity: 0, y: -15 }}
+                initial={{ opacity: 0, y: -18 }}
                 animate={{ opacity: 1, y: 0 }}
-                style={{ textAlign: 'center', marginBottom: '18px', maxWidth: '440px', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}
+                transition={{ duration: 0.35, ease: 'easeOut' }}
+                style={{
+                    textAlign: 'center',
+                    marginBottom: '20px',
+                    maxWidth: (step === 3 || step === 4) ? '620px' : '480px',
+                    width: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '12px',
+                    position: 'relative',
+                    zIndex: 1
+                }}
             >
-                <div style={{ width: '100%', display: 'flex', justifyContent: 'flex-end', paddingRight: '4px' }}>
-                    <LanguageSwitcher mode="compact" />
+                {/* Floating Top Nav: Language & ABDM Trust Badge */}
+                <div style={{
+                    width: '100%',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '0 4px'
+                }}>
+                    <div style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '4px 10px',
+                        background: 'rgba(255, 255, 255, 0.85)',
+                        backdropFilter: 'blur(8px)',
+                        borderRadius: '20px',
+                        border: '1px solid rgba(226, 232, 240, 0.9)',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        color: '#0f766e',
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
+                    }}>
+                        <ShieldCheck size={13} color="#0d9488" />
+                        <span>ABDM Integrated</span>
+                    </div>
+
+                    <div style={{
+                        background: 'rgba(255, 255, 255, 0.85)',
+                        backdropFilter: 'blur(8px)',
+                        borderRadius: '20px',
+                        border: '1px solid rgba(226, 232, 240, 0.9)',
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
+                    }}>
+                        <LanguageSwitcher mode="compact" />
+                    </div>
                 </div>
-                <SwasthyaLogo size="large" showTagline={true} />
+
+                {/* Main Hero Logo Card */}
+                <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    marginTop: '4px'
+                }}>
+                    <SwasthyaLogo size="large" showTagline={true} />
+                </div>
             </motion.div>
 
             {/* Main Interactive Card */}
             <motion.div
-                initial={{ opacity: 0, scale: 0.96 }}
+                initial={{ opacity: 0, scale: 0.97 }}
                 animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.35, delay: 0.05 }}
                 style={{
-                    background: 'white',
-                    borderRadius: '24px',
-                    padding: '24px',
+                    background: 'rgba(255, 255, 255, 0.98)',
+                    backdropFilter: 'blur(16px)',
+                    borderRadius: '26px',
+                    padding: '24px 22px',
                     width: '100%',
-                    maxWidth: (step === 3 || step === 4) ? '580px' : '440px',
-                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.03)',
-                    border: '1px solid #f1f5f9',
-                    boxSizing: 'border-box'
+                    maxWidth: (step === 3 || step === 4) ? '620px' : '480px',
+                    boxShadow: '0 20px 45px -10px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(226, 232, 240, 0.85)',
+                    boxSizing: 'border-box',
+                    position: 'relative',
+                    zIndex: 1
                 }}
             >
                 {step !== 3 && step !== 4 && (
                     <>
-                        {/* 1. Login / New User Registration Segmented Switcher */}
+                        {/* 1. Auth Mode Tabs: Sign In vs New User Register */}
                         <div style={{
                             display: 'flex',
                             background: '#f1f5f9',
                             padding: '4px',
-                            borderRadius: '14px',
-                            marginBottom: '18px'
+                            borderRadius: '16px',
+                            marginBottom: '20px',
+                            position: 'relative'
                         }}>
                             <button
                                 type="button"
@@ -553,23 +653,24 @@ const Login = () => {
                                 }}
                                 style={{
                                     flex: 1,
-                                    padding: '9px 12px',
-                                    borderRadius: '10px',
+                                    padding: '10px 14px',
+                                    borderRadius: '12px',
                                     border: 'none',
-                                    background: authMode === 'login' ? 'white' : 'transparent',
+                                    background: authMode === 'login' ? '#ffffff' : 'transparent',
                                     color: authMode === 'login' ? '#0f172a' : '#64748b',
                                     fontWeight: 700,
                                     fontSize: '13px',
-                                    boxShadow: authMode === 'login' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+                                    boxShadow: authMode === 'login' ? '0 4px 12px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(0,0,0,0.04)' : 'none',
                                     cursor: 'pointer',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    gap: '6px'
+                                    gap: '7px',
+                                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
                                 }}
                             >
-                                <LogIn size={15} color={authMode === 'login' ? '#0d9488' : '#64748b'} />
-                                <span>Sign In</span>
+                                <LogIn size={16} color={authMode === 'login' ? '#0d9488' : '#64748b'} />
+                                <span>Sign In (लॉग इन)</span>
                             </button>
                             <button
                                 type="button"
@@ -581,83 +682,300 @@ const Login = () => {
                                 }}
                                 style={{
                                     flex: 1,
-                                    padding: '9px 12px',
-                                    borderRadius: '10px',
+                                    padding: '10px 14px',
+                                    borderRadius: '12px',
                                     border: 'none',
-                                    background: authMode === 'register' ? 'white' : 'transparent',
+                                    background: authMode === 'register' ? '#ffffff' : 'transparent',
                                     color: authMode === 'register' ? '#0f172a' : '#64748b',
                                     fontWeight: 700,
                                     fontSize: '13px',
-                                    boxShadow: authMode === 'register' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+                                    boxShadow: authMode === 'register' ? '0 4px 12px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(0,0,0,0.04)' : 'none',
                                     cursor: 'pointer',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    gap: '6px'
+                                    gap: '7px',
+                                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
                                 }}
                             >
-                                <UserPlus size={15} color={authMode === 'register' ? '#0284c7' : '#64748b'} />
-                                <span>New User Register</span>
+                                <UserPlus size={16} color={authMode === 'register' ? '#0284c7' : '#64748b'} />
+                                <span>Register (नया खाता)</span>
                             </button>
                         </div>
 
-                        {/* 2. Persona Selector Grid */}
-                        <div style={{ marginBottom: '16px' }}>
-                            <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>
-                                Choose Persona Role:
-                            </label>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
-                                {rolesConfig.map((r) => {
-                                    const isSelected = selectedRole === r.id;
-                                    return (
-                                        <button
-                                            key={r.id}
-                                            type="button"
-                                            onClick={() => {
-                                                setSelectedRole(r.id);
-                                                if (authMode === 'login') {
-                                                    setPhoneNumber(r.demoPhone.replace('+91', ''));
-                                                }
-                                            }}
-                                            style={{
-                                                padding: '10px 4px',
-                                                borderRadius: '12px',
-                                                border: isSelected ? '2px solid #0d9488' : '1px solid #e2e8f0',
-                                                background: isSelected ? '#f0fdfa' : 'white',
-                                                cursor: 'pointer',
-                                                display: 'flex',
-                                                flexDirection: 'column',
-                                                alignItems: 'center',
-                                                gap: '4px',
-                                                transition: 'all 0.2s ease'
-                                            }}
-                                        >
-                                            {r.icon}
-                                            <span style={{
-                                                fontSize: '11px',
-                                                fontWeight: isSelected ? 700 : 500,
-                                                color: isSelected ? '#0f766e' : '#64748b',
-                                                textAlign: 'center'
-                                            }}>
-                                                {r.label}
-                                            </span>
-                                        </button>
-                                    );
-                                })}
+                        {/* 2. Choose Persona Role with Modern Micro-Card Grid */}
+                        <div style={{ marginBottom: '18px' }}>
+                            <div style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                marginBottom: '10px'
+                            }}>
+                                <label style={{
+                                    fontSize: '12px',
+                                    fontWeight: 800,
+                                    color: '#334155',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.5px'
+                                }}>
+                                    Select Portal Role (भूमिका चुनें):
+                                </label>
+                                <span style={{
+                                    fontSize: '11px',
+                                    fontWeight: 700,
+                                    color: currentRole.color,
+                                    background: currentRole.bg,
+                                    padding: '2px 8px',
+                                    borderRadius: '8px',
+                                    border: `1px solid ${currentRole.border}`
+                                }}>
+                                    {currentRole.tag}
+                                </span>
+                            </div>
+
+                            {/* 5-Persona Grid (3 in Top Row, 2 in Bottom Row) */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                                    {rolesConfig.slice(0, 3).map((r) => {
+                                        const isSelected = selectedRole === r.id;
+                                        return (
+                                            <button
+                                                key={r.id}
+                                                type="button"
+                                                onClick={() => {
+                                                    setSelectedRole(r.id);
+                                                    if (authMode === 'login') {
+                                                        setPhoneNumber(r.demoPhone.replace('+91', ''));
+                                                        if (loginMethod === 'email' && !email) {
+                                                            setEmail(r.demoEmail);
+                                                        }
+                                                    }
+                                                }}
+                                                style={{
+                                                    padding: '12px 6px',
+                                                    borderRadius: '14px',
+                                                    border: isSelected ? `2px solid ${r.color}` : '1.5px solid #e2e8f0',
+                                                    background: isSelected ? r.bg : '#ffffff',
+                                                    cursor: 'pointer',
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    alignItems: 'center',
+                                                    gap: '6px',
+                                                    position: 'relative',
+                                                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                                                    boxShadow: isSelected ? `0 4px 12px ${r.color}25` : '0 1px 3px rgba(0,0,0,0.02)',
+                                                    transform: isSelected ? 'scale(1.02)' : 'scale(1)'
+                                                }}
+                                            >
+                                                {isSelected && (
+                                                    <div style={{
+                                                        position: 'absolute',
+                                                        top: '4px',
+                                                        right: '4px',
+                                                        width: '14px',
+                                                        height: '14px',
+                                                        borderRadius: '50%',
+                                                        background: r.color,
+                                                        color: 'white',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center'
+                                                    }}>
+                                                        <Check size={9} strokeWidth={3} />
+                                                    </div>
+                                                )}
+                                                <div style={{
+                                                    width: '32px',
+                                                    height: '32px',
+                                                    borderRadius: '10px',
+                                                    background: isSelected ? '#ffffff' : r.bg,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    color: r.color,
+                                                    boxShadow: isSelected ? '0 2px 6px rgba(0,0,0,0.06)' : 'none'
+                                                }}>
+                                                    {r.icon}
+                                                </div>
+                                                <div style={{ textAlign: 'center' }}>
+                                                    <span style={{
+                                                        fontSize: '11.5px',
+                                                        fontWeight: isSelected ? 800 : 600,
+                                                        color: isSelected ? '#0f172a' : '#475569',
+                                                        display: 'block',
+                                                        lineHeight: '1.2'
+                                                    }}>
+                                                        {r.shortLabel}
+                                                    </span>
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+                                    {rolesConfig.slice(3, 5).map((r) => {
+                                        const isSelected = selectedRole === r.id;
+                                        return (
+                                            <button
+                                                key={r.id}
+                                                type="button"
+                                                onClick={() => {
+                                                    setSelectedRole(r.id);
+                                                    if (authMode === 'login') {
+                                                        setPhoneNumber(r.demoPhone.replace('+91', ''));
+                                                        if (loginMethod === 'email' && !email) {
+                                                            setEmail(r.demoEmail);
+                                                        }
+                                                    }
+                                                }}
+                                                style={{
+                                                    padding: '10px 12px',
+                                                    borderRadius: '14px',
+                                                    border: isSelected ? `2px solid ${r.color}` : '1.5px solid #e2e8f0',
+                                                    background: isSelected ? r.bg : '#ffffff',
+                                                    cursor: 'pointer',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '10px',
+                                                    position: 'relative',
+                                                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                                                    boxShadow: isSelected ? `0 4px 12px ${r.color}25` : '0 1px 3px rgba(0,0,0,0.02)',
+                                                    transform: isSelected ? 'scale(1.02)' : 'scale(1)'
+                                                }}
+                                            >
+                                                {isSelected && (
+                                                    <div style={{
+                                                        position: 'absolute',
+                                                        top: '4px',
+                                                        right: '4px',
+                                                        width: '14px',
+                                                        height: '14px',
+                                                        borderRadius: '50%',
+                                                        background: r.color,
+                                                        color: 'white',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center'
+                                                    }}>
+                                                        <Check size={9} strokeWidth={3} />
+                                                    </div>
+                                                )}
+                                                <div style={{
+                                                    width: '30px',
+                                                    height: '30px',
+                                                    borderRadius: '10px',
+                                                    background: isSelected ? '#ffffff' : r.bg,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    color: r.color,
+                                                    flexShrink: 0
+                                                }}>
+                                                    {r.icon}
+                                                </div>
+                                                <div style={{ textAlign: 'left', flex: 1, minWidth: 0 }}>
+                                                    <span style={{
+                                                        fontSize: '11.5px',
+                                                        fontWeight: isSelected ? 800 : 600,
+                                                        color: isSelected ? '#0f172a' : '#475569',
+                                                        display: 'block',
+                                                        whiteSpace: 'nowrap',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis'
+                                                    }}>
+                                                        {r.shortLabel}
+                                                    </span>
+                                                    <span style={{ fontSize: '10px', color: '#64748b' }}>
+                                                        {r.tag}
+                                                    </span>
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Active Role Explainer Banner with Demo Quick-Fill */}
+                            <div style={{
+                                marginTop: '10px',
+                                padding: '9px 12px',
+                                borderRadius: '12px',
+                                background: currentRole.bg,
+                                border: `1px solid ${currentRole.border}`,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                gap: '8px'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                                    <span style={{ color: currentRole.color, display: 'flex', alignItems: 'center' }}>
+                                        <Sparkles size={14} />
+                                    </span>
+                                    <span style={{
+                                        fontSize: '11px',
+                                        fontWeight: 600,
+                                        color: '#334155',
+                                        whiteSpace: 'nowrap',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis'
+                                    }}>
+                                        {currentRole.desc}
+                                    </span>
+                                </div>
+                                {authMode === 'login' && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (loginMethod === 'email') {
+                                                setEmail(currentRole.demoEmail);
+                                                setPassword('password123');
+                                            } else {
+                                                setPhoneNumber(currentRole.demoPhone.replace('+91', ''));
+                                            }
+                                        }}
+                                        style={{
+                                            background: '#ffffff',
+                                            border: `1px solid ${currentRole.border}`,
+                                            color: currentRole.color,
+                                            padding: '3px 8px',
+                                            borderRadius: '6px',
+                                            fontSize: '10.5px',
+                                            fontWeight: 700,
+                                            cursor: 'pointer',
+                                            flexShrink: 0,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '3px',
+                                            boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+                                        }}
+                                    >
+                                        <Zap size={11} fill={currentRole.color} />
+                                        <span>Auto-fill</span>
+                                    </button>
+                                )}
                             </div>
                         </div>
 
-                        {/* 3. Auth Method Toggle (Gmail ID Primary vs Mobile Phone Optional) */}
-                        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+                        {/* 3. Auth Method Toggle (Gmail ID Primary vs Mobile OTP Optional) */}
+                        <div style={{
+                            display: 'flex',
+                            gap: '8px',
+                            marginBottom: '18px',
+                            background: '#f8fafc',
+                            padding: '3px',
+                            borderRadius: '12px',
+                            border: '1px solid #e2e8f0'
+                        }}>
                             <button
                                 type="button"
                                 onClick={() => { setLoginMethod('email'); setLoginError(''); }}
                                 style={{
                                     flex: 1.2,
-                                    padding: '9px',
-                                    borderRadius: '10px',
-                                    border: loginMethod === 'email' ? '1.5px solid #0284c7' : '1px solid #e2e8f0',
-                                    background: loginMethod === 'email' ? '#f0f9ff' : 'white',
+                                    padding: '8px',
+                                    borderRadius: '9px',
+                                    border: loginMethod === 'email' ? '1px solid #bae6fd' : 'none',
+                                    background: loginMethod === 'email' ? '#ffffff' : 'transparent',
                                     color: loginMethod === 'email' ? '#0369a1' : '#64748b',
                                     fontSize: '12px',
                                     fontWeight: 700,
@@ -665,10 +983,11 @@ const Login = () => {
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    gap: '6px'
+                                    gap: '6px',
+                                    boxShadow: loginMethod === 'email' ? '0 2px 6px rgba(0,0,0,0.04)' : 'none'
                                 }}
                             >
-                                <Mail size={14} />
+                                <Mail size={14} color={loginMethod === 'email' ? '#0284c7' : '#94a3b8'} />
                                 <span>Gmail / Email (Primary)</span>
                             </button>
                             <button
@@ -676,10 +995,10 @@ const Login = () => {
                                 onClick={() => { setLoginMethod('phone'); setLoginError(''); }}
                                 style={{
                                     flex: 0.8,
-                                    padding: '9px',
-                                    borderRadius: '10px',
-                                    border: loginMethod === 'phone' ? '1.5px solid #0d9488' : '1px solid #e2e8f0',
-                                    background: loginMethod === 'phone' ? '#f0fdfa' : 'white',
+                                    padding: '8px',
+                                    borderRadius: '9px',
+                                    border: loginMethod === 'phone' ? '1px solid #99f6e4' : 'none',
+                                    background: loginMethod === 'phone' ? '#ffffff' : 'transparent',
                                     color: loginMethod === 'phone' ? '#0f766e' : '#64748b',
                                     fontSize: '12px',
                                     fontWeight: 700,
@@ -687,11 +1006,12 @@ const Login = () => {
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    gap: '6px'
+                                    gap: '6px',
+                                    boxShadow: loginMethod === 'phone' ? '0 2px 6px rgba(0,0,0,0.04)' : 'none'
                                 }}
                             >
-                                <Phone size={14} />
-                                <span>Mobile OTP (Optional)</span>
+                                <Phone size={14} color={loginMethod === 'phone' ? '#0d9488' : '#94a3b8'} />
+                                <span>Mobile OTP</span>
                             </button>
                         </div>
                     </>
@@ -699,20 +1019,24 @@ const Login = () => {
 
                 {/* Error Banner */}
                 {loginError && (
-                    <div style={{
-                        padding: '12px 14px',
-                        background: '#fee2e2',
-                        borderRadius: '12px',
-                        border: '1px solid #fca5a5',
-                        color: '#991b1b',
-                        fontSize: '12px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '8px',
-                        marginBottom: '16px'
-                    }}>
+                    <motion.div
+                        initial={{ opacity: 0, y: -6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        style={{
+                            padding: '12px 14px',
+                            background: '#fef2f2',
+                            borderRadius: '12px',
+                            border: '1px solid #fecaca',
+                            color: '#991b1b',
+                            fontSize: '12px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '8px',
+                            marginBottom: '16px'
+                        }}
+                    >
                         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                            <AlertCircle size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
+                            <AlertCircle size={16} color="#dc2626" style={{ flexShrink: 0, marginTop: '2px' }} />
                             <span style={{ fontWeight: 600 }}>{loginError}</span>
                         </div>
                         {authMode === 'login' && loginError.toLowerCase().includes('no account') && (
@@ -743,7 +1067,7 @@ const Login = () => {
                                 <span>Register as {currentRole.label} with this Gmail now →</span>
                             </button>
                         )}
-                    </div>
+                    </motion.div>
                 )}
 
                 {/* STEP 1: Input Form */}
@@ -767,12 +1091,17 @@ const Login = () => {
                                                 width: '100%',
                                                 padding: '12px 14px 12px 42px',
                                                 borderRadius: '12px',
-                                                border: '1.5px solid #cbd5e1',
+                                                border: '1.5px solid #e2e8f0',
+                                                background: '#f8fafc',
                                                 fontSize: '14px',
                                                 boxSizing: 'border-box',
                                                 fontWeight: 600,
-                                                color: '#0f172a'
+                                                color: '#0f172a',
+                                                transition: 'all 0.2s ease',
+                                                outline: 'none'
                                             }}
+                                            onFocus={(e) => { e.target.style.borderColor = '#0d9488'; e.target.style.background = '#ffffff'; }}
+                                            onBlur={(e) => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = '#f8fafc'; }}
                                             autoFocus
                                         />
                                         <User size={18} color="#94a3b8" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
@@ -794,17 +1123,22 @@ const Login = () => {
                                                 width: '100%',
                                                 padding: '12px 14px 12px 42px',
                                                 borderRadius: '12px',
-                                                border: '1.5px solid #cbd5e1',
+                                                border: '1.5px solid #e2e8f0',
+                                                background: '#f8fafc',
                                                 fontSize: '14px',
                                                 boxSizing: 'border-box',
                                                 fontWeight: 600,
-                                                color: '#0f172a'
+                                                color: '#0f172a',
+                                                transition: 'all 0.2s ease',
+                                                outline: 'none'
                                             }}
+                                            onFocus={(e) => { e.target.style.borderColor = '#0d9488'; e.target.style.background = '#ffffff'; }}
+                                            onBlur={(e) => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = '#f8fafc'; }}
                                         />
                                         <Mail size={18} color="#94a3b8" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
                                     </div>
                                     <span style={{ fontSize: '11px', color: '#64748b', display: 'block', marginTop: '4px' }}>
-                                        Used for multi-device access & instant password resets
+                                        Used for multi-device access & digital health records
                                     </span>
                                 </div>
 
@@ -814,7 +1148,7 @@ const Login = () => {
                                     </label>
                                     <div style={{ position: 'relative' }}>
                                         <input
-                                            type="password"
+                                            type={showPassword ? "text" : "password"}
                                             required
                                             minLength={6}
                                             value={password}
@@ -822,16 +1156,38 @@ const Login = () => {
                                             placeholder="Minimum 6 characters"
                                             style={{
                                                 width: '100%',
-                                                padding: '12px 14px 12px 42px',
+                                                padding: '12px 42px 12px 42px',
                                                 borderRadius: '12px',
-                                                border: '1.5px solid #cbd5e1',
+                                                border: '1.5px solid #e2e8f0',
+                                                background: '#f8fafc',
                                                 fontSize: '14px',
                                                 boxSizing: 'border-box',
                                                 fontWeight: 600,
-                                                color: '#0f172a'
+                                                color: '#0f172a',
+                                                transition: 'all 0.2s ease',
+                                                outline: 'none'
                                             }}
+                                            onFocus={(e) => { e.target.style.borderColor = '#0d9488'; e.target.style.background = '#ffffff'; }}
+                                            onBlur={(e) => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = '#f8fafc'; }}
                                         />
                                         <Lock size={18} color="#94a3b8" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            style={{
+                                                position: 'absolute',
+                                                right: '12px',
+                                                top: '50%',
+                                                transform: 'translateY(-50%)',
+                                                background: 'none',
+                                                border: 'none',
+                                                color: '#94a3b8',
+                                                cursor: 'pointer',
+                                                padding: 0
+                                            }}
+                                        >
+                                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                        </button>
                                     </div>
                                 </div>
 
@@ -849,12 +1205,17 @@ const Login = () => {
                                                 width: '100%',
                                                 padding: '12px 14px 12px 42px',
                                                 borderRadius: '12px',
-                                                border: '1.5px solid #cbd5e1',
+                                                border: '1.5px solid #e2e8f0',
+                                                background: '#f8fafc',
                                                 fontSize: '14px',
                                                 boxSizing: 'border-box',
                                                 fontWeight: 600,
-                                                color: '#0f172a'
+                                                color: '#0f172a',
+                                                transition: 'all 0.2s ease',
+                                                outline: 'none'
                                             }}
+                                            onFocus={(e) => { e.target.style.borderColor = '#0d9488'; e.target.style.background = '#ffffff'; }}
+                                            onBlur={(e) => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = '#f8fafc'; }}
                                         />
                                         <Phone size={18} color="#94a3b8" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
                                     </div>
@@ -863,29 +1224,31 @@ const Login = () => {
                                     </span>
                                 </div>
 
-                                <button
+                                <motion.button
+                                    whileHover={{ scale: 1.01 }}
+                                    whileTap={{ scale: 0.98 }}
                                     type="submit"
                                     disabled={loading}
                                     style={{
-                                        padding: '12px 18px',
-                                        background: 'linear-gradient(135deg, #0284c7 0%, #0d9488 100%)',
+                                        padding: '13px 18px',
+                                        background: 'linear-gradient(135deg, #0d9488 0%, #0284c7 100%)',
                                         color: 'white',
                                         border: 'none',
                                         borderRadius: '14px',
                                         fontSize: '14px',
-                                        fontWeight: 700,
+                                        fontWeight: 800,
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         gap: '8px',
                                         cursor: loading ? 'not-allowed' : 'pointer',
-                                        boxShadow: '0 4px 12px rgba(2, 132, 199, 0.3)',
-                                        marginTop: '4px'
+                                        boxShadow: '0 6px 18px rgba(13, 148, 136, 0.32)',
+                                        marginTop: '6px'
                                     }}
                                 >
-                                    <span>Continue to Profile Setup (2/2)</span>
+                                    <span>Continue to Profile Details (आगे बढ़ें)</span>
                                     <ArrowRight size={16} />
-                                </button>
+                                </motion.button>
                             </form>
                         ) : loginMethod === 'email' ? (
                             /* Primary Gmail Login Form */
@@ -905,12 +1268,17 @@ const Login = () => {
                                                 width: '100%',
                                                 padding: '12px 14px 12px 42px',
                                                 borderRadius: '12px',
-                                                border: '1.5px solid #cbd5e1',
+                                                border: '1.5px solid #e2e8f0',
+                                                background: '#f8fafc',
                                                 fontSize: '14px',
                                                 boxSizing: 'border-box',
                                                 fontWeight: 600,
-                                                color: '#0f172a'
+                                                color: '#0f172a',
+                                                transition: 'all 0.2s ease',
+                                                outline: 'none'
                                             }}
+                                            onFocus={(e) => { e.target.style.borderColor = '#0d9488'; e.target.style.background = '#ffffff'; }}
+                                            onBlur={(e) => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = '#f8fafc'; }}
                                             autoFocus
                                         />
                                         <Mail size={18} color="#94a3b8" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
@@ -936,55 +1304,86 @@ const Login = () => {
                                     </div>
                                     <div style={{ position: 'relative' }}>
                                         <input
-                                            type="password"
+                                            type={showPassword ? "text" : "password"}
                                             required
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}
                                             placeholder="Enter your password"
                                             style={{
                                                 width: '100%',
-                                                padding: '12px 14px 12px 42px',
+                                                padding: '12px 42px 12px 42px',
                                                 borderRadius: '12px',
-                                                border: '1.5px solid #cbd5e1',
+                                                border: '1.5px solid #e2e8f0',
+                                                background: '#f8fafc',
                                                 fontSize: '14px',
                                                 boxSizing: 'border-box',
                                                 fontWeight: 600,
-                                                color: '#0f172a'
+                                                color: '#0f172a',
+                                                transition: 'all 0.2s ease',
+                                                outline: 'none'
                                             }}
+                                            onFocus={(e) => { e.target.style.borderColor = '#0d9488'; e.target.style.background = '#ffffff'; }}
+                                            onBlur={(e) => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = '#f8fafc'; }}
                                         />
                                         <Lock size={18} color="#94a3b8" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            style={{
+                                                position: 'absolute',
+                                                right: '12px',
+                                                top: '50%',
+                                                transform: 'translateY(-50%)',
+                                                background: 'none',
+                                                border: 'none',
+                                                color: '#94a3b8',
+                                                cursor: 'pointer',
+                                                padding: 0
+                                            }}
+                                        >
+                                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                        </button>
                                     </div>
                                 </div>
 
-                                <button
+                                <motion.button
+                                    whileHover={{ scale: 1.01 }}
+                                    whileTap={{ scale: 0.98 }}
                                     type="submit"
                                     disabled={loading}
                                     style={{
-                                        padding: '12px 18px',
-                                        background: 'linear-gradient(135deg, #0284c7 0%, #0d9488 100%)',
+                                        padding: '13px 18px',
+                                        background: 'linear-gradient(135deg, #0d9488 0%, #0284c7 100%)',
                                         color: 'white',
                                         border: 'none',
                                         borderRadius: '14px',
                                         fontSize: '14px',
-                                        fontWeight: 700,
+                                        fontWeight: 800,
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         gap: '8px',
                                         cursor: loading ? 'not-allowed' : 'pointer',
-                                        boxShadow: '0 4px 12px rgba(2, 132, 199, 0.3)',
-                                        marginTop: '4px'
+                                        boxShadow: '0 6px 18px rgba(13, 148, 136, 0.32)',
+                                        marginTop: '6px'
                                     }}
                                 >
-                                    {loading ? <span>Signing In...</span> : <><span>Sign In with Gmail</span> <ArrowRight size={16} /></>}
-                                </button>
+                                    {loading ? (
+                                        <span>Signing In to {currentRole.label}...</span>
+                                    ) : (
+                                        <>
+                                            <span>Sign In to {currentRole.shortLabel} Portal</span>
+                                            <ArrowRight size={16} />
+                                        </>
+                                    )}
+                                </motion.button>
                             </form>
                         ) : (
                             /* Secondary / Optional Mobile OTP Login */
                             <form onSubmit={handleSendOtp} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                                 <div>
                                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
-                                        Mobile Number (Optional Mobile Login)
+                                        Mobile Number (10-Digit Mobile)
                                     </label>
                                     <div style={{ position: 'relative' }}>
                                         <input
@@ -996,12 +1395,17 @@ const Login = () => {
                                                 width: '100%',
                                                 padding: '12px 14px 12px 42px',
                                                 borderRadius: '12px',
-                                                border: '1.5px solid #cbd5e1',
+                                                border: '1.5px solid #e2e8f0',
+                                                background: '#f8fafc',
                                                 fontSize: '14px',
                                                 boxSizing: 'border-box',
                                                 fontWeight: 600,
-                                                color: '#0f172a'
+                                                color: '#0f172a',
+                                                transition: 'all 0.2s ease',
+                                                outline: 'none'
                                             }}
+                                            onFocus={(e) => { e.target.style.borderColor = '#0d9488'; e.target.style.background = '#ffffff'; }}
+                                            onBlur={(e) => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = '#f8fafc'; }}
                                             autoFocus
                                         />
                                         <Phone size={18} color="#94a3b8" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
@@ -1011,28 +1415,30 @@ const Login = () => {
                                     </span>
                                 </div>
 
-                                <button
+                                <motion.button
+                                    whileHover={{ scale: 1.01 }}
+                                    whileTap={{ scale: 0.98 }}
                                     type="submit"
                                     disabled={loading}
                                     style={{
-                                        padding: '12px 18px',
+                                        padding: '13px 18px',
                                         background: 'linear-gradient(135deg, #0d9488 0%, #0284c7 100%)',
                                         color: 'white',
                                         border: 'none',
                                         borderRadius: '14px',
                                         fontSize: '14px',
-                                        fontWeight: 700,
+                                        fontWeight: 800,
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         gap: '8px',
                                         cursor: loading ? 'not-allowed' : 'pointer',
-                                        boxShadow: '0 4px 12px rgba(13, 148, 136, 0.3)',
+                                        boxShadow: '0 6px 18px rgba(13, 148, 136, 0.32)',
                                         opacity: loading ? 0.7 : 1
                                     }}
                                 >
                                     {loading ? <span>Sending Code...</span> : <><span>Send Mobile OTP</span> <ArrowRight size={16} /></>}
-                                </button>
+                                </motion.button>
                             </form>
                         )}
                     </>
