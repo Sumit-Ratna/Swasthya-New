@@ -24,6 +24,26 @@ allprojects {
     }
 }
 
+subprojects {
+    afterEvaluate { project ->
+        if (project.plugins.hasPlugin("kotlin-android") || project.plugins.hasPlugin("org.jetbrains.kotlin.android")) {
+            try {
+                project.kotlin {
+                    jvmToolchain(17)
+                }
+            } catch (Exception e) {}
+        }
+        if (project.plugins.hasPlugin("com.android.application") || project.plugins.hasPlugin("com.android.library")) {
+            project.android {
+                compileOptions {
+                    sourceCompatibility JavaVersion.VERSION_17
+                    targetCompatibility JavaVersion.VERSION_17
+                }
+            }
+        }
+    }
+}
+
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
