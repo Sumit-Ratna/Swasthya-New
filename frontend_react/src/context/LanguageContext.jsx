@@ -19,7 +19,7 @@ export const translations = {
         navHome: 'Home',
         navStatus: 'Status',
         navRecords: 'Records',
-        navReferrals: 'Referrals',
+        navReferrals: 'Track Referrals',
         navProfile: 'Profile',
         navAshaHub: 'ASHA Hub',
         navFieldVitals: 'Field Vitals',
@@ -32,7 +32,7 @@ export const translations = {
         navDocRoster: 'Doc Roster',
         navCommandHub: 'Command Hub',
         navBedsLive: 'Beds Live',
-        navMedHistory: 'Med History',
+        navMedHistory: 'Medical History',
         navSupport: 'Support',
         navNotifications: 'Notifications',
 
@@ -151,23 +151,23 @@ export const translations = {
         recentReferrals: 'Active Closed-Loop Referrals',
         noActiveReferrals: 'No active referrals at the moment.',
         nearbyFacilities: 'Nearby Health Facilities & Live Beds',
-        phcShirwal: 'PHC Shirwal Primary Health Centre',
+        phcShirwal: 'Primary Health Centre (PHC) Shirwal',
         civilHospital: 'District Civil Hospital Nashik',
         open24x7: 'Open 24x7 • Emergency Ready',
         bedAvailable: 'Beds Available',
 
         // Quick Actions
-        quickTriage: 'Instant AI Triage',
+        quickTriage: 'Patient Risk Score',
         quickTriageDesc: 'Check symptoms with safe clinical guidance',
-        quickReferral: 'Referral Pipeline',
+        quickReferral: 'Track Referrals',
         quickReferralDesc: 'Track hospital transfers in real time',
         quickFacilities: 'Find Nearest Facility',
         quickFacilitiesDesc: 'Locate PHCs, CHCs, & Hospitals with ICU',
         quickConsult: 'Doctor Consultation',
         quickConsultDesc: 'Connect with specialist doctors',
-        quickRecords: 'Medical Records',
+        quickRecords: 'Medicine Explainer',
         quickRecordsDesc: 'EHR records, prescriptions & lab reports',
-        quickFamily: 'Family & Dependents',
+        quickFamily: 'Family Person',
         quickFamilyDesc: 'Manage health records of elders & children',
 
         // Triage Assessment
@@ -454,17 +454,17 @@ export const translations = {
         bedAvailable: 'बेड उपलब्ध',
 
         // Quick Actions
-        quickTriage: 'त्वरित एआई जांच (Triage)',
+        quickTriage: 'पेशेंट रिस्क स्कोर (Patient Risk Score)',
         quickTriageDesc: 'लक्षणों की जांच कर सुरक्षित चिकित्सकीय मार्गदर्शन पाएं',
-        quickReferral: 'रेफरल ट्रैकर',
+        quickReferral: 'रेफरल ट्रैक करें (Track Referrals)',
         quickReferralDesc: 'अस्पताल ट्रांसफर को रियल-टाइम में ट्रैक करें',
         quickFacilities: 'निकटतम अस्पताल खोजें',
         quickFacilitiesDesc: 'पीएचसी, सीएचसी और आईसीयू युक्त अस्पताल खोजें',
         quickConsult: 'डॉक्टर से परामर्श',
         quickConsultDesc: 'विशेषज्ञ डॉक्टरों से ऑनलाइन परामर्श लें',
-        quickRecords: 'स्वास्थ्य रिकॉर्ड्स',
+        quickRecords: 'दवा व रिपोर्ट समझें (Medicine Explainer)',
         quickRecordsDesc: 'पर्चे, लैब टेस्ट रिपोर्ट और डिस्चार्ज समरी',
-        quickFamily: 'परिवार व आश्रित',
+        quickFamily: 'परिवार जन (Family Person)',
         quickFamilyDesc: 'बुजुर्गों और बच्चों के स्वास्थ्य रिकॉर्ड प्रबंधित करें',
 
         // Triage Assessment

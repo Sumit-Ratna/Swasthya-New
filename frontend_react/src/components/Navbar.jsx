@@ -86,11 +86,11 @@ const Navbar = () => {
             { path: '/facilities', label: t('navBedsLive', 'Beds Live'), icon: Building2 },
             { 
                 path: '/referrals', 
-                label: t('navReferrals', 'Referrals'), 
+                label: t('navReferrals', 'Track Referrals'), 
                 icon: GitBranch,
                 highlight: true 
             },
-            { path: '/records', label: t('navMedHistory', 'Med History'), icon: Lock },
+            { path: '/records', label: t('navMedHistory', 'Medical History'), icon: Lock },
             { path: '/profile', label: t('navProfile', 'Profile'), icon: User }
         ];
     } else {
@@ -104,7 +104,7 @@ const Navbar = () => {
                 icon: FileText,
                 highlight: true 
             },
-            { path: '/referrals', label: t('navReferrals', 'Referrals'), icon: GitBranch },
+            { path: '/referrals', label: t('navReferrals', 'Track Referrals'), icon: GitBranch },
             { path: '/profile', label: t('navProfile', 'Profile'), icon: User }
         ];
     }

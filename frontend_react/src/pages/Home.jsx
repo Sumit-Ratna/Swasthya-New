@@ -146,18 +146,18 @@ const Home = () => {
 
     const coreFeatures = [
         {
-            title: t('navReferrals', 'Referral Tracker'),
+            title: t('quickReferral', 'Track Referrals'),
             tag: t('closedLoopBadge', 'Closed-Loop'),
-            desc: t('quickReferralDesc', 'Milestone tracking & verified care closure'),
+            desc: t('quickReferralDesc', 'Track hospital transfers in real time'),
             icon: <GitBranch size={22} color="#0d9488" />,
             bgColor: '#ccfbf1',
             badgeColor: '#0f766e',
             link: '/referrals'
         },
         {
-            title: t('quickFacilities', 'HealthCentres Nearby'),
+            title: t('quickFacilities', 'Find Nearest Facility'),
             tag: t('liveBedsBadge', 'Live Beds'),
-            desc: t('quickFacilitiesDesc', 'Multi-tier directory & load meters'),
+            desc: t('quickFacilitiesDesc', 'Locate PHCs, CHCs, & Hospitals with ICU'),
             icon: <Building2 size={22} color="#2563eb" />,
             bgColor: '#dbeafe',
             badgeColor: '#1d4ed8',
@@ -166,25 +166,25 @@ const Home = () => {
         {
             title: t('quickTriage', 'Patient Risk Score'),
             tag: t('triageAiBadge', 'Triage AI'),
-            desc: t('quickTriageDesc', 'Vitals scoring & emergency risk alerts'),
+            desc: t('quickTriageDesc', 'Check symptoms with safe clinical guidance'),
             icon: <HeartPulse size={22} color="#e11d48" />,
             bgColor: '#ffe4e6',
             badgeColor: '#be123c',
             link: '/triage'
         },
         {
-            title: t('quickRecords', 'Lab Report OCR & Explainer'),
+            title: t('quickRecords', 'Medicine Explainer'),
             tag: t('medgemmaAiBadge', 'MedGemma AI'),
-            desc: t('quickRecordsDesc', 'Automated blood test & visual dosage guides'),
+            desc: t('quickRecordsDesc', 'EHR records, prescriptions & lab reports'),
             icon: <FileText size={22} color="#7c3aed" />,
             bgColor: '#ede9fe',
             badgeColor: '#6d28d9',
             link: '/records'
         },
         {
-            title: t('quickFamily', 'Family & Dependents'),
+            title: t('quickFamily', 'Family Person'),
             tag: t('familyProxyBadge', 'Family Proxy'),
-            desc: t('quickFamilyDesc', 'Dependent monitoring & SOS panic'),
+            desc: t('quickFamilyDesc', 'Manage health records of elders & children'),
             icon: <Users size={22} color="#db2777" />,
             bgColor: '#fce7f3',
             badgeColor: '#be185d',
