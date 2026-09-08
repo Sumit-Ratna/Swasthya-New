@@ -270,7 +270,7 @@ const Login = () => {
     const handleEmailLogin = async (e) => {
         if (e) e.preventDefault();
         if (!email || !email.includes('@')) {
-            setLoginError("Please enter a valid Gmail / Email address");
+            setLoginError("Please enter a valid email address");
             return;
         }
         if (!password) {
@@ -300,7 +300,7 @@ const Login = () => {
     const handleRegisterStep1 = async (e) => {
         if (e) e.preventDefault();
         if (!email || !email.includes('@')) {
-            setLoginError("Please enter a valid Gmail / Email address");
+            setLoginError("Please enter a valid email address");
             return;
         }
         if (!password || password.length < 6) {
@@ -350,7 +350,7 @@ const Login = () => {
     const handleSendResetCode = async (e) => {
         if (e) e.preventDefault();
         if (!forgotEmail || !forgotEmail.includes('@')) {
-            alert("Please enter your registered Gmail / Email address");
+            alert("Please enter your registered email address");
             return;
         }
 
@@ -547,14 +547,14 @@ const Login = () => {
                 zIndex: 0
             }} />
 
-            {/* Header & Language Switcher */}
+            {/* Header & Logo */}
             <motion.div
                 initial={{ opacity: 0, y: -12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
                 style={{
                     textAlign: 'center',
-                    marginBottom: '14px',
+                    marginBottom: '16px',
                     maxWidth: (step === 3 || step === 4) ? '620px' : '440px',
                     width: '100%',
                     display: 'flex',
@@ -564,16 +564,6 @@ const Login = () => {
                     zIndex: 1
                 }}
             >
-                {/* Clean Top-Right Language Switcher */}
-                <div style={{
-                    width: '100%',
-                    display: 'flex',
-                    justifyContent: 'flex-end',
-                    marginBottom: '6px'
-                }}>
-                    <LanguageSwitcher mode="compact" />
-                </div>
-
                 {/* Main Hero Logo */}
                 <div style={{
                     display: 'flex',
@@ -807,7 +797,7 @@ const Login = () => {
                                 }}
                             >
                                 <UserPlus size={13} />
-                                <span>Register as {currentRole.label} with this Gmail now →</span>
+                                <span>Register as {currentRole.label} with this email now →</span>
                             </button>
                         )}
                     </motion.div>
@@ -853,7 +843,7 @@ const Login = () => {
 
                                 <div>
                                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
-                                        Gmail / Email Address (Primary Identity) *
+                                        Email Address *
                                     </label>
                                     <div style={{ position: 'relative' }}>
                                         <input
@@ -998,7 +988,7 @@ const Login = () => {
                             <form onSubmit={handleEmailLogin} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                                 <div>
                                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
-                                        Gmail / Email Address *
+                                        Email Address *
                                     </label>
                                     <div style={{ position: 'relative' }}>
                                         <input
@@ -1333,7 +1323,7 @@ const Login = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '3px' }}>Gmail / Email ID *</label>
+                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '3px' }}>Email Address *</label>
                                     <input
                                         type="email"
                                         required
@@ -1635,7 +1625,7 @@ const Login = () => {
                                 <form onSubmit={handleSendResetCode} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                                     <div>
                                         <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
-                                            Gmail / Email Address *
+                                            Email Address *
                                         </label>
                                         <input
                                             type="email"
