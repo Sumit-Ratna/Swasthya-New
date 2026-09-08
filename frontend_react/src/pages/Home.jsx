@@ -147,7 +147,7 @@ const Home = () => {
     const coreFeatures = [
         {
             title: t('navReferrals', 'Referral Tracker'),
-            tag: 'Closed-Loop',
+            tag: t('closedLoopBadge', 'Closed-Loop'),
             desc: t('quickReferralDesc', 'Milestone tracking & verified care closure'),
             icon: <GitBranch size={22} color="#0d9488" />,
             bgColor: '#ccfbf1',
@@ -156,7 +156,7 @@ const Home = () => {
         },
         {
             title: t('quickFacilities', 'HealthCentres Nearby'),
-            tag: 'Live Beds',
+            tag: t('liveBedsBadge', 'Live Beds'),
             desc: t('quickFacilitiesDesc', 'Multi-tier directory & load meters'),
             icon: <Building2 size={22} color="#2563eb" />,
             bgColor: '#dbeafe',
@@ -165,7 +165,7 @@ const Home = () => {
         },
         {
             title: t('quickTriage', 'Patient Risk Score'),
-            tag: 'Triage AI',
+            tag: t('triageAiBadge', 'Triage AI'),
             desc: t('quickTriageDesc', 'Vitals scoring & emergency risk alerts'),
             icon: <HeartPulse size={22} color="#e11d48" />,
             bgColor: '#ffe4e6',
@@ -174,7 +174,7 @@ const Home = () => {
         },
         {
             title: t('quickRecords', 'Lab Report OCR & Explainer'),
-            tag: 'MedGemma AI',
+            tag: t('medgemmaAiBadge', 'MedGemma AI'),
             desc: t('quickRecordsDesc', 'Automated blood test & visual dosage guides'),
             icon: <FileText size={22} color="#7c3aed" />,
             bgColor: '#ede9fe',
@@ -183,7 +183,7 @@ const Home = () => {
         },
         {
             title: t('quickFamily', 'Family & Dependents'),
-            tag: 'Family Proxy',
+            tag: t('familyProxyBadge', 'Family Proxy'),
             desc: t('quickFamilyDesc', 'Dependent monitoring & SOS panic'),
             icon: <Users size={22} color="#db2777" />,
             bgColor: '#fce7f3',
@@ -192,8 +192,8 @@ const Home = () => {
         },
         {
             title: t('navMedHistory', 'Medical History'),
-            tag: 'EHR Records',
-            desc: 'Past records, confirmed appointments & health archives',
+            tag: t('ehrRecordsBadge', 'EHR Records'),
+            desc: t('medHistoryDesc', 'Past records, confirmed appointments & health archives'),
             icon: <History size={22} color="#0284c7" />,
             bgColor: '#e0f2fe',
             badgeColor: '#0369a1',
@@ -221,11 +221,11 @@ const Home = () => {
                 <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <span style={{ fontSize: '12px', fontWeight: '700', color: '#0d9488', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            AYUSHMAN BHARAT SWASTHYA
+                            {t('ayushmanHeader', 'AYUSHMAN BHARAT SWASTHYA')}
                         </span>
                     </div>
                     <h1 style={{ fontSize: '24px', color: 'var(--text-primary)', margin: '2px 0 0', fontWeight: 800 }}>
-                        {user?.name || 'Swasthya Citizen'}
+                        {user?.name || t('citizenTitle', 'Swasthya Citizen')}
                     </h1>
                 </div>
 
@@ -279,7 +279,7 @@ const Home = () => {
                         title="Feedback & Suggestions"
                     >
                         <MessageSquareHeart size={16} color="#0f766e" />
-                        <span style={{ fontSize: '11px', fontWeight: 700, color: '#0f766e' }}>Feedback</span>
+                        <span style={{ fontSize: '11px', fontWeight: 700, color: '#0f766e' }}>{t('feedbackPrompt', 'Feedback')}</span>
                     </motion.div>
 
                     {/* Notifications */}
@@ -377,10 +377,10 @@ const Home = () => {
                                     boxShadow: '0 2px 6px rgba(5, 150, 105, 0.35)'
                                 }}>
                                     <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#a7f3d0', display: 'inline-block' }}></span>
-                                    Referral In Progress
+                                    {t('referralInProgress', 'Referral In Progress')}
                                 </span>
                                 <span style={{ background: 'rgba(255,255,255,0.16)', fontSize: '10px', fontWeight: 700, padding: '3px 8px', borderRadius: '16px' }}>
-                                    Token: {activeReferral?.slot_token || '#TK-042'}
+                                    {t('tokenLabel', 'Token')}: {activeReferral?.slot_token || '#TK-042'}
                                 </span>
                             </div>
 
@@ -407,12 +407,12 @@ const Home = () => {
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
                             <div>
                                 <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.2px' }}>
-                                    {activeReferral?.facilities?.name || 'District Civil Hospital Nashik'}
+                                    {activeReferral?.facilities?.name || t('hospitalNashik', 'District Civil Hospital Nashik')}
                                 </h3>
                                 <p style={{ margin: '2px 0 0', fontSize: '11.5px', color: '#99f6e4', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                                    <span>{activeReferral?.specialty_required || 'Cardiology Consult'}</span>
+                                    <span>{activeReferral?.specialty_required || t('specialtyCardiology', 'Cardiology Consult')}</span>
                                     <span>•</span>
-                                    <span style={{ color: '#fed7aa', fontWeight: 700 }}>{activeReferral?.status || 'APPOINTMENT_BOOKED'}</span>
+                                    <span style={{ color: '#fed7aa', fontWeight: 700 }}>{activeReferral?.status === 'APPOINTMENT_BOOKED' ? t('stageBooked', 'APPOINTMENT_BOOKED') : activeReferral?.status}</span>
                                 </p>
                             </div>
 
@@ -440,7 +440,7 @@ const Home = () => {
                                     transition: 'all 0.2s ease'
                                 }}
                             >
-                                <span>{isReferralExpanded ? 'Less' : 'Details'}</span>
+                                <span>{isReferralExpanded ? t('lessBtn', 'Less') : t('detailsBtn', 'Details')}</span>
                                 {isReferralExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
                             </button>
                         </div>
@@ -449,8 +449,8 @@ const Home = () => {
                         {!isReferralExpanded && (
                             <div style={{ marginTop: '10px' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9.5px', color: '#ccfbf1', marginBottom: '4px', fontWeight: 600 }}>
-                                    <span>Stage: <strong style={{ color: '#fef08a' }}>3. Booked (Active)</strong></span>
-                                    <span>Click to view route & details ▾</span>
+                                    <span>{t('stageLabel', 'Stage')}: <strong style={{ color: '#fef08a' }}>{t('stageBooked', '3. Booked (Active)')}</strong></span>
+                                    <span>{t('clickForRouteDetails', 'Click to view route & details')} ▾</span>
                                 </div>
                                 <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.2)', borderRadius: '2px', overflow: 'hidden' }}>
                                     <div style={{ width: '60%', height: '100%', background: 'linear-gradient(90deg, #2dd4bf, #facc15)', borderRadius: '2px' }}></div>
@@ -484,7 +484,7 @@ const Home = () => {
                                         marginBottom: '12px'
                                     }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-                                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                                             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                                                 <div style={{
                                                     width: '34px',
                                                     height: '34px',
@@ -502,7 +502,7 @@ const Home = () => {
                                                 <div>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                                                         <span style={{ fontSize: '13.5px', fontWeight: 800, color: '#ffffff' }}>
-                                                            Direction & Distance: {activeReferral?.distance_km || '4.2 km'}
+                                                            {t('directionDistance', 'Direction & Distance')}: {activeReferral?.distance_km || '4.2 km'}
                                                         </span>
                                                         <span style={{
                                                             background: 'rgba(20, 184, 166, 0.25)',
@@ -527,7 +527,7 @@ const Home = () => {
                                                         </span>
                                                     </div>
                                                     <p style={{ margin: '3px 0 0', fontSize: '11px', color: '#ccfbf1' }}>
-                                                        🛣️ <strong>Route:</strong> {activeReferral?.route_summary || 'via Shalimar Rd & NH-848'} ({activeReferral?.distance_source || 'OSRM Road Routing'})
+                                                        🛣️ <strong>{t('routeLabel', 'Route')}:</strong> {activeReferral?.route_summary || 'via Shalimar Rd & NH-848'} ({activeReferral?.distance_source || 'OSRM Road Routing'})
                                                     </p>
                                                 </div>
                                             </div>
@@ -552,7 +552,7 @@ const Home = () => {
                                                     transition: 'all 0.2s ease'
                                                 }}
                                             >
-                                                <Navigation2 size={12} fill="#022c22" /> Get Directions
+                                                <Navigation2 size={12} fill="#022c22" /> {t('getDirections', 'Get Directions')}
                                             </a>
                                         </div>
                                     </div>
@@ -572,7 +572,7 @@ const Home = () => {
                                             border: '1px solid rgba(255,255,255,0.1)'
                                         }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#99f6e4', fontSize: '10.5px', fontWeight: 700, marginBottom: '2px' }}>
-                                                <MapPin size={12} color="#2dd4bf" /> Facility Location
+                                                <MapPin size={12} color="#2dd4bf" /> {t('facilityLocation', 'Facility Location')}
                                             </div>
                                             <div style={{ fontSize: '11px', color: '#f0fdfa', lineHeight: '1.3' }}>
                                                 {activeReferral?.facilities?.address || 'Old Agra Rd, Shalimar Chowk, Nashik - 422001'}
@@ -587,7 +587,7 @@ const Home = () => {
                                             border: '1px solid rgba(255,255,255,0.1)'
                                         }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#99f6e4', fontSize: '10.5px', fontWeight: 700, marginBottom: '2px' }}>
-                                                <UserCheck size={12} color="#2dd4bf" /> Assigned Consultant
+                                                <UserCheck size={12} color="#2dd4bf" /> {t('assignedConsultant', 'Assigned Consultant')}
                                             </div>
                                             <div style={{ fontSize: '11px', color: '#f0fdfa', fontWeight: 600 }}>
                                                 {activeReferral?.doctor_name || 'Dr. Anand Deshmukh (Cardiology)'}
@@ -605,13 +605,13 @@ const Home = () => {
                                             border: '1px solid rgba(255,255,255,0.1)'
                                         }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#99f6e4', fontSize: '10.5px', fontWeight: 700, marginBottom: '2px' }}>
-                                                <Calendar size={12} color="#2dd4bf" /> Appointment Schedule
+                                                <Calendar size={12} color="#2dd4bf" /> {t('appointmentSchedule', 'Appointment Schedule')}
                                             </div>
                                             <div style={{ fontSize: '11px', color: '#fef08a', fontWeight: 700 }}>
                                                 {activeReferral?.appointment_time || 'Today • 02:30 PM - 03:00 PM'}
                                             </div>
                                             <div style={{ fontSize: '9.5px', color: '#99f6e4', marginTop: '2px' }}>
-                                                Fast-Track OPD Entry Token Active
+                                                {t('fastTrackTokenActive', 'Fast-Track OPD Entry Token Active')}
                                             </div>
                                         </div>
 
@@ -627,7 +627,7 @@ const Home = () => {
                                         }}>
                                             <div>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#99f6e4', fontSize: '10.5px', fontWeight: 700, marginBottom: '2px' }}>
-                                                    <Phone size={12} color="#2dd4bf" /> Facility Helpdesk
+                                                    <Phone size={12} color="#2dd4bf" /> {t('facilityHelpdesk', 'Facility Helpdesk')}
                                                 </div>
                                                 <div style={{ fontSize: '11px', color: '#f0fdfa' }}>
                                                     {activeReferral?.facilities?.phone || '+91 253 257 2038'}
@@ -646,7 +646,7 @@ const Home = () => {
                                                     gap: '3px'
                                                 }}
                                             >
-                                                Call Helpdesk <ArrowRight size={9} />
+                                                {t('callHelpdesk', 'Call Helpdesk')} <ArrowRight size={9} />
                                             </a>
                                         </div>
                                     </div>
@@ -673,15 +673,15 @@ const Home = () => {
                                                 boxShadow: '0 3px 10px rgba(20, 184, 166, 0.4)'
                                             }}
                                         >
-                                            Track Journey Timeline <ArrowRight size={13} />
+                                            {t('trackJourneyTimeline', 'Track Journey Timeline')} <ArrowRight size={13} />
                                         </button>
                                     </div>
 
                                     {/* 5-Stage Live Progress Track */}
                                     <div style={{ background: 'rgba(0,0,0,0.25)', borderRadius: '12px', padding: '10px 12px', border: '1px solid rgba(255,255,255,0.08)' }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9.5px', fontWeight: 700, color: '#ccfbf1', marginBottom: '6px', flexWrap: 'wrap', gap: '3px' }}>
-                                            <span style={{ color: '#5eead4' }}>✓ 1. Triaged</span>
-                                            <span style={{ color: '#5eead4' }}>✓ 2. Facility Assigned</span>
+                                            <span style={{ color: '#5eead4' }}>✓ 1. {t('stepTriaged', 'Triaged')}</span>
+                                            <span style={{ color: '#5eead4' }}>✓ 2. {t('stepFacilityLinked', 'Facility Assigned')}</span>
                                             <span style={{ 
                                                 color: '#fef08a', 
                                                 fontWeight: 900, 
@@ -690,10 +690,10 @@ const Home = () => {
                                                 borderRadius: '4px',
                                                 border: '1px solid rgba(250, 204, 21, 0.4)'
                                             }}>
-                                                ● 3. Booked (Active)
+                                                ● {t('stageBooked', '3. Booked (Active)')}
                                             </span>
-                                            <span style={{ opacity: 0.75 }}>4. Transit</span>
-                                            <span style={{ opacity: 0.75 }}>5. Care Done</span>
+                                            <span style={{ opacity: 0.75 }}>4. {t('stepInTransit', 'Transit')}</span>
+                                            <span style={{ opacity: 0.75 }}>5. {t('stepCareCompleted', 'Care Done')}</span>
                                         </div>
                                         <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.18)', borderRadius: '3px', overflow: 'hidden' }}>
                                             <div style={{ 
@@ -717,7 +717,7 @@ const Home = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
                     <div>
                         <h2 className="section-title" style={{ margin: 0, color: 'var(--text-primary)', fontSize: '17px', fontWeight: 800 }}>
-                            Swasthya Platform Capabilities
+                            {t('platformCapabilities', 'Swasthya Platform Capabilities')}
                         </h2>
                     </div>
                     <span style={{
@@ -729,7 +729,7 @@ const Home = () => {
                         fontWeight: 700,
                         border: '1px solid #ccfbf1'
                     }}>
-                        All 6 Core Modules
+                        {t('all6Modules', 'All 6 Core Modules')}
                     </span>
                 </div>
 
@@ -825,7 +825,7 @@ const Home = () => {
                                 fontWeight: 700,
                                 color: 'var(--primary-color)'
                             }}>
-                                <span>Open Module</span>
+                                <span>{t('openModule', 'Open Module')}</span>
                                 <ChevronRight size={13} />
                             </div>
                         </motion.div>
@@ -838,13 +838,13 @@ const Home = () => {
             <div style={{ marginBottom: '24px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                     <h2 className="section-title" style={{ margin: 0, color: 'var(--text-primary)', fontSize: '18px', fontWeight: 800 }}>
-                        Your Care Team & Doctors
+                        {t('careTeamTitle', 'Your Care Team & Doctors')}
                     </h2>
                     <button
                         onClick={() => navigate('/care-team')}
                         style={{ background: 'none', border: 'none', color: 'var(--primary-color)', fontSize: '13px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
                     >
-                        View All <ChevronRight size={16} />
+                        {t('viewAll', 'View All')} <ChevronRight size={16} />
                     </button>
                 </div>
 
@@ -881,8 +881,20 @@ const Home = () => {
                             </div>
                             <div>
                                 <strong style={{ fontSize: '13px', color: 'var(--text-primary)', display: 'block' }}>{doc.name}</strong>
-                                <div style={{ fontSize: '11px', color: 'var(--primary-color)' }}>{doc.specialization}</div>
-                                <div style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>{doc.hospital_name}</div>
+                                <div style={{ fontSize: '11px', color: 'var(--primary-color)' }}>
+                                    {doc.specialization?.toLowerCase().includes('cardio') 
+                                        ? t('specialtyCardiology', 'Cardiology') 
+                                        : doc.specialization?.toLowerCase().includes('obs') || doc.specialization?.toLowerCase().includes('gyn') 
+                                            ? t('specialtyObstetrics', 'Obstetrics & Gynaecology')
+                                            : doc.specialization}
+                                </div>
+                                <div style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>
+                                    {doc.hospital_name?.toLowerCase().includes('nashik')
+                                        ? t('hospitalNashik', 'District Hospital Nashik')
+                                        : doc.hospital_name?.toLowerCase().includes('pune')
+                                            ? t('hospitalPune', 'Civil Hospital Pune')
+                                            : doc.hospital_name}
+                                </div>
                             </div>
                         </div>
                     ))}
