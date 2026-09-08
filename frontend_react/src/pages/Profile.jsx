@@ -224,7 +224,7 @@ const Profile = () => {
                 color: '#0d9488',
                 bg: '#ccfbf1',
                 icon: HeartPulse,
-                tabs: ['overview', 'language', 'rch_credentials', 'dependents_proxy', 'dbt_wallet']
+                tabs: ['overview', 'rch_credentials', 'dependents_proxy', 'dbt_wallet']
             };
         }
         if (role === 'doctor') {
@@ -234,7 +234,7 @@ const Profile = () => {
                 color: '#0284c7',
                 bg: '#e0f2fe',
                 icon: Stethoscope,
-                tabs: ['overview', 'language', 'clinical_license', 'opd_schedule']
+                tabs: ['overview', 'clinical_license', 'opd_schedule']
             };
         }
         if (role === 'facility_staff' || role === 'facility_coordinator' || role === 'facility') {
@@ -244,7 +244,7 @@ const Profile = () => {
                 color: '#0369a1',
                 bg: '#e0f2fe',
                 icon: Building2,
-                tabs: ['overview', 'language', 'facility_license', 'bed_capacity']
+                tabs: ['overview', 'facility_license', 'bed_capacity']
             };
         }
         if (role === 'admin') {
@@ -254,7 +254,7 @@ const Profile = () => {
                 color: '#334155',
                 bg: '#f1f5f9',
                 icon: Shield,
-                tabs: ['overview', 'language', 'authority_scope', 'security_audit']
+                tabs: ['overview', 'authority_scope', 'security_audit']
             };
         }
         return {
@@ -263,7 +263,7 @@ const Profile = () => {
             color: '#0f766e',
             bg: '#ccfbf1',
             icon: UserCheck,
-            tabs: ['overview', 'language', 'medical', 'lifestyle']
+            tabs: ['overview', 'medical', 'lifestyle']
         };
     };
 
@@ -324,7 +324,6 @@ const Profile = () => {
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                        <LanguageSwitcher mode="compact" />
                         <button
                             onClick={() => editMode ? handleCancel() : setEditMode(true)}
                             style={{
@@ -712,12 +711,6 @@ const Profile = () => {
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    )}
-
-                    {tab === 'language' && (
-                        <div style={{ marginBottom: '20px' }}>
-                            <LanguageSwitcher mode="card" />
                         </div>
                     )}
 

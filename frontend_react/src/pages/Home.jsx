@@ -230,8 +230,6 @@ const Home = () => {
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <LanguageSwitcher mode="compact" />
-
                     {/* SOS Emergency Call Button */}
                     <motion.a 
                         whileHover={{ scale: 1.05 }}
