@@ -1299,42 +1299,74 @@ const Login = () => {
 
                 {/* STEP 3: Complete Indian Citizen Health Profile */}
                 {step === 3 && (
-                    <form onSubmit={handleProfileSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                        <div style={{ background: '#f0fdfa', border: '1px solid #99f6e4', padding: '12px', borderRadius: '12px', fontSize: '12px', color: '#0f766e', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Shield size={18} color="#0d9488" />
-                            <span><strong>Indian Citizen Healthcare Profile:</strong> Automatically synced to your Supabase digital health locker & ABDM record.</span>
+                    <form onSubmit={handleProfileSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        {/* Compact Top Banner */}
+                        <div style={{
+                            background: 'linear-gradient(135deg, #f0fdfa 0%, #f0f9ff 100%)',
+                            border: '1px solid #ccfbf1',
+                            padding: '10px 12px',
+                            borderRadius: '12px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: '8px'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <div style={{
+                                    width: '26px',
+                                    height: '26px',
+                                    borderRadius: '8px',
+                                    background: '#0d9488',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: '#ffffff',
+                                    flexShrink: 0
+                                }}>
+                                    <Shield size={14} />
+                                </div>
+                                <div>
+                                    <div style={{ fontSize: '12px', fontWeight: 800, color: '#0f766e', lineHeight: 1.2 }}>Digital Health Profile</div>
+                                    <div style={{ fontSize: '10.5px', color: '#64748b' }}>Synced with ABDM & Supabase Health Locker</div>
+                                </div>
+                            </div>
+                            <span style={{ fontSize: '10px', fontWeight: 700, background: '#ccfbf1', color: '#0f766e', padding: '2px 8px', borderRadius: '12px', whiteSpace: 'nowrap' }}>
+                                Step 2 of 3
+                            </span>
                         </div>
 
-                        {/* 1. Basic Demographics */}
-                        <div>
-                            <h4 style={{ margin: '0 0 8px 0', fontSize: '13px', fontWeight: 800, color: '#1e293b', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <User size={15} color="#0284c7" /> 1. Personal Demographics
-                            </h4>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+                        {/* 1. Personal Demographics Card */}
+                        <div style={{
+                            background: '#fafbfc',
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '14px',
+                            padding: '12px 14px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '10px'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <User size={15} color="#0284c7" />
+                                <span style={{ fontSize: '12px', fontWeight: 800, color: '#1e293b' }}>1. Personal Demographics</span>
+                            </div>
+
+                            {/* Row 1: Full Name & Mobile */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '8px' }}>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '3px' }}>Full Name (पूरा नाम) *</label>
+                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>Full Name *</label>
                                     <input
                                         type="text"
                                         required
                                         value={profileData.name}
                                         onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
                                         placeholder="e.g. Aditya Singh"
-                                        style={{ width: '100%', padding: '9px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                                        style={{ width: '100%', padding: '9px 11px', borderRadius: '9px', border: '1.5px solid #e2e8f0', background: '#ffffff', fontSize: '12.5px', boxSizing: 'border-box', fontWeight: 500, color: '#0f172a', outline: 'none' }}
+                                        onFocus={(e) => { e.target.style.borderColor = '#0d9488'; e.target.style.boxShadow = '0 0 0 3px rgba(13, 148, 136, 0.12)'; }}
+                                        onBlur={(e) => { e.target.style.borderColor = '#e2e8f0'; e.target.style.boxShadow = 'none'; }}
                                     />
                                 </div>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '3px' }}>Email Address *</label>
-                                    <input
-                                        type="email"
-                                        required
-                                        value={email || profileData.email}
-                                        onChange={(e) => { setEmail(e.target.value); setProfileData({ ...profileData, email: e.target.value }); }}
-                                        placeholder="your.email@gmail.com"
-                                        style={{ width: '100%', padding: '9px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
-                                    />
-                                </div>
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '3px' }}>Mobile Number (मोबाइल नंबर) *</label>
+                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>Mobile Number *</label>
                                     <input
                                         type="tel"
                                         value={profileData.phone || phoneNumber}
@@ -1344,18 +1376,36 @@ const Login = () => {
                                             setProfileData({ ...profileData, phone: val }); 
                                         }}
                                         placeholder="10-digit mobile"
-                                        style={{ width: '100%', padding: '9px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                                        style={{ width: '100%', padding: '9px 11px', borderRadius: '9px', border: '1.5px solid #e2e8f0', background: '#ffffff', fontSize: '12.5px', boxSizing: 'border-box', fontWeight: 500, color: '#0f172a', outline: 'none' }}
+                                        onFocus={(e) => { e.target.style.borderColor = '#0d9488'; e.target.style.boxShadow = '0 0 0 3px rgba(13, 148, 136, 0.12)'; }}
+                                        onBlur={(e) => { e.target.style.borderColor = '#e2e8f0'; e.target.style.boxShadow = 'none'; }}
                                     />
                                 </div>
                             </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginTop: '10px' }}>
+                            {/* Row 2: Email Address */}
+                            <div>
+                                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>Email Address *</label>
+                                <input
+                                    type="email"
+                                    required
+                                    value={email || profileData.email}
+                                    onChange={(e) => { setEmail(e.target.value); setProfileData({ ...profileData, email: e.target.value }); }}
+                                    placeholder="your.email@example.com"
+                                    style={{ width: '100%', padding: '9px 11px', borderRadius: '9px', border: '1.5px solid #e2e8f0', background: '#ffffff', fontSize: '12.5px', boxSizing: 'border-box', fontWeight: 500, color: '#0f172a', outline: 'none' }}
+                                    onFocus={(e) => { e.target.style.borderColor = '#0d9488'; e.target.style.boxShadow = '0 0 0 3px rgba(13, 148, 136, 0.12)'; }}
+                                    onBlur={(e) => { e.target.style.borderColor = '#e2e8f0'; e.target.style.boxShadow = 'none'; }}
+                                />
+                            </div>
+
+                            {/* Row 3: Gender, Date of Birth, Blood Group */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr 0.9fr', gap: '8px' }}>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '3px' }}>Gender *</label>
+                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>Gender *</label>
                                     <select
                                         value={profileData.gender}
                                         onChange={(e) => setProfileData({ ...profileData, gender: e.target.value })}
-                                        style={{ width: '100%', padding: '9px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                                        style={{ width: '100%', padding: '9px 8px', borderRadius: '9px', border: '1.5px solid #e2e8f0', background: '#ffffff', fontSize: '12.5px', boxSizing: 'border-box', fontWeight: 500, color: '#0f172a', outline: 'none' }}
                                     >
                                         <option value="Male">Male</option>
                                         <option value="Female">Female</option>
@@ -1363,21 +1413,23 @@ const Login = () => {
                                     </select>
                                 </div>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '3px' }}>Date of Birth *</label>
+                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>Date of Birth *</label>
                                     <input
                                         type="date"
                                         required
                                         value={profileData.dob}
                                         onChange={(e) => setProfileData({ ...profileData, dob: e.target.value })}
-                                        style={{ width: '100%', padding: '9px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                                        style={{ width: '100%', padding: '8px 6px', borderRadius: '9px', border: '1.5px solid #e2e8f0', background: '#ffffff', fontSize: '12px', boxSizing: 'border-box', fontWeight: 500, color: '#0f172a', outline: 'none' }}
+                                        onFocus={(e) => { e.target.style.borderColor = '#0d9488'; e.target.style.boxShadow = '0 0 0 3px rgba(13, 148, 136, 0.12)'; }}
+                                        onBlur={(e) => { e.target.style.borderColor = '#e2e8f0'; e.target.style.boxShadow = 'none'; }}
                                     />
                                 </div>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '3px' }}>Blood Group *</label>
+                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>Blood Group *</label>
                                     <select
                                         value={profileData.blood_group}
                                         onChange={(e) => setProfileData({ ...profileData, blood_group: e.target.value })}
-                                        style={{ width: '100%', padding: '9px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                                        style={{ width: '100%', padding: '9px 8px', borderRadius: '9px', border: '1.5px solid #e2e8f0', background: '#ffffff', fontSize: '12.5px', boxSizing: 'border-box', fontWeight: 500, color: '#0f172a', outline: 'none' }}
                                     >
                                         {['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'].map(bg => (
                                             <option key={bg} value={bg}>{bg}</option>
@@ -1387,188 +1439,258 @@ const Login = () => {
                             </div>
                         </div>
 
-                        {/* 2. National Health ID & ABHA */}
-                        <div>
-                            <h4 style={{ margin: '0 0 8px 0', fontSize: '13px', fontWeight: 800, color: '#1e293b', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <Shield size={15} color="#0d9488" /> 2. National Health ID (ABDM / ABHA)
-                            </h4>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 0.8fr', gap: '10px' }}>
+                        {/* 2. National Health ID (ABDM / ABHA) Card */}
+                        <div style={{
+                            background: '#fafbfc',
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '14px',
+                            padding: '12px 14px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '10px'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <Shield size={15} color="#0d9488" />
+                                    <span style={{ fontSize: '12px', fontWeight: 800, color: '#1e293b' }}>2. National Health ID (ABDM / ABHA)</span>
+                                </div>
+                                <span style={{ fontSize: '9.5px', color: '#0d9488', fontWeight: 700, background: '#ccfbf1', padding: '2px 6px', borderRadius: '8px' }}>Ayushman Bharat</span>
+                            </div>
+
+                            {/* Row 1: ABHA ID & ABHA Address */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '8px' }}>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '3px' }}>14-Digit ABHA Number</label>
+                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>14-Digit ABHA Number</label>
                                     <input
                                         type="text"
                                         value={profileData.abha_id}
                                         onChange={(e) => setProfileData({ ...profileData, abha_id: e.target.value })}
                                         placeholder="91-XXXX-XXXX-XXXX"
-                                        style={{ width: '100%', padding: '9px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                                        style={{ width: '100%', padding: '9px 11px', borderRadius: '9px', border: '1.5px solid #e2e8f0', background: '#ffffff', fontSize: '12.5px', boxSizing: 'border-box', fontWeight: 500, color: '#0f172a', outline: 'none' }}
+                                        onFocus={(e) => { e.target.style.borderColor = '#0d9488'; e.target.style.boxShadow = '0 0 0 3px rgba(13, 148, 136, 0.12)'; }}
+                                        onBlur={(e) => { e.target.style.borderColor = '#e2e8f0'; e.target.style.boxShadow = 'none'; }}
                                     />
                                 </div>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '3px' }}>ABHA Address</label>
+                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>ABHA Address</label>
                                     <input
                                         type="text"
                                         value={profileData.abha_address}
                                         onChange={(e) => setProfileData({ ...profileData, abha_address: e.target.value })}
-                                        placeholder="user@abdm"
-                                        style={{ width: '100%', padding: '9px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
-                                    />
-                                </div>
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '3px' }}>Aadhaar Last 4</label>
-                                    <input
-                                        type="text"
-                                        maxLength={4}
-                                        value={profileData.aadhaar_last4}
-                                        onChange={(e) => setProfileData({ ...profileData, aadhaar_last4: e.target.value })}
-                                        placeholder="5660"
-                                        style={{ width: '100%', padding: '9px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                                        placeholder="username@abdm"
+                                        style={{ width: '100%', padding: '9px 11px', borderRadius: '9px', border: '1.5px solid #e2e8f0', background: '#ffffff', fontSize: '12.5px', boxSizing: 'border-box', fontWeight: 500, color: '#0f172a', outline: 'none' }}
+                                        onFocus={(e) => { e.target.style.borderColor = '#0d9488'; e.target.style.boxShadow = '0 0 0 3px rgba(13, 148, 136, 0.12)'; }}
+                                        onBlur={(e) => { e.target.style.borderColor = '#e2e8f0'; e.target.style.boxShadow = 'none'; }}
                                     />
                                 </div>
                             </div>
+
+                            {/* Row 2: Aadhaar Last 4 */}
+                            <div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                                    <label style={{ fontSize: '11px', fontWeight: 700, color: '#475569' }}>Aadhaar Number (Last 4 Digits)</label>
+                                    <span style={{ fontSize: '10px', color: '#64748b' }}>🔒 256-bit hashed</span>
+                                </div>
+                                <input
+                                    type="text"
+                                    maxLength={4}
+                                    value={profileData.aadhaar_last4}
+                                    onChange={(e) => setProfileData({ ...profileData, aadhaar_last4: e.target.value })}
+                                    placeholder="e.g. 5660"
+                                    style={{ width: '100%', padding: '9px 11px', borderRadius: '9px', border: '1.5px solid #e2e8f0', background: '#ffffff', fontSize: '12.5px', boxSizing: 'border-box', fontWeight: 500, color: '#0f172a', outline: 'none' }}
+                                    onFocus={(e) => { e.target.style.borderColor = '#0d9488'; e.target.style.boxShadow = '0 0 0 3px rgba(13, 148, 136, 0.12)'; }}
+                                    onBlur={(e) => { e.target.style.borderColor = '#e2e8f0'; e.target.style.boxShadow = 'none'; }}
+                                />
+                            </div>
                         </div>
 
-                        {/* 3. Address in India */}
-                        <div>
-                            <h4 style={{ margin: '0 0 8px 0', fontSize: '13px', fontWeight: 800, color: '#1e293b', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <MapPin size={15} color="#ea580c" /> 3. Residential Address (India)
-                            </h4>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 0.8fr', gap: '10px' }}>
+                        {/* 3. Residential Address (India) Card */}
+                        <div style={{
+                            background: '#fafbfc',
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '14px',
+                            padding: '12px 14px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '10px'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <MapPin size={15} color="#ea580c" />
+                                <span style={{ fontSize: '12px', fontWeight: 800, color: '#1e293b' }}>3. Residential Address (India)</span>
+                            </div>
+
+                            {/* Row 1: State & City */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '8px' }}>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '3px' }}>State (राज्य) *</label>
+                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>State (राज्य) *</label>
                                     <select
                                         value={profileData.address_state}
                                         onChange={(e) => setProfileData({ ...profileData, address_state: e.target.value })}
-                                        style={{ width: '100%', padding: '9px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                                        style={{ width: '100%', padding: '9px 8px', borderRadius: '9px', border: '1.5px solid #e2e8f0', background: '#ffffff', fontSize: '12.5px', boxSizing: 'border-box', fontWeight: 500, color: '#0f172a', outline: 'none' }}
                                     >
                                         {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
                                     </select>
                                 </div>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '3px' }}>District / City *</label>
+                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>District / City *</label>
                                     <input
                                         type="text"
                                         required
                                         value={profileData.address_city}
                                         onChange={(e) => setProfileData({ ...profileData, address_city: e.target.value })}
-                                        placeholder="e.g. Lucknow / Mumbai"
-                                        style={{ width: '100%', padding: '9px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                                        placeholder="e.g. Lucknow"
+                                        style={{ width: '100%', padding: '9px 11px', borderRadius: '9px', border: '1.5px solid #e2e8f0', background: '#ffffff', fontSize: '12.5px', boxSizing: 'border-box', fontWeight: 500, color: '#0f172a', outline: 'none' }}
+                                        onFocus={(e) => { e.target.style.borderColor = '#0d9488'; e.target.style.boxShadow = '0 0 0 3px rgba(13, 148, 136, 0.12)'; }}
+                                        onBlur={(e) => { e.target.style.borderColor = '#e2e8f0'; e.target.style.boxShadow = 'none'; }}
                                     />
                                 </div>
+                            </div>
+
+                            {/* Row 2: PIN Code & Street Address */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '0.9fr 1.3fr', gap: '8px' }}>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '3px' }}>PIN Code *</label>
+                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>PIN Code *</label>
                                     <input
                                         type="text"
                                         maxLength={6}
                                         value={profileData.pincode}
                                         onChange={(e) => setProfileData({ ...profileData, pincode: e.target.value })}
                                         placeholder="226001"
-                                        style={{ width: '100%', padding: '9px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                                        style={{ width: '100%', padding: '9px 11px', borderRadius: '9px', border: '1.5px solid #e2e8f0', background: '#ffffff', fontSize: '12.5px', boxSizing: 'border-box', fontWeight: 500, color: '#0f172a', outline: 'none' }}
+                                        onFocus={(e) => { e.target.style.borderColor = '#0d9488'; e.target.style.boxShadow = '0 0 0 3px rgba(13, 148, 136, 0.12)'; }}
+                                        onBlur={(e) => { e.target.style.borderColor = '#e2e8f0'; e.target.style.boxShadow = 'none'; }}
+                                    />
+                                </div>
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>Street / Landmark</label>
+                                    <input
+                                        type="text"
+                                        value={profileData.address}
+                                        onChange={(e) => setProfileData({ ...profileData, address: e.target.value })}
+                                        placeholder="House No., Street"
+                                        style={{ width: '100%', padding: '9px 11px', borderRadius: '9px', border: '1.5px solid #e2e8f0', background: '#ffffff', fontSize: '12.5px', boxSizing: 'border-box', fontWeight: 500, color: '#0f172a', outline: 'none' }}
+                                        onFocus={(e) => { e.target.style.borderColor = '#0d9488'; e.target.style.boxShadow = '0 0 0 3px rgba(13, 148, 136, 0.12)'; }}
+                                        onBlur={(e) => { e.target.style.borderColor = '#e2e8f0'; e.target.style.boxShadow = 'none'; }}
                                     />
                                 </div>
                             </div>
-                            <div style={{ marginTop: '10px' }}>
-                                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '3px' }}>Full Street / Village Address</label>
-                                <input
-                                    type="text"
-                                    value={profileData.address}
-                                    onChange={(e) => setProfileData({ ...profileData, address: e.target.value })}
-                                    placeholder="House/Plot No., Street, Landmark"
-                                    style={{ width: '100%', padding: '9px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
-                                />
-                            </div>
                         </div>
 
-                        {/* 4. Emergency Contact & Clinical Baseline */}
-                        <div>
-                            <h4 style={{ margin: '0 0 8px 0', fontSize: '13px', fontWeight: 800, color: '#1e293b', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <Activity size={15} color="#db2777" /> 4. Emergency Contact & Health Baseline
-                            </h4>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                        {/* 4. Emergency & Clinical Baseline Card */}
+                        <div style={{
+                            background: '#fafbfc',
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '14px',
+                            padding: '12px 14px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '10px'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <Activity size={15} color="#db2777" />
+                                <span style={{ fontSize: '12px', fontWeight: 800, color: '#1e293b' }}>4. Emergency & Clinical Baseline</span>
+                            </div>
+
+                            {/* Row 1: Contact Name & Phone */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '8px' }}>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '3px' }}>Emergency Contact Name</label>
+                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>Emergency Contact</label>
                                     <input
                                         type="text"
                                         value={profileData.emergency_contact_name}
                                         onChange={(e) => setProfileData({ ...profileData, emergency_contact_name: e.target.value })}
-                                        placeholder="Contact Person Name"
-                                        style={{ width: '100%', padding: '9px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                                        placeholder="Contact Name"
+                                        style={{ width: '100%', padding: '9px 11px', borderRadius: '9px', border: '1.5px solid #e2e8f0', background: '#ffffff', fontSize: '12.5px', boxSizing: 'border-box', fontWeight: 500, color: '#0f172a', outline: 'none' }}
+                                        onFocus={(e) => { e.target.style.borderColor = '#0d9488'; e.target.style.boxShadow = '0 0 0 3px rgba(13, 148, 136, 0.12)'; }}
+                                        onBlur={(e) => { e.target.style.borderColor = '#e2e8f0'; e.target.style.boxShadow = 'none'; }}
                                     />
                                 </div>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '3px' }}>Emergency Phone</label>
+                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>Emergency Phone</label>
                                     <input
                                         type="tel"
                                         value={profileData.emergency_contact}
                                         onChange={(e) => setProfileData({ ...profileData, emergency_contact: e.target.value })}
-                                        placeholder="10-digit phone number"
-                                        style={{ width: '100%', padding: '9px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                                        placeholder="10-digit number"
+                                        style={{ width: '100%', padding: '9px 11px', borderRadius: '9px', border: '1.5px solid #e2e8f0', background: '#ffffff', fontSize: '12.5px', boxSizing: 'border-box', fontWeight: 500, color: '#0f172a', outline: 'none' }}
+                                        onFocus={(e) => { e.target.style.borderColor = '#0d9488'; e.target.style.boxShadow = '0 0 0 3px rgba(13, 148, 136, 0.12)'; }}
+                                        onBlur={(e) => { e.target.style.borderColor = '#e2e8f0'; e.target.style.boxShadow = 'none'; }}
                                     />
                                 </div>
                             </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '10px' }}>
+
+                            {/* Row 2: Allergies & Chronic Conditions */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '3px' }}>Known Allergies</label>
+                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>Known Allergies</label>
                                     <input
                                         type="text"
                                         value={profileData.allergies}
                                         onChange={(e) => setProfileData({ ...profileData, allergies: e.target.value })}
-                                        placeholder="e.g. Penicillin, Peanuts, None"
-                                        style={{ width: '100%', padding: '9px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                                        placeholder="e.g. Penicillin, None"
+                                        style={{ width: '100%', padding: '9px 11px', borderRadius: '9px', border: '1.5px solid #e2e8f0', background: '#ffffff', fontSize: '12.5px', boxSizing: 'border-box', fontWeight: 500, color: '#0f172a', outline: 'none' }}
+                                        onFocus={(e) => { e.target.style.borderColor = '#0d9488'; e.target.style.boxShadow = '0 0 0 3px rgba(13, 148, 136, 0.12)'; }}
+                                        onBlur={(e) => { e.target.style.borderColor = '#e2e8f0'; e.target.style.boxShadow = 'none'; }}
                                     />
                                 </div>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '3px' }}>Chronic Conditions</label>
+                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>Chronic Conditions</label>
                                     <input
                                         type="text"
                                         value={profileData.chronic_conditions}
                                         onChange={(e) => setProfileData({ ...profileData, chronic_conditions: e.target.value })}
-                                        placeholder="e.g. Diabetes, Hypertension, None"
-                                        style={{ width: '100%', padding: '9px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                                        placeholder="e.g. Diabetes, None"
+                                        style={{ width: '100%', padding: '9px 11px', borderRadius: '9px', border: '1.5px solid #e2e8f0', background: '#ffffff', fontSize: '12.5px', boxSizing: 'border-box', fontWeight: 500, color: '#0f172a', outline: 'none' }}
+                                        onFocus={(e) => { e.target.style.borderColor = '#0d9488'; e.target.style.boxShadow = '0 0 0 3px rgba(13, 148, 136, 0.12)'; }}
+                                        onBlur={(e) => { e.target.style.borderColor = '#e2e8f0'; e.target.style.boxShadow = 'none'; }}
                                     />
                                 </div>
                             </div>
                         </div>
 
-                        {/* Submit Buttons */}
-                        <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                        {/* Submit & Skip Actions */}
+                        <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
                             <button
                                 type="submit"
                                 disabled={loading}
                                 style={{
-                                    flex: 1,
-                                    padding: '12px 18px',
+                                    flex: 1.4,
+                                    padding: '13px 18px',
                                     background: 'linear-gradient(135deg, #0d9488 0%, #0284c7 100%)',
                                     color: 'white',
                                     border: 'none',
-                                    borderRadius: '14px',
-                                    fontSize: '14px',
+                                    borderRadius: '12px',
+                                    fontSize: '13.5px',
                                     fontWeight: 700,
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     gap: '8px',
                                     cursor: loading ? 'not-allowed' : 'pointer',
-                                    boxShadow: '0 4px 12px rgba(13, 148, 136, 0.3)'
+                                    boxShadow: '0 4px 14px rgba(13, 148, 136, 0.35)',
+                                    transition: 'all 0.2s ease'
                                 }}
                             >
-                                <span>Continue to Medical Consent (आगे बढ़ें)</span>
+                                <span>Continue to Consent</span>
                                 <ArrowRight size={16} />
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setStep(4)}
                                 style={{
-                                    padding: '12px 16px',
-                                    background: '#f1f5f9',
-                                    color: '#475569',
-                                    border: 'none',
-                                    borderRadius: '14px',
+                                    flex: 0.8,
+                                    padding: '13px 14px',
+                                    background: '#f8fafc',
+                                    color: '#64748b',
+                                    border: '1.5px solid #e2e8f0',
+                                    borderRadius: '12px',
                                     fontSize: '13px',
                                     fontWeight: 600,
-                                    cursor: 'pointer'
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease'
                                 }}
                             >
-                                Skip to Consent
+                                Skip for Now
                             </button>
                         </div>
                     </form>
