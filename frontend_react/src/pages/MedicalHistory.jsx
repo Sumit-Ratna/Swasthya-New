@@ -14,6 +14,7 @@ import {
     CalendarCheck, UserCheck, ChevronRight, FileCheck, Phone,
     HeartPulse, RefreshCw, Check
 } from 'lucide-react';
+import PatientConsentModal from '../components/PatientConsentModal';
 
 const MedicalHistory = () => {
     const { user, updateUser } = useContext(AuthContext);
@@ -35,6 +36,9 @@ const MedicalHistory = () => {
 
     // Modal States
     const [showAddModal, setShowAddModal] = useState(false);
+    const [showConsentModal, setShowConsentModal] = useState(false);
+    const [pendingConsentRecord, setPendingConsentRecord] = useState(null);
+    const [isPersistingConsentAndRecord, setIsPersistingConsentAndRecord] = useState(false);
     const [selectedRecordModal, setSelectedRecordModal] = useState(null);
     const [selectedAppointmentSlip, setSelectedAppointmentSlip] = useState(null);
     const [savingRecord, setSavingRecord] = useState(false);
@@ -279,48 +283,79 @@ const MedicalHistory = () => {
         reader.readAsDataURL(file);
     };
 
-    // Save New Old Medical Record & Sync with Supabase Profile
-    const handleSaveOldRecord = async (e) => {
+    // STEP 1: Prompt explicit patient consent before persisting medical history or prescription data
+    const handleInitiateSaveRecord = (e) => {
         if (e) e.preventDefault();
         if (!newRecord.title.trim()) {
             alert("Please enter a Title or Diagnosis for the record.");
             return;
         }
 
+        const recordId = 'past_' + Date.now();
+        const recordToSave = {
+            id: recordId,
+            title: newRecord.title.trim(),
+            category: newRecord.category,
+            record_date: newRecord.record_date || new Date().toISOString().split('T')[0],
+            facility_name: newRecord.facility_name.trim() || 'Private Clinic / Hospital',
+            doctor_name: newRecord.doctor_name.trim() || 'Treating Physician',
+            diagnosis: newRecord.diagnosis.trim(),
+            notes: newRecord.notes.trim(),
+            medications: newRecord.medications.trim(),
+            vitals_bp: newRecord.vitals_bp.trim(),
+            vitals_sugar: newRecord.vitals_sugar.trim(),
+            vitals_weight: newRecord.vitals_weight.trim(),
+            file_name: newRecord.file_name || null,
+            file_preview: newRecord.file_preview || null,
+            file_type: newRecord.file_type || null,
+            created_at: new Date().toISOString()
+        };
+
+        setPendingConsentRecord(recordToSave);
+        setShowConsentModal(true);
+    };
+
+    // STEP 2: Only after patient actively confirms consent, persist consent and store medical history
+    const handleConsentConfirmedAndSave = async (consentData) => {
+        if (!pendingConsentRecord) return;
+        
+        setIsPersistingConsentAndRecord(true);
         setSavingRecord(true);
         try {
-            const recordId = 'past_' + Date.now();
-            const recordToSave = {
-                id: recordId,
-                title: newRecord.title.trim(),
-                category: newRecord.category,
-                record_date: newRecord.record_date || new Date().toISOString().split('T')[0],
-                facility_name: newRecord.facility_name.trim() || 'Private Clinic / Hospital',
-                doctor_name: newRecord.doctor_name.trim() || 'Treating Physician',
-                diagnosis: newRecord.diagnosis.trim(),
-                notes: newRecord.notes.trim(),
-                medications: newRecord.medications.trim(),
-                vitals_bp: newRecord.vitals_bp.trim(),
-                vitals_sugar: newRecord.vitals_sugar.trim(),
-                vitals_weight: newRecord.vitals_weight.trim(),
-                file_name: newRecord.file_name || null,
-                file_preview: newRecord.file_preview || null,
-                file_type: newRecord.file_type || null,
-                created_at: new Date().toISOString()
-            };
+            const token = localStorage.getItem('accessToken');
 
-            const updatedPastRecords = [recordToSave, ...oldPastRecords];
-            setOldPastRecords(updatedPastRecords);
+            // 1. Transactional Step 1: Persist Consent Record to Backend / Audit Ledger
+            try {
+                await axios.post('/api/profile/consent', {
+                    consent_status: 'GRANTED',
+                    consent_version: consentData.consent_version,
+                    consent_purpose: consentData.consent_purpose,
+                    related_record_id: pendingConsentRecord.id
+                }, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+            } catch (cErr) {
+                console.warn('[CONSENT] Backend consent audit notice:', cErr.message);
+            }
 
-            // Construct new medical_history JSON object for Supabase
+            // 2. Transactional Step 2: Persist Medical History to Supabase and Profile API
+            const updatedPastRecords = [pendingConsentRecord, ...oldPastRecords];
+            
             const existingHistory = user?.medical_history || {};
             const updatedMedicalHistory = {
                 ...existingHistory,
                 past_records: updatedPastRecords,
+                consent: {
+                    status: 'GRANTED',
+                    version: consentData.consent_version,
+                    purpose: consentData.consent_purpose,
+                    consented_at: consentData.consented_at,
+                    related_record_id: pendingConsentRecord.id
+                },
                 last_updated_at: new Date().toISOString()
             };
 
-            // 1. Sync directly with Supabase Database
+            // Direct Supabase update
             try {
                 const { error: supaErr } = await supabase
                     .from('users')
@@ -337,9 +372,8 @@ const MedicalHistory = () => {
                 console.warn('[SUPABASE] Exception updating medical history:', supaEx.message);
             }
 
-            // 2. Sync via Backend Profile Update Endpoint
+            // Sync via Backend Profile Update Endpoint
             try {
-                const token = localStorage.getItem('accessToken');
                 await axios.post('/api/profile/update', {
                     section: 'medical_history',
                     data: {
@@ -352,7 +386,9 @@ const MedicalHistory = () => {
                 console.warn('[API] Backend profile endpoint sync notice:', apiEx.message);
             }
 
-            // 3. Update AuthContext & localStorage
+            // Update UI state & AuthContext
+            setOldPastRecords(updatedPastRecords);
+
             if (updateUser) {
                 updateUser({
                     medical_history: updatedMedicalHistory
@@ -366,7 +402,7 @@ const MedicalHistory = () => {
                 }
             }
 
-            // Reset Form & Close Modal
+            // Reset Form & Close Modals
             setNewRecord({
                 title: '',
                 category: 'Lab Report',
@@ -384,12 +420,15 @@ const MedicalHistory = () => {
                 file_type: ''
             });
 
+            setShowConsentModal(false);
+            setPendingConsentRecord(null);
             setShowAddModal(false);
-            showToast("Old Medical Record successfully added and saved to your Supabase Health Profile!");
+            showToast("Consent recorded & Medical Record saved to your secure Health Profile!");
         } catch (err) {
             console.error("Save old record error:", err);
             alert("Error saving record: " + (err.message || "Please check connection."));
         } finally {
+            setIsPersistingConsentAndRecord(false);
             setSavingRecord(false);
         }
     };
@@ -1203,7 +1242,7 @@ const MedicalHistory = () => {
                             </div>
 
                             {/* Modal Form Body */}
-                            <form onSubmit={handleSaveOldRecord} style={{ padding: '20px' }}>
+                            <form onSubmit={handleInitiateSaveRecord} style={{ padding: '20px' }}>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
 
                                     {/* Record Title */}
@@ -1819,6 +1858,18 @@ const MedicalHistory = () => {
                     </div>
                 )}
             </AnimatePresence>
+
+            {/* Legally Conscious Patient Consent Modal */}
+            <PatientConsentModal
+                isOpen={showConsentModal}
+                onClose={() => {
+                    setShowConsentModal(false);
+                    setPendingConsentRecord(null);
+                }}
+                onConsentConfirmed={handleConsentConfirmedAndSave}
+                recordSummary={pendingConsentRecord}
+                isProcessing={isPersistingConsentAndRecord}
+            />
         </div>
     );
 };

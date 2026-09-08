@@ -56,25 +56,32 @@ exports.getProfile = async (req, res, next) => {
     }
 };
 
-// Update Profile Consent
+// Update / Record Profile Consent
 exports.updateConsent = async (req, res, next) => {
     try {
         const userId = req.user.id;
-        const { consent_status } = req.body;
+        const { 
+            consent_status = 'GRANTED', 
+            consent_version = 'medical-history-v1', 
+            consent_purpose = 'MEDICAL_HISTORY_AND_PRESCRIPTION_STORAGE',
+            related_record_id = null 
+        } = req.body;
 
-        if (!consent_status) {
-            return res.status(400).json({
-                success: false,
-                error: "consent_status is required",
-                code: "VALIDATION_ERROR"
-            });
-        }
-
-        const updated = await dbService.updatePatientConsent(userId, consent_status, userId, req.user.role);
+        const updated = await dbService.updatePatientConsent(
+            userId, 
+            consent_status, 
+            userId, 
+            req.user.role || 'patient',
+            {
+                consent_version,
+                consent_purpose,
+                related_record_id
+            }
+        );
 
         res.json({
             success: true,
-            message: `Consent updated to ${consent_status}`,
+            message: `Consent successfully recorded as ${consent_status}`,
             data: updated
         });
     } catch (err) {

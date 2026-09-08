@@ -5,6 +5,7 @@ const auth = require('../middleware/auth');
 
 router.get('/', auth, profileController.getProfile);
 router.post('/update', auth, profileController.updateProfile);
+router.post('/consent', auth, profileController.updateConsent);
 router.put('/consent', auth, profileController.updateConsent);
 router.delete('/delete', auth, profileController.deleteProfile);
 

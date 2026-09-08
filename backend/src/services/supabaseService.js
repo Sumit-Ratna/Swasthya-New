@@ -580,9 +580,84 @@ class SupabaseService {
         try {
             await supabase.from('patients').delete().or(`id.eq.${userId},user_id.eq.${userId}`);
             await supabase.from('users').delete().eq('id', userId);
-            await this.logAuditEvent('USER_ACCOUNT_DELETED', userId, userId, 'SUCCESS', 'User account and patient profile deleted');
+            try {
+                const auditService = require('./auditService');
+                await auditService.logAudit({
+                    actorId: userId,
+                    actorRole: 'PATIENT',
+                    actionType: 'USER_ACCOUNT_DELETED',
+                    resourceType: 'USER_PROFILE',
+                    resourceId: userId,
+                    result: 'SUCCESS',
+                    metadata: { message: 'User account and patient profile deleted' }
+                });
+            } catch (aErr) {}
         } catch (e) {}
         return true;
+    }
+
+    async updatePatientConsent(userId, consentStatus = 'GRANTED', actorUserId, actorRole = 'PATIENT', details = {}) {
+        try {
+            const timestamp = new Date().toISOString();
+            const consentVersion = details.consent_version || 'medical-history-v1';
+            const consentPurpose = details.consent_purpose || 'MEDICAL_HISTORY_AND_PRESCRIPTION_STORAGE';
+            const relatedRecordId = details.related_record_id || null;
+
+            // Fetch current user
+            const user = await this.getUser(userId);
+            const currentHistory = user?.medical_history || {};
+            const updatedHistory = {
+                ...currentHistory,
+                consent: {
+                    status: consentStatus,
+                    version: consentVersion,
+                    purpose: consentPurpose,
+                    consented_at: timestamp,
+                    related_record_id: relatedRecordId
+                },
+                last_updated_at: timestamp
+            };
+
+            // Update in Supabase
+            await supabase
+                .from('users')
+                .update({
+                    medical_history: updatedHistory,
+                    updated_at: timestamp
+                })
+                .eq('id', userId);
+
+            // Audit log
+            try {
+                const auditService = require('./auditService');
+                await auditService.logAudit({
+                    actorId: actorUserId || userId,
+                    actorRole: actorRole || 'PATIENT',
+                    actionType: consentStatus === 'GRANTED' ? 'PATIENT_CONSENT_GRANTED' : 'PATIENT_CONSENT_DECLINED',
+                    resourceType: 'MEDICAL_HISTORY',
+                    resourceId: relatedRecordId || userId,
+                    result: 'SUCCESS',
+                    metadata: {
+                        consent_version: consentVersion,
+                        consent_purpose: consentPurpose,
+                        consent_status: consentStatus,
+                        consented_at: timestamp,
+                        related_record_id: relatedRecordId
+                    }
+                });
+            } catch (aErr) {
+                console.warn('[AUDIT] Consent log notice:', aErr.message);
+            }
+
+            return {
+                userId,
+                consent: updatedHistory.consent,
+                updated_at: timestamp
+            };
+        } catch (err) {
+            console.error('[SUPABASE] updatePatientConsent error:', err);
+            throw err;
+        }
     }
 
     // ==========================================
