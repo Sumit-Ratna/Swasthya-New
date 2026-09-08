@@ -1,13 +1,19 @@
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const crypto = require('crypto');
 
-const DB_DIR = path.join(__dirname, '../../data');
+const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+const DB_DIR = isServerless ? path.join(os.tmpdir(), 'data') : path.join(__dirname, '../../data');
 const DB_FILE = path.join(DB_DIR, 'swasthya_db.json');
 
-// Ensure database directory exists
-if (!fs.existsSync(DB_DIR)) {
-    fs.mkdirSync(DB_DIR, { recursive: true });
+// Ensure database directory exists safely
+try {
+    if (!fs.existsSync(DB_DIR)) {
+        fs.mkdirSync(DB_DIR, { recursive: true });
+    }
+} catch (e) {
+    console.warn('[LOCAL DB] Notice on directory initialization:', e.message);
 }
 
 // Initial Seed Data

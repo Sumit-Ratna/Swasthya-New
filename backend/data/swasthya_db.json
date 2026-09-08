@@ -1513,6 +1513,18 @@
       "file_path": "/uploads/demo-cbc.pdf",
       "ai_summary": "Hemoglobin: 12.4 g/dL (Normal). Platelets: 220,000 /mcL (Normal). WBC count slightly elevated at 10,800 /mcL.",
       "created_at": "2026-09-04T20:45:00.030Z"
+    },
+    {
+      "id": "9136a8be-2468-49e9-8736-14ef2c689ec7",
+      "patient_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "type": "lab_report",
+      "file_url": "uploads/1788854799859-127461531-report_sample.png",
+      "title": "Uploaded Report",
+      "summary": "Uploaded Report",
+      "extracted_data": {},
+      "is_shared": false,
+      "shared_with": [],
+      "created_at": "2026-09-08T08:06:40.195Z"
     }
   ],
   "security_audit_ledger": [

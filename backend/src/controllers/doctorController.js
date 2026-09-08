@@ -202,9 +202,15 @@ exports.addDiagnosisNote = async (req, res, next) => {
         const doctor = await dbService.getUser(doctorId);
         if (!doctor) return res.status(404).json({ success: false, error: "Doctor profile not found" });
 
+        const os = require('os');
         const fileName = `Diagnosis-${Date.now()}-${patient_id.substring(0, 6)}.pdf`;
-        const uploadDir = path.join(__dirname, '../../uploads');
-        if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+        const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+        const uploadDir = isServerless ? path.join(os.tmpdir(), 'uploads') : path.join(__dirname, '../../uploads');
+        try {
+            if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+        } catch (dirErr) {
+            console.warn('[DOCTOR_DIAGNOSIS] Uploads directory creation notice:', dirErr.message);
+        }
         const filePath = path.join(uploadDir, fileName);
 
         const pdfData = {

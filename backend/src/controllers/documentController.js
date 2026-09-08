@@ -2,7 +2,7 @@ const dbService = require('../services/supabaseService');
 const aiService = require('../services/aiService');
 const fs = require('fs');
 const path = require('path');
-const crypto = require('crypto');
+const os = require('os');
 const uuidv4 = () => crypto.randomUUID();
 
 exports.uploadReport = async (req, res) => {
@@ -16,19 +16,41 @@ exports.uploadReport = async (req, res) => {
 
         console.log(`[STORAGE] Saving document for patient: ${patient_id}${shouldAnalyze ? ' with AI analysis' : ''}`);
 
-        // Ensure uploads directory exists
-        const uploadDir = path.join(__dirname, '../../uploads');
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
-        }
-
-        // Generate a unique filename
+        // Generate a clean unique filename
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const fileName = uniqueSuffix + '-' + req.file.originalname;
-        const filePath = path.join(uploadDir, fileName);
+        const safeOriginalName = (req.file.originalname || 'report.png').replace(/[^a-zA-Z0-9.-]/g, '_');
+        const fileName = uniqueSuffix + '-' + safeOriginalName;
+        let fileUrl = 'uploads/' + fileName;
 
-        // Save the file to disk
-        fs.writeFileSync(filePath, req.file.buffer);
+        // Resiliently save to disk (supports Vercel serverless /tmp and local uploads directory)
+        try {
+            const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+            let uploadDir = isServerless 
+                ? path.join(os.tmpdir(), 'uploads') 
+                : path.join(__dirname, '../../uploads');
+
+            try {
+                if (!fs.existsSync(uploadDir)) {
+                    fs.mkdirSync(uploadDir, { recursive: true });
+                }
+                const filePath = path.join(uploadDir, fileName);
+                fs.writeFileSync(filePath, req.file.buffer);
+            } catch (diskErr) {
+                // If standard path failed (e.g. read-only fs), fallback to os.tmpdir()
+                uploadDir = path.join(os.tmpdir(), 'uploads');
+                if (!fs.existsSync(uploadDir)) {
+                    fs.mkdirSync(uploadDir, { recursive: true });
+                }
+                const fallbackFilePath = path.join(uploadDir, fileName);
+                fs.writeFileSync(fallbackFilePath, req.file.buffer);
+            }
+        } catch (storageErr) {
+            console.warn('[STORAGE] Disk write skipped due to read-only environment:', storageErr.message);
+            // In pure serverless without persistent disk, data URL is preserved for small images
+            if (req.file.mimetype && req.file.buffer && req.file.buffer.length < 2 * 1024 * 1024) {
+                fileUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+            }
+        }
 
         let initialData = {};
         let sharedWith = [];
@@ -61,14 +83,14 @@ exports.uploadReport = async (req, res) => {
         const newDoc = await dbService.createDocument({
             patient_id,
             type: 'lab_report',
-            file_url: 'uploads/' + fileName,
+            file_url: fileUrl,
             extracted_data: initialData,
             summary: "Uploaded Report",
             is_shared: isShared,
             shared_with: sharedWith
         });
 
-        console.log("[SUCCESS] Document created in Firestore:", newDoc.id);
+        console.log("[SUCCESS] Document created:", newDoc.id);
 
         if (!shouldAnalyze) {
             return res.json({
