@@ -5,12 +5,15 @@ import {
     Building2, MapPin, Phone, ShieldAlert, CheckCircle2, 
     Stethoscope, Clock, Filter, Search, ArrowRight, AlertCircle, 
     Bell, Navigation, RefreshCw, Compass, Download, WifiOff, 
-    Globe, Crosshair, Layers, ExternalLink, Activity, HardDrive, Check
+    Globe, Crosshair, Layers, ExternalLink, Activity, HardDrive, Check,
+    Radio, Zap, ShieldCheck
 } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Map, Marker, Popup, NavigationControl, ScaleControl } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import { Geolocation } from '@capacitor/geolocation';
+import { Capacitor } from '@capacitor/core';
 import { 
     fetchNearbyOsmHealthcare, 
     calculateHaversineDistance, 
@@ -32,10 +35,15 @@ const FacilityFinder = () => {
     const { user } = useContext(AuthContext);
     const navigate = useNavigate();
 
-    // Geolocation States
-    const [userLocation, setUserLocation] = useState({ lat: 19.9975, lon: 73.7898, isDefault: true });
+    // Real-Time Geolocation States
+    const [userLocation, setUserLocation] = useState({ lat: 19.9975, lon: 73.7898, isDefault: true, accuracy: null });
     const [locationStatus, setLocationStatus] = useState('prompt'); // 'prompt' | 'locating' | 'granted' | 'denied' | 'error'
     const [locationError, setLocationError] = useState(null);
+    const [liveGpsActive, setLiveGpsActive] = useState(false);
+    const [followUser, setFollowUser] = useState(true);
+    const [lastGpsUpdate, setLastGpsUpdate] = useState(null);
+    const watchIdRef = useRef(null);
+    const lastFetchedCenterRef = useRef(null);
 
     // Facility & Data States
     const [facilities, setFacilities] = useState([]);
@@ -45,20 +53,21 @@ const FacilityFinder = () => {
     const [dataSourceInfo, setDataSourceInfo] = useState('OpenStreetMap');
     const [lastUpdated, setLastUpdated] = useState(null);
 
-    // Filter States
+    // 1-Click Quick Filter States ('government' | 'hospital' | 'ALL')
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState('ALL'); // 'ALL' | 'hospital' | 'clinic' | 'doctors' | 'pharmacy'
+    const [selectedCategory, setSelectedCategory] = useState('government'); // Default to Gov Hospital or 1-click select
     const [emergencyOnly, setEmergencyOnly] = useState(false);
     const [searchRadius, setSearchRadius] = useState(8000); // 8 km in meters
     const [selectedFacility, setSelectedFacility] = useState(null);
     const [selectedRegionName, setSelectedRegionName] = useState('Current GPS Location');
 
-    // Download Local Map Modal State
+    // Auto Pre-installed Local Map State
     const [showDownloadModal, setShowDownloadModal] = useState(false);
     const [downloadingMap, setDownloadingMap] = useState(false);
     const [downloadProgress, setDownloadProgress] = useState(0);
     const [downloadSuccess, setDownloadSuccess] = useState(false);
     const [offlineSavedCount, setOfflineSavedCount] = useState(0);
+    const [isMapPreinstalled, setIsMapPreinstalled] = useState(true);
 
     // Map Rendering & WebGL Fallback States
     const [mapGlError, setMapGlError] = useState(false);
@@ -76,70 +85,170 @@ const FacilityFinder = () => {
     const [bookingSuccess, setBookingSuccess] = useState(false);
 
     /**
-     * Request real user geolocation from browser/device
+     * Start continuous real-time GPS tracking via Capacitor or Browser API
      */
-    const requestUserLocation = useCallback(() => {
-        if (!navigator.geolocation) {
-            setLocationStatus('error');
-            setLocationError('Geolocation is not supported by your browser. Using region view.');
-            return;
-        }
-
+    const startContinuousGpsTracking = useCallback(async () => {
         setLocationStatus('locating');
         setLocationError(null);
 
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                const { latitude, longitude, accuracy } = position.coords;
-                setUserLocation({ lat: latitude, lon: longitude, accuracy, isDefault: false });
-                setLocationStatus('granted');
-                setLocationError(null);
-                setSelectedRegionName('Current GPS Location');
-            },
-            (err) => {
-                console.warn('Geolocation error:', err);
-                setLocationStatus(err.code === 1 ? 'denied' : 'error');
-                if (err.code === 1) {
-                    setLocationError('Location permission was denied. You can select a region or download a local map.');
-                } else if (err.code === 2) {
-                    setLocationError('GPS position unavailable. You can choose a region or download a local map.');
-                } else if (err.code === 3) {
-                    setLocationError('Location request timed out. Please try again or download a local map.');
-                } else {
-                    setLocationError('Unable to acquire GPS coordinates.');
+        // Native Capacitor Geolocation Watcher
+        if (Capacitor.isNativePlatform()) {
+            try {
+                // First get immediate position
+                const currentPos = await Geolocation.getCurrentPosition({
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 3000
+                });
+                if (currentPos && currentPos.coords) {
+                    const { latitude, longitude, accuracy } = currentPos.coords;
+                    setUserLocation({ lat: latitude, lon: longitude, accuracy: Math.round(accuracy || 5), isDefault: false });
+                    setLocationStatus('granted');
+                    setLiveGpsActive(true);
+                    setLastGpsUpdate(new Date().toLocaleTimeString());
+                    setSelectedRegionName('Current GPS Location');
                 }
-            },
-            {
-                enableHighAccuracy: true,
-                timeout: 12000,
-                maximumAge: 10000
+
+                // Setup continuous watcher
+                if (watchIdRef.current) {
+                    await Geolocation.clearWatch({ id: watchIdRef.current });
+                }
+
+                const watchId = await Geolocation.watchPosition(
+                    { enableHighAccuracy: true, timeout: 12000, maximumAge: 3000 },
+                    (position, err) => {
+                        if (err) {
+                            console.warn('[GPS Watch Error]:', err);
+                            return;
+                        }
+                        if (position && position.coords) {
+                            const { latitude, longitude, accuracy } = position.coords;
+                            setUserLocation(prev => ({
+                                lat: latitude,
+                                lon: longitude,
+                                accuracy: Math.round(accuracy || 5),
+                                isDefault: false
+                            }));
+                            setLocationStatus('granted');
+                            setLiveGpsActive(true);
+                            setLastGpsUpdate(new Date().toLocaleTimeString());
+                            setSelectedRegionName('Current GPS Location');
+                        }
+                    }
+                );
+                watchIdRef.current = watchId;
+                return;
+            } catch (e) {
+                console.warn('Native Capacitor GPS tracking fallback to web geolocation:', e);
             }
-        );
+        }
+
+        // Web Browser / PWA Geolocation Watcher
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const { latitude, longitude, accuracy } = position.coords;
+                    setUserLocation({ lat: latitude, lon: longitude, accuracy: Math.round(accuracy || 5), isDefault: false });
+                    setLocationStatus('granted');
+                    setLiveGpsActive(true);
+                    setLastGpsUpdate(new Date().toLocaleTimeString());
+                    setSelectedRegionName('Current GPS Location');
+                },
+                (err) => {
+                    console.warn('Geolocation error:', err);
+                    setLocationStatus(err.code === 1 ? 'denied' : 'error');
+                    if (err.code === 1) {
+                        setLocationError('Location permission was denied. Using offline local map data.');
+                    } else if (err.code === 2) {
+                        setLocationError('GPS position unavailable. Using cached local map.');
+                    } else {
+                        setLocationError('Unable to acquire GPS coordinates.');
+                    }
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 3000 }
+            );
+
+            if (watchIdRef.current && typeof watchIdRef.current === 'number') {
+                navigator.geolocation.clearWatch(watchIdRef.current);
+            }
+
+            const wId = navigator.geolocation.watchPosition(
+                (position) => {
+                    const { latitude, longitude, accuracy } = position.coords;
+                    setUserLocation(prev => ({
+                        lat: latitude,
+                        lon: longitude,
+                        accuracy: Math.round(accuracy || 5),
+                        isDefault: false
+                    }));
+                    setLocationStatus('granted');
+                    setLiveGpsActive(true);
+                    setLastGpsUpdate(new Date().toLocaleTimeString());
+                    setSelectedRegionName('Current GPS Location');
+                },
+                (err) => console.warn('Continuous GPS watch warning:', err),
+                { enableHighAccuracy: true, timeout: 12000, maximumAge: 3000 }
+            );
+            watchIdRef.current = wId;
+        } else {
+            setLocationStatus('error');
+            setLocationError('Geolocation is not supported by your browser.');
+        }
     }, []);
 
-    // Initial Geolocation Request on mount
+    // Start GPS tracking on mount and cleanup on unmount
     useEffect(() => {
-        requestUserLocation();
-    }, [requestUserLocation]);
+        startContinuousGpsTracking();
+
+        return () => {
+            if (watchIdRef.current) {
+                if (Capacitor.isNativePlatform() && typeof watchIdRef.current === 'string') {
+                    Geolocation.clearWatch({ id: watchIdRef.current }).catch(() => {});
+                } else if (typeof watchIdRef.current === 'number') {
+                    navigator.geolocation.clearWatch(watchIdRef.current);
+                }
+            }
+        };
+    }, [startContinuousGpsTracking]);
 
     /**
-     * Fetch real OpenStreetMap healthcare facilities whenever user location or radius changes
+     * Fetch real OpenStreetMap healthcare facilities & Auto-Preload Local Map
      */
-    const loadOsmFacilities = useCallback(async (targetLat, targetLon) => {
+    const loadOsmFacilities = useCallback(async (targetLat, targetLon, forceRefresh = false) => {
         const lat = targetLat || userLocation?.lat || 19.9975;
         const lon = targetLon || userLocation?.lon || 73.7898;
+
+        // Prevent repeated re-fetches for tiny GPS jitter (< 800 meters) unless forceRefresh is true
+        if (!forceRefresh && lastFetchedCenterRef.current) {
+            const dist = calculateHaversineDistance(lastFetchedCenterRef.current.lat, lastFetchedCenterRef.current.lon, lat, lon);
+            if (dist < 800 && facilities.length > 0) {
+                // Just recalculate distances smoothly without re-querying Overpass API
+                setFacilities(prev => prev.map(f => {
+                    const d = calculateHaversineDistance(lat, lon, f.lat, f.lon);
+                    return {
+                        ...f,
+                        distanceMeters: d,
+                        distanceFormatted: formatDistance(d)
+                    };
+                }).sort((a, b) => a.distanceMeters - b.distanceMeters));
+                return;
+            }
+        }
 
         setLoading(true);
         setDataError(null);
 
         try {
             const result = await fetchNearbyOsmHealthcare(lat, lon, searchRadius);
+            lastFetchedCenterRef.current = { lat, lon };
             setFacilities(result.facilities || []);
             setIsOfflineData(result.isOffline || false);
-            setDataSourceInfo(result.source || 'OpenStreetMap');
+            setDataSourceInfo(result.source || 'OpenStreetMap (Auto-Synced)');
             setLastUpdated(result.timestamp || new Date().toISOString());
+            setOfflineSavedCount(result.facilities?.length || 0);
+            setIsMapPreinstalled(true);
         } catch (err) {
-            console.warn('Overpass fetch failed, checking local cache:', err);
+            console.warn('Overpass fetch failed, loading local offline map cache:', err);
             const cached = getFacilitiesFromLocalCache(lat, lon);
             if (cached && cached.facilities && cached.facilities.length > 0) {
                 const recalculated = cached.facilities.map(f => {
@@ -153,26 +262,29 @@ const FacilityFinder = () => {
 
                 setFacilities(recalculated);
                 setIsOfflineData(true);
-                setDataSourceInfo(`Offline Cached (${new Date(cached.timestamp).toLocaleDateString()})`);
+                setDataSourceInfo(`Offline Pre-Installed Map (${new Date(cached.timestamp).toLocaleDateString()})`);
                 setLastUpdated(cached.timestamp);
+                setOfflineSavedCount(recalculated.length);
+                setIsMapPreinstalled(true);
             } else {
                 setFacilities([]);
                 setDataError(
                     !navigator.onLine 
-                        ? 'No offline healthcare data is available for this area. Please click "Download Local Map" when online.' 
-                        : 'Unable to connect to OpenStreetMap live servers. Click "Download Local Map" to initialize local offline data.'
+                        ? 'Operating in offline mode. Local map data is being loaded.' 
+                        : 'Connecting to OpenStreetMap servers...'
                 );
             }
         } finally {
             setLoading(false);
         }
-    }, [userLocation, searchRadius]);
+    }, [userLocation, searchRadius, facilities.length]);
 
+    // Automatically fetch facilities and pre-cache local map whenever user coordinates initialize
     useEffect(() => {
         if (userLocation?.lat && userLocation?.lon) {
             loadOsmFacilities(userLocation.lat, userLocation.lon);
         }
-    }, [userLocation, searchRadius, loadOsmFacilities]);
+    }, [userLocation.lat, userLocation.lon, searchRadius]);
 
     /**
      * Check if offline data exists on mount
@@ -181,8 +293,9 @@ const FacilityFinder = () => {
         const cached = getFacilitiesFromLocalCache(userLocation.lat, userLocation.lon);
         if (cached && cached.facilities) {
             setOfflineSavedCount(cached.facilities.length);
+            setIsMapPreinstalled(true);
         }
-    }, [userLocation]);
+    }, [userLocation.lat, userLocation.lon]);
 
     /**
      * Initialize MapLibre GL Map with OpenStreetMap raster tiles safely
@@ -251,36 +364,39 @@ const FacilityFinder = () => {
     }, []);
 
     /**
-     * Update User Location Marker & Center Map
+     * Update User Location Marker & Keep Map in Sync with Real GPS
      */
     useEffect(() => {
-        if (!mapRef.current || !userLocation) return;
+        if (!mapRef.current || !userLocation?.lat || !userLocation?.lon) return;
         const map = mapRef.current;
 
         try {
-            map.flyTo({
-                center: [userLocation.lon, userLocation.lat],
-                zoom: 13.5,
-                essential: true
-            });
+            if (followUser) {
+                map.flyTo({
+                    center: [userLocation.lon, userLocation.lat],
+                    zoom: 13.5,
+                    essential: true
+                });
+            }
 
             if (!userMarkerRef.current) {
                 const el = document.createElement('div');
                 el.className = 'user-location-marker';
-                el.style.width = '22px';
-                el.style.height = '22px';
+                el.style.width = '24px';
+                el.style.height = '24px';
                 el.style.borderRadius = '50%';
                 el.style.backgroundColor = '#2563eb';
                 el.style.border = '3px solid #ffffff';
-                el.style.boxShadow = '0 0 0 6px rgba(37, 99, 235, 0.3), 0 3px 10px rgba(0,0,0,0.3)';
+                el.style.boxShadow = '0 0 0 8px rgba(37, 99, 235, 0.35), 0 3px 12px rgba(0,0,0,0.35)';
                 el.style.cursor = 'pointer';
 
                 const popup = new Popup({ offset: 12 }).setHTML(`
                     <div style="font-family: Inter, sans-serif; font-size: 12px; padding: 4px;">
-                        <strong style="color: #2563eb;">📍 ${userLocation.isDefault ? 'Region Center' : 'Your GPS Location'}</strong>
+                        <strong style="color: #2563eb;">📍 ${userLocation.isDefault ? 'Region Center' : 'Your Live GPS Location'}</strong>
                         <div style="font-size: 11px; color: #64748b; margin-top: 2px;">
                             Lat: ${userLocation.lat.toFixed(4)}, Lon: ${userLocation.lon.toFixed(4)}
                         </div>
+                        ${userLocation.accuracy ? `<div style="font-size: 10px; color: #16a34a; font-weight: 700; margin-top: 2px;">Accuracy: ±${userLocation.accuracy}m</div>` : ''}
                     </div>
                 `);
 
@@ -296,10 +412,13 @@ const FacilityFinder = () => {
         } catch (e) {
             console.warn('Error updating user marker on map:', e);
         }
-    }, [userLocation]);
+    }, [userLocation, followUser]);
 
     /**
-     * Filter facilities by search, category, and emergency tag
+     * 1-Click Filter Logic:
+     * - 'government': Strictly returns only Government Hospitals (Civil, District, PHC, CHC, AIIMS, ESIC, etc.)
+     * - 'hospital': Returns ALL hospitals (Private + Govt)
+     * - 'ALL': Returns all healthcare facilities
      */
     const filteredFacilities = facilities.filter(f => {
         const matchesSearch = 
@@ -315,9 +434,21 @@ const FacilityFinder = () => {
                 `${f.name || ''} ${f.operator || ''} ${f.typeLabel || ''} ${f.rawTags?.operator_type || ''} ${f.rawTags?.ownership || ''} ${f.address || ''}`
             );
 
-        const matchesCategory = 
-            selectedCategory === 'ALL' || 
-            (selectedCategory === 'government' ? isGovHospital : f.typeKey === selectedCategory);
+        const isAnyHospital = 
+            f.typeKey === 'hospital' || 
+            isGovHospital || 
+            /hospital|general hospital|superspeciality|multi-speciality|multispeciality|nursing home|medical college|sanatorium|infirmary/i.test(
+                `${f.name || ''} ${f.typeLabel || ''} ${f.rawTags?.amenity || ''} ${f.rawTags?.healthcare || ''}`
+            );
+
+        let matchesCategory = true;
+        if (selectedCategory === 'government') {
+            matchesCategory = isGovHospital;
+        } else if (selectedCategory === 'hospital') {
+            matchesCategory = isAnyHospital;
+        } else {
+            matchesCategory = true;
+        }
 
         const matchesEmergency = 
             !emergencyOnly || f.emergency_capable;
@@ -528,9 +659,9 @@ const FacilityFinder = () => {
         <div style={{ padding: '20px 16px 120px 16px', maxWidth: '1100px', margin: '0 auto', color: 'var(--text-primary)', fontFamily: 'Inter, system-ui, sans-serif' }}>
             
             {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '18px', flexWrap: 'wrap', gap: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
                 <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
                         <span style={{
                             background: 'linear-gradient(135deg, #0d9488, #0f766e)',
                             color: 'white',
@@ -542,68 +673,85 @@ const FacilityFinder = () => {
                         }}>
                             OPENSTREETMAP + MAPLIBRE
                         </span>
-                        {isOfflineData ? (
-                            <span style={{
-                                background: '#fef3c7',
-                                color: '#b45309',
-                                fontSize: '11px',
-                                fontWeight: 700,
-                                padding: '3px 8px',
-                                borderRadius: '6px',
-                                border: '1px solid #fde68a',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '4px'
-                            }}>
-                                <WifiOff size={12} /> Offline Mode
-                            </span>
-                        ) : (
-                            <span style={{
-                                background: '#dcfce7',
-                                color: '#166534',
-                                fontSize: '11px',
-                                fontWeight: 700,
-                                padding: '3px 8px',
-                                borderRadius: '6px',
-                                border: '1px solid #bbf7d0'
-                            }}>
-                                ● Live GPS Connected
-                            </span>
-                        )}
+
+                        {/* Live GPS Active Badge */}
+                        <span style={{
+                            background: liveGpsActive ? '#dcfce7' : '#e0f2fe',
+                            color: liveGpsActive ? '#166534' : '#0369a1',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            padding: '3px 8px',
+                            borderRadius: '6px',
+                            border: `1px solid ${liveGpsActive ? '#bbf7d0' : '#bae6fd'}`,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                        }}>
+                            <Radio size={12} className={liveGpsActive ? 'spin' : ''} />
+                            {liveGpsActive ? `Live GPS Active (±${userLocation.accuracy || 5}m)` : 'GPS Locating...'}
+                        </span>
+
+                        {/* Auto-Installed Local Map Badge */}
+                        <span style={{
+                            background: '#f0fdfa',
+                            color: '#0f766e',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            padding: '3px 8px',
+                            borderRadius: '6px',
+                            border: '1px solid #ccfbf1',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                        }}>
+                            <ShieldCheck size={12} />
+                            Offline Map Ready ({offlineSavedCount || facilities.length} POIs)
+                        </span>
                     </div>
+
                     <h1 style={{ fontSize: '24px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '10px', margin: '4px 0', color: '#1e293b' }}>
                         <Building2 color="var(--primary-color)" size={28} />
                         HealthCentres Nearby & Smart Directory
                     </h1>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '13.5px', margin: 0 }}>
-                        Real-time GPS mapping of hospitals, clinics, and pharmacies powered by OpenStreetMap
+                        Real-time GPS tracking of hospitals & health centers • Auto-cached local offline map
                     </p>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                     <button
-                        onClick={() => setShowDownloadModal(true)}
+                        onClick={() => {
+                            setFollowUser(true);
+                            if (mapRef.current && userLocation?.lat && userLocation?.lon) {
+                                mapRef.current.flyTo({
+                                    center: [userLocation.lon, userLocation.lat],
+                                    zoom: 14.5,
+                                    essential: true
+                                });
+                            }
+                        }}
                         style={{
-                            background: 'linear-gradient(135deg, #0d9488, #0f766e)',
-                            border: 'none',
+                            background: followUser ? 'linear-gradient(135deg, #2563eb, #1d4ed8)' : '#ffffff',
+                            border: followUser ? 'none' : '1px solid var(--border-color)',
                             padding: '8px 14px',
                             borderRadius: '10px',
                             fontSize: '12.5px',
                             fontWeight: 700,
-                            color: '#ffffff',
+                            color: followUser ? '#ffffff' : '#2563eb',
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
                             gap: '6px',
-                            boxShadow: '0 2px 8px rgba(13, 148, 136, 0.3)'
+                            boxShadow: followUser ? '0 2px 8px rgba(37, 99, 235, 0.3)' : '0 1px 3px rgba(0,0,0,0.05)'
                         }}
                     >
-                        <Download size={15} />
-                        <span>Download Local Map</span>
+                        <Crosshair size={15} />
+                        <span>{followUser ? '📍 Following GPS' : 'Center on GPS'}</span>
                     </button>
 
                     <button
-                        onClick={requestUserLocation}
+                        onClick={() => loadOsmFacilities(userLocation.lat, userLocation.lon, true)}
+                        disabled={loading}
                         style={{
                             background: '#ffffff',
                             border: '1px solid var(--border-color)',
@@ -611,66 +759,153 @@ const FacilityFinder = () => {
                             borderRadius: '10px',
                             fontSize: '12.5px',
                             fontWeight: 700,
-                            color: 'var(--primary-color)',
-                            cursor: 'pointer',
+                            color: 'var(--text-primary)',
+                            cursor: loading ? 'not-allowed' : 'pointer',
                             display: 'flex',
                             alignItems: 'center',
                             gap: '6px',
                             boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
                         }}
+                        title="Re-sync healthcare facilities around your GPS location"
                     >
-                        <Crosshair size={15} />
-                        <span>GPS Locate</span>
+                        <RefreshCw size={14} className={loading ? 'spin' : ''} />
+                        <span>Re-Sync</span>
                     </button>
                 </div>
             </div>
 
-            {/* Offline Cache Notice Banner if Available */}
-            {offlineSavedCount > 0 && !isOfflineData && (
-                <div style={{
-                    background: '#f0fdfa',
-                    border: '1px solid #ccfbf1',
-                    borderRadius: '12px',
-                    padding: '10px 14px',
-                    marginBottom: '16px',
-                    fontSize: '12.5px',
-                    color: '#0f766e',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    flexWrap: 'wrap',
-                    gap: '8px'
-                }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <HardDrive size={16} />
-                        <span><strong>{offlineSavedCount} healthcare facilities</strong> saved in local offline storage for this area.</span>
-                    </div>
+            {/* 1-CLICK QUICK FILTER BAR (HOSPITALS / GOVT HOSPITALS / ALL) */}
+            <div style={{
+                background: '#ffffff',
+                border: '1px solid #e2e8f0',
+                borderRadius: '16px',
+                padding: '12px 14px',
+                marginBottom: '16px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '10px'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', flex: 1 }}>
+                    <span style={{ fontSize: '12px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginRight: '4px' }}>
+                        ⚡ 1-Click Filters:
+                    </span>
+
+                    {/* 1-CLICK: Gov. Hospital */}
                     <button
-                        onClick={() => setShowDownloadModal(true)}
-                        style={{ background: 'none', border: 'none', color: '#0d9488', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer', fontSize: '12px' }}
+                        onClick={() => setSelectedCategory('government')}
+                        style={{
+                            background: selectedCategory === 'government' ? 'linear-gradient(135deg, #0284c7, #0369a1)' : '#f0f9ff',
+                            color: selectedCategory === 'government' ? '#ffffff' : '#0369a1',
+                            border: selectedCategory === 'government' ? '2px solid #0284c7' : '1px solid #bae6fd',
+                            padding: '8px 16px',
+                            borderRadius: '10px',
+                            fontSize: '13px',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            boxShadow: selectedCategory === 'government' ? '0 3px 10px rgba(2, 132, 199, 0.35)' : 'none',
+                            transition: 'all 0.2s ease'
+                        }}
                     >
-                        Manage Local Map ▾
+                        <span style={{ fontSize: '15px' }}>🏛️</span>
+                        <span>Gov. Hospital Only</span>
+                    </button>
+
+                    {/* 1-CLICK: All Hospitals */}
+                    <button
+                        onClick={() => setSelectedCategory('hospital')}
+                        style={{
+                            background: selectedCategory === 'hospital' ? 'linear-gradient(135deg, #dc2626, #b91c1c)' : '#fef2f2',
+                            color: selectedCategory === 'hospital' ? '#ffffff' : '#dc2626',
+                            border: selectedCategory === 'hospital' ? '2px solid #dc2626' : '1px solid #fecaca',
+                            padding: '8px 16px',
+                            borderRadius: '10px',
+                            fontSize: '13px',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            boxShadow: selectedCategory === 'hospital' ? '0 3px 10px rgba(220, 38, 38, 0.35)' : 'none',
+                            transition: 'all 0.2s ease'
+                        }}
+                    >
+                        <span style={{ fontSize: '15px' }}>🏥</span>
+                        <span>All Hospitals</span>
+                    </button>
+
+                    {/* 1-CLICK: All Facility Types */}
+                    <button
+                        onClick={() => setSelectedCategory('ALL')}
+                        style={{
+                            background: selectedCategory === 'ALL' ? 'linear-gradient(135deg, #0d9488, #0f766e)' : '#f0fdfa',
+                            color: selectedCategory === 'ALL' ? '#ffffff' : '#0f766e',
+                            border: selectedCategory === 'ALL' ? '2px solid #0d9488' : '1px solid #ccfbf1',
+                            padding: '8px 16px',
+                            borderRadius: '10px',
+                            fontSize: '13px',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            boxShadow: selectedCategory === 'ALL' ? '0 3px 10px rgba(13, 148, 136, 0.35)' : 'none',
+                            transition: 'all 0.2s ease'
+                        }}
+                    >
+                        <span style={{ fontSize: '15px' }}>🌐</span>
+                        <span>All Facilities</span>
+                    </button>
+
+                    {/* 1-CLICK: Emergency Toggle */}
+                    <button
+                        onClick={() => setEmergencyOnly(prev => !prev)}
+                        style={{
+                            background: emergencyOnly ? '#991b1b' : '#ffffff',
+                            color: emergencyOnly ? '#ffffff' : '#991b1b',
+                            border: emergencyOnly ? '2px solid #7f1d1d' : '1px solid #fca5a5',
+                            padding: '8px 14px',
+                            borderRadius: '10px',
+                            fontSize: '12.5px',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                            transition: 'all 0.2s ease'
+                        }}
+                    >
+                        <span>🚨 24x7 Emergency</span>
                     </button>
                 </div>
-            )}
+
+                <div style={{ fontSize: '12px', fontWeight: 700, color: '#0f766e', background: '#ccfbf1', padding: '4px 10px', borderRadius: '8px', whiteSpace: 'nowrap' }}>
+                    {filteredFacilities.length} {selectedCategory === 'government' ? 'Gov. Hospitals' : (selectedCategory === 'hospital' ? 'Hospitals' : 'Facilities')} Found
+                </div>
+            </div>
 
             {/* Region Selector Bar */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflowX: 'auto', paddingBottom: '10px', marginBottom: '14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '12px' }}>
                 <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748b', whiteSpace: 'nowrap', marginRight: '4px' }}>
-                    Quick Region:
+                    Preset Region:
                 </span>
                 {DEFAULT_REGIONS.map((region, idx) => (
                     <button
                         key={idx}
                         onClick={() => handleSelectRegion(region)}
                         style={{
-                            padding: '6px 12px',
+                            padding: '5px 11px',
                             borderRadius: '8px',
                             border: selectedRegionName === region.name ? '1px solid #0d9488' : '1px solid var(--border-color)',
                             background: selectedRegionName === region.name ? '#f0fdfa' : '#ffffff',
                             color: selectedRegionName === region.name ? '#0f766e' : '#475569',
                             fontWeight: selectedRegionName === region.name ? 700 : 500,
-                            fontSize: '12px',
+                            fontSize: '11.5px',
                             cursor: 'pointer',
                             whiteSpace: 'nowrap'
                         }}
@@ -684,7 +919,7 @@ const FacilityFinder = () => {
             {locationStatus === 'locating' && (
                 <div style={{ background: '#e0f2fe', border: '1px solid #bae6fd', borderRadius: '12px', padding: '10px 14px', marginBottom: '16px', color: '#0369a1', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <RefreshCw className="spin" size={16} />
-                    <span>Detecting your real device GPS position...</span>
+                    <span>Continuous GPS tracking active: updating coordinates in real time...</span>
                 </div>
             )}
 
@@ -695,10 +930,10 @@ const FacilityFinder = () => {
                         <span>{locationError}</span>
                     </div>
                     <button
-                        onClick={requestUserLocation}
+                        onClick={startContinuousGpsTracking}
                         style={{ background: '#dc2626', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '6px', fontWeight: 700, fontSize: '12px', cursor: 'pointer', whiteSpace: 'nowrap' }}
                     >
-                        Retry Location
+                        Retry GPS
                     </button>
                 </div>
             )}
@@ -710,10 +945,10 @@ const FacilityFinder = () => {
                         <span>{dataError}</span>
                     </div>
                     <button
-                        onClick={() => setShowDownloadModal(true)}
+                        onClick={() => loadOsmFacilities(userLocation.lat, userLocation.lon, true)}
                         style={{ background: '#d97706', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '6px', fontWeight: 700, fontSize: '12px', cursor: 'pointer', whiteSpace: 'nowrap' }}
                     >
-                        Download Local Map
+                        Retry Sync
                     </button>
                 </div>
             )}
@@ -739,16 +974,10 @@ const FacilityFinder = () => {
                         <p style={{ margin: '0 0 14px', fontSize: '13px', color: '#64748b', maxWidth: '450px' }}>
                             Displaying {filteredFacilities.length} real healthcare facilities found near your coordinates.
                         </p>
-                        <button
-                            onClick={() => setShowDownloadModal(true)}
-                            style={{ background: '#0d9488', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}
-                        >
-                            Download Local Area Offline Map Data
-                        </button>
                     </div>
                 )}
 
-                {/* Map Floating Control Overlay */}
+                {/* Map Floating Real-Time GPS Overlay */}
                 <div style={{
                     position: 'absolute',
                     top: '12px',
@@ -764,23 +993,24 @@ const FacilityFinder = () => {
                     flexDirection: 'column',
                     gap: '4px',
                     pointerEvents: 'auto',
-                    maxWidth: '240px'
+                    maxWidth: '250px'
                 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 800, color: '#1e293b' }}>
-                        <Globe size={14} color="#0d9488" />
-                        <span>MapLibre + OpenStreetMap</span>
+                        <Radio size={14} color={liveGpsActive ? '#16a34a' : '#2563eb'} className={liveGpsActive ? 'spin' : ''} />
+                        <span>{liveGpsActive ? 'Live Real-Time GPS Tracking' : 'GPS Initialized'}</span>
                     </div>
                     {userLocation ? (
                         <div style={{ color: '#64748b', fontSize: '10.5px' }}>
-                            📍 Center: <strong>{userLocation.lat.toFixed(4)}, {userLocation.lon.toFixed(4)}</strong>
+                            📍 Lat: <strong>{userLocation.lat.toFixed(4)}</strong>, Lon: <strong>{userLocation.lon.toFixed(4)}</strong>
+                            {userLocation.accuracy && ` (±${userLocation.accuracy}m)`}
                         </div>
                     ) : (
                         <div style={{ color: '#b45309', fontSize: '10.5px' }}>
-                            Waiting for GPS permissions...
+                            Waiting for GPS fix...
                         </div>
                     )}
-                    <div style={{ color: '#0d9488', fontWeight: 700, fontSize: '11px' }}>
-                        🏥 {filteredFacilities.length} real facilities located
+                    <div style={{ color: selectedCategory === 'government' ? '#0369a1' : (selectedCategory === 'hospital' ? '#dc2626' : '#0d9488'), fontWeight: 800, fontSize: '11px' }}>
+                        {selectedCategory === 'government' ? '🏛️ Showing Govt. Hospitals Only' : (selectedCategory === 'hospital' ? '🏥 Showing All Hospitals' : '🌐 Showing All Facilities')} ({filteredFacilities.length})
                     </div>
                 </div>
 
@@ -801,37 +1031,26 @@ const FacilityFinder = () => {
                     flexWrap: 'wrap',
                     alignItems: 'center'
                 }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}><span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#0284c7' }}></span> Govt. Hospital</span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}><span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#dc2626' }}></span> Hospital</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontWeight: 700, color: '#0369a1' }}><span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#0284c7' }}></span> Govt. Hospital</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontWeight: 700, color: '#dc2626' }}><span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#dc2626' }}></span> Hospital</span>
                     <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}><span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#0d9488' }}></span> Clinic</span>
                     <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}><span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#7c3aed' }}></span> Doctors</span>
                     <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}><span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#16a34a' }}></span> Pharmacy</span>
                 </div>
             </div>
 
-            {/* Filter Bar */}
-            <div className="card" style={{ padding: '16px', marginBottom: '20px', display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', borderRadius: '14px' }}>
+            {/* Filter Search and Radius Bar */}
+            <div className="card" style={{ padding: '14px', marginBottom: '20px', display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', borderRadius: '14px' }}>
                 <div style={{ flex: 1, minWidth: '220px', position: 'relative' }}>
                     <input 
                         type="text"
-                        placeholder="Search real facility name, street, or city..."
+                        placeholder="Search hospital name, street, or locality..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         style={{ paddingLeft: '38px', width: '100%', fontSize: '13.5px' }}
                     />
                     <Search size={18} color="var(--text-secondary)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
                 </div>
-
-                {/* Category Filter */}
-                <select 
-                    value={selectedCategory} 
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--card-bg)', color: 'var(--text-primary)', fontSize: '13px', fontWeight: 600 }}
-                >
-                    <option value="ALL">All Facility Types</option>
-                    <option value="government">Government Hospital</option>
-                    <option value="hospital">Hospitals</option>
-                </select>
 
                 {/* Search Radius Selector */}
                 <select 
@@ -845,29 +1064,19 @@ const FacilityFinder = () => {
                     <option value="15000">Radius: 15 km</option>
                     <option value="25000">Radius: 25 km</option>
                 </select>
-
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', userSelect: 'none' }}>
-                    <input 
-                        type="checkbox"
-                        checked={emergencyOnly}
-                        onChange={(e) => setEmergencyOnly(e.target.checked)}
-                        style={{ width: '16px', height: '16px', accentColor: 'var(--primary-color)' }}
-                    />
-                    <span>🚨 24x7 Emergency</span>
-                </label>
             </div>
 
             {/* Results Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
                 <div style={{ fontSize: '14px', fontWeight: 700, color: '#334155' }}>
-                    Nearby Healthcare Facilities ({filteredFacilities.length} found)
+                    {selectedCategory === 'government' ? '🏛️ Government Hospitals' : (selectedCategory === 'hospital' ? '🏥 All Hospitals' : 'Healthcare Facilities')} ({filteredFacilities.length} found)
                     <span style={{ fontSize: '12px', fontWeight: 500, color: '#64748b', marginLeft: '6px' }}>
-                        • Sorted by nearest GPS distance
+                        • Live GPS distance sorted
                     </span>
                 </div>
 
                 <div style={{ fontSize: '11px', color: '#64748b' }}>
-                    Data Source: <strong style={{ color: '#0f766e' }}>{dataSourceInfo}</strong>
+                    Source: <strong style={{ color: '#0f766e' }}>{dataSourceInfo}</strong>
                 </div>
             </div>
 
@@ -875,17 +1084,17 @@ const FacilityFinder = () => {
             {loading ? (
                 <div className="card" style={{ textAlign: 'center', padding: '50px 0', color: 'var(--text-secondary)' }}>
                     <RefreshCw className="spin" size={28} color="var(--primary-color)" style={{ margin: '0 auto 12px' }} />
-                    <div style={{ fontWeight: 700, fontSize: '15px', color: '#1e293b' }}>Querying OpenStreetMap Healthcare POIs...</div>
+                    <div style={{ fontWeight: 700, fontSize: '15px', color: '#1e293b' }}>Syncing OpenStreetMap Healthcare POIs...</div>
                     <p style={{ fontSize: '13px', color: '#64748b', marginTop: '4px' }}>
-                        Calculating actual road distances from your GPS location
+                        Calculating actual road distances from your live GPS location
                     </p>
                 </div>
             ) : filteredFacilities.length === 0 ? (
                 <div className="card" style={{ textAlign: 'center', padding: '40px 20px', borderRadius: '16px' }}>
                     <AlertCircle size={40} color="var(--primary-color)" style={{ margin: '0 auto 12px' }} />
-                    <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 800 }}>No Healthcare Facilities Found</h3>
+                    <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 800 }}>No Matching Facilities Found</h3>
                     <p style={{ color: 'var(--text-secondary)', marginTop: '8px', fontSize: '13.5px', maxWidth: '500px', margin: '8px auto 16px' }}>
-                        {dataError || 'No facilities matched your search radius or filters. Try increasing the search radius or clicking "Download Local Map".'}
+                        {dataError || 'No facilities matched your current filter or radius. Try expanding search radius to 25 km.'}
                     </p>
                     <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
                         <button
@@ -906,22 +1115,7 @@ const FacilityFinder = () => {
                                 cursor: 'pointer'
                             }}
                         >
-                            Expand Radius to 25 km
-                        </button>
-                        <button
-                            onClick={() => setShowDownloadModal(true)}
-                            style={{
-                                background: '#f1f5f9',
-                                border: '1px solid #cbd5e1',
-                                color: '#334155',
-                                padding: '8px 16px',
-                                borderRadius: '8px',
-                                fontWeight: 700,
-                                fontSize: '13px',
-                                cursor: 'pointer'
-                            }}
-                        >
-                            Download Local Area Map
+                            Expand Radius to 25 km & Show All
                         </button>
                     </div>
                 </div>
