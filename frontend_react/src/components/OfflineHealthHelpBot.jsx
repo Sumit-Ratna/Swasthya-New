@@ -102,15 +102,13 @@ const OfflineHealthHelpBot = () => {
         }
     };
 
-    // Auto-trigger Gemma 1.5 Lite model download when bot is opened while offline
+    // Auto-trigger real Gemma 1.5 Lite model download when bot is opened for the first time
     useEffect(() => {
-        if (isOpen && (!isOnline || aiMode === 'offline')) {
-            if (gemmaState.status === 'not_downloaded' && !gemmaState.isDownloading) {
-                console.log('[OFFLINE BOT] Bot opened in offline mode - starting automatic Gemma 1.5 Lite mobile download...');
-                handleDownloadGemma();
-            }
+        if (isOpen && gemmaState.status === 'not_downloaded' && !gemmaState.isDownloading && navigator.onLine) {
+            console.log('[Swasthya AI] First-time chatbot launch detected - downloading real Gemma 1.5 Lite on-device model...');
+            handleDownloadGemma();
         }
-    }, [isOpen, isOnline, aiMode, gemmaState.status]);
+    }, [isOpen, gemmaState.status, gemmaState.isDownloading]);
 
     // Toggle Mode
     const handleToggleMode = (newMode) => {
@@ -324,12 +322,12 @@ const OfflineHealthHelpBot = () => {
         }
 
         // Auto-download Gemma 1.5 Lite model if not yet cached on device
-        if (gemmaEngine.getStatus().status === 'not_downloaded') {
+        if (gemmaEngine.getStatus().status === 'not_downloaded' && navigator.onLine) {
             await gemmaEngine.startModelDownload();
         }
 
         // On-Device Gemma 1.5 Lite Neural Core Dynamic Reasoning
-        const gemmaResult = await gemmaEngine.generateInference(queryText);
+        const gemmaResult = await gemmaEngine.generateInference(queryText, null, language);
         const dynamicReply = gemmaResult.reply || (offlineResult ? offlineResult.message : 'Evaluation complete.');
 
         const botMsg = {
@@ -598,7 +596,7 @@ const OfflineHealthHelpBot = () => {
                         </div>
 
                         {/* First-Time Gemma Model Download Banner */}
-                        {showFirstTimeDownloadPrompt && (
+                        {showFirstTimeDownloadPrompt && !gemmaState.isDownloading && (
                             <div style={{
                                 background: 'linear-gradient(135deg, #0284c7 0%, #0d9488 100%)',
                                 color: 'white',
@@ -611,7 +609,7 @@ const OfflineHealthHelpBot = () => {
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <Cpu size={18} color="#ffffff" />
                                     <div style={{ fontSize: '11px' }}>
-                                        <strong>Download Gemma 1.5 Lite Mobile (185 MB):</strong>
+                                        <strong>Download Gemma 1.5 Lite Mobile ({gemmaState.size}):</strong>
                                         <div style={{ opacity: 0.9 }}>100% offline neural AI in Airplane Mode.</div>
                                     </div>
                                 </div>
@@ -638,22 +636,27 @@ const OfflineHealthHelpBot = () => {
                             </div>
                         )}
 
-                        {/* Live Download Progress Indicator */}
+                        {/* Live Download Progress Indicator with Real Streaming Metrics */}
                         {gemmaState.isDownloading && (
-                            <div style={{ background: '#f0f9ff', padding: '8px 14px', borderBottom: '1px solid #bae6fd' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#0369a1', fontWeight: 700, marginBottom: '3px' }}>
-                                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                        <RefreshCw size={11} className="spin" /> Caching Gemma 1.5 Lite locally...
+                            <div style={{ background: '#f0f9ff', padding: '10px 14px', borderBottom: '1px solid #bae6fd' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#0369a1', fontWeight: 700, marginBottom: '4px' }}>
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                        <RefreshCw size={12} className="spin" />
+                                        <span>Downloading {gemmaState.currentFile || 'Gemma 1.5 Lite shards'}</span>
                                     </span>
                                     <span>{gemmaState.progress}%</span>
                                 </div>
-                                <div style={{ width: '100%', height: '5px', background: '#e0f2fe', borderRadius: '3px', overflow: 'hidden' }}>
+                                <div style={{ width: '100%', height: '6px', background: '#e0f2fe', borderRadius: '3px', overflow: 'hidden', marginBottom: '4px' }}>
                                     <div style={{
                                         width: `${gemmaState.progress}%`,
                                         height: '100%',
                                         background: 'linear-gradient(90deg, #0284c7 0%, #0d9488 100%)',
                                         transition: 'width 0.2s ease'
                                     }} />
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#0284c7' }}>
+                                    <span>{gemmaState.loadedFormatted || '0.0 MB'} / {gemmaState.size}</span>
+                                    <span>{gemmaState.speedMBs ? `${gemmaState.speedMBs} MB/s` : 'Connecting...'}</span>
                                 </div>
                             </div>
                         )}
