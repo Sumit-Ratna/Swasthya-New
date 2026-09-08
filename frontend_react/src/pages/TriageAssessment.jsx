@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const N8N_TRIAGE_WEBHOOK = 'https://saadkhan104.app.n8n.cloud/webhook/631f6768-d50b-4010-b06c-062e97503bd3';
 
@@ -41,6 +43,7 @@ const PRESETS = [
 
 const TriageAssessment = () => {
     const { user } = useContext(AuthContext);
+    const { t } = useLanguage();
     const navigate = useNavigate();
 
     const [form, setForm] = useState({

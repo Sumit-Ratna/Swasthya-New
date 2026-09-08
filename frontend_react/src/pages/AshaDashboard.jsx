@@ -10,9 +10,12 @@ import {
 import axios from '../config/api';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const AshaDashboard = () => {
     const { user, logout } = useContext(AuthContext);
+    const { t } = useLanguage();
     const navigate = useNavigate();
 
     // Active Modal States for the 6 Cards + Sync Banner + Emergency Card + Notifications

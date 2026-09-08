@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { supabase } from '../config/supabase';
+import { useLanguage } from '../context/LanguageContext';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import {
     FileText, Calendar, Clock, Plus, Upload, CheckCircle2,
     AlertCircle, MapPin, Stethoscope, Search, Filter, Trash2,
@@ -15,6 +17,7 @@ import {
 
 const MedicalHistory = () => {
     const { user, updateUser } = useContext(AuthContext);
+    const { t } = useLanguage();
     const navigate = useNavigate();
 
     // Active tab: 'all' | 'records' | 'appointments' | 'old_records'

@@ -396,98 +396,105 @@ const Profile = () => {
                     transition={{ duration: 0.15 }}
                 >
                     {tab === 'overview' && (
-                        <div className="card" style={{ padding: '20px', borderRadius: '16px', background: 'var(--card-bg)', border: '1px solid var(--border-color)', marginBottom: '20px' }}>
-                            <h3 style={{ marginTop: 0, marginBottom: '16px', fontSize: '15px', fontWeight: 800, color: 'var(--text-primary)' }}>
-                                Profile Demographics & Contact
-                            </h3>
+                        <>
+                            {/* Prominent Language Settings Card */}
+                            <div style={{ marginBottom: '18px' }}>
+                                <LanguageSwitcher mode="card" />
+                            </div>
 
-                            {editMode ? (
-                                <>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
-                                        <div>
-                                            <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>FULL NAME</label>
-                                            <input
-                                                type="text"
-                                                name="name"
-                                                value={formData.name}
-                                                onChange={handleChange}
-                                                style={{ width: '100%', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '13px', boxSizing: 'border-box' }}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>EMAIL</label>
-                                            <input
-                                                type="email"
-                                                name="email"
-                                                value={formData.email}
-                                                onChange={handleChange}
-                                                style={{ width: '100%', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '13px', boxSizing: 'border-box' }}
-                                            />
-                                        </div>
-                                    </div>
+                            <div className="card" style={{ padding: '20px', borderRadius: '16px', background: 'var(--card-bg)', border: '1px solid var(--border-color)', marginBottom: '20px' }}>
+                                <h3 style={{ marginTop: 0, marginBottom: '16px', fontSize: '15px', fontWeight: 800, color: 'var(--text-primary)' }}>
+                                    {t('personalInfo', 'Profile Demographics & Contact')}
+                                </h3>
 
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '14px' }}>
-                                        <div>
-                                            <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>DISTRICT</label>
-                                            <input
-                                                type="text"
-                                                name="address_city"
-                                                value={formData.address_city}
-                                                onChange={handleChange}
-                                                style={{ width: '100%', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '13px', boxSizing: 'border-box' }}
-                                            />
+                                {editMode ? (
+                                    <>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
+                                            <div>
+                                                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>{t('fullName', 'FULL NAME')}</label>
+                                                <input
+                                                    type="text"
+                                                    name="name"
+                                                    value={formData.name}
+                                                    onChange={handleChange}
+                                                    style={{ width: '100%', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '13px', boxSizing: 'border-box' }}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>{t('emailAddress', 'EMAIL')}</label>
+                                                <input
+                                                    type="email"
+                                                    name="email"
+                                                    value={formData.email}
+                                                    onChange={handleChange}
+                                                    style={{ width: '100%', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '13px', boxSizing: 'border-box' }}
+                                                />
+                                            </div>
                                         </div>
-                                        <div>
-                                            <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>STATE</label>
-                                            <select
-                                                name="address_state"
-                                                value={formData.address_state}
-                                                onChange={handleChange}
-                                                style={{ width: '100%', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '13px', boxSizing: 'border-box' }}
-                                            >
-                                                {INDIAN_STATES.map(st => <option key={st} value={st}>{st}</option>)}
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>PINCODE</label>
-                                            <input
-                                                type="text"
-                                                name="pincode"
-                                                value={formData.pincode}
-                                                onChange={handleChange}
-                                                style={{ width: '100%', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '13px', boxSizing: 'border-box' }}
-                                            />
-                                        </div>
-                                    </div>
 
-                                    <button 
-                                        onClick={handleSave} 
-                                        style={{ width: '100%', padding: '12px', background: 'var(--primary-color)', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
-                                    >
-                                        <Save size={16} /> Save Demographics
-                                    </button>
-                                </>
-                            ) : (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f1f5f9', fontSize: '13px' }}>
-                                        <span style={{ color: 'var(--text-secondary)' }}>Full Name</span>
-                                        <strong style={{ color: 'var(--text-primary)' }}>{formData.name || 'Swasthya Member'}</strong>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '14px' }}>
+                                            <div>
+                                                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>{t('city', 'DISTRICT')}</label>
+                                                <input
+                                                    type="text"
+                                                    name="address_city"
+                                                    value={formData.address_city}
+                                                    onChange={handleChange}
+                                                    style={{ width: '100%', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '13px', boxSizing: 'border-box' }}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>{t('state', 'STATE')}</label>
+                                                <select
+                                                    name="address_state"
+                                                    value={formData.address_state}
+                                                    onChange={handleChange}
+                                                    style={{ width: '100%', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '13px', boxSizing: 'border-box' }}
+                                                >
+                                                    {INDIAN_STATES.map(st => <option key={st} value={st}>{st}</option>)}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>{t('pincode', 'PINCODE')}</label>
+                                                <input
+                                                    type="text"
+                                                    name="pincode"
+                                                    value={formData.pincode}
+                                                    onChange={handleChange}
+                                                    style={{ width: '100%', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '13px', boxSizing: 'border-box' }}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <button 
+                                            onClick={handleSave} 
+                                            style={{ width: '100%', padding: '12px', background: 'var(--primary-color)', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                                        >
+                                            <Save size={16} /> {t('save', 'Save Changes')}
+                                        </button>
+                                    </>
+                                ) : (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f1f5f9', fontSize: '13px' }}>
+                                            <span style={{ color: 'var(--text-secondary)' }}>{t('fullName', 'Full Name')}</span>
+                                            <strong style={{ color: 'var(--text-primary)' }}>{formData.name || 'Swasthya Member'}</strong>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f1f5f9', fontSize: '13px' }}>
+                                            <span style={{ color: 'var(--text-secondary)' }}>{t('emailAddress', 'Email')} / {t('phoneNumber', 'Phone')}</span>
+                                            <strong style={{ color: 'var(--text-primary)' }}>{formData.email || formData.phone || '+91 9822012345'}</strong>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f1f5f9', fontSize: '13px' }}>
+                                            <span style={{ color: 'var(--text-secondary)' }}>{t('city', 'Location & District')}</span>
+                                            <strong style={{ color: 'var(--text-primary)' }}>{formData.address_city}, {formData.address_state} - {formData.pincode}</strong>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', fontSize: '13px' }}>
+                                            <span style={{ color: 'var(--text-secondary)' }}>{t('abhaId', 'ABHA / ABDM ID')}</span>
+                                            <strong style={{ color: '#0f766e', fontFamily: 'monospace' }}>{formData.abha_id}</strong>
+                                        </div>
                                     </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f1f5f9', fontSize: '13px' }}>
-                                        <span style={{ color: 'var(--text-secondary)' }}>Email / Phone</span>
-                                        <strong style={{ color: 'var(--text-primary)' }}>{formData.email || formData.phone || '+91 9822012345'}</strong>
-                                    </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f1f5f9', fontSize: '13px' }}>
-                                        <span style={{ color: 'var(--text-secondary)' }}>Location & District</span>
-                                        <strong style={{ color: 'var(--text-primary)' }}>{formData.address_city}, {formData.address_state} - {formData.pincode}</strong>
-                                    </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', fontSize: '13px' }}>
-                                        <span style={{ color: 'var(--text-secondary)' }}>ABHA / ABDM ID</span>
-                                        <strong style={{ color: '#0f766e', fontFamily: 'monospace' }}>{formData.abha_id}</strong>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
+                                )}
+                            </div>
+                        </>
                     )}
 
                     {tab === 'rch_credentials' && (

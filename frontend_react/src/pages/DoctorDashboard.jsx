@@ -8,9 +8,12 @@ import {
     Building2, Activity, Shield, ArrowRight
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const DoctorDashboard = () => {
     const { user } = useContext(AuthContext);
+    const { t } = useLanguage();
     const navigate = useNavigate();
 
     const [stats, setStats] = useState({ patientCount: 1, todayAppointments: 0, recentActivity: [] });

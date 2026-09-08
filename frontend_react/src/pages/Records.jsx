@@ -9,9 +9,12 @@ import {
     Stethoscope, Search, Sparkles, BookOpen, Pill, Clock, ArrowRight 
 } from 'lucide-react';
 import MedicalExplainerVideo from '../components/MedicalExplainerVideo';
+import { useLanguage } from '../context/LanguageContext';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const Records = ({ viewingPatientId, defaultTab }) => {
     const { user } = useContext(AuthContext);
+    const { t } = useLanguage();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
 
@@ -348,7 +351,7 @@ const Records = ({ viewingPatientId, defaultTab }) => {
                     }}
                 >
                     <FileText size={16} />
-                    <span>Report OCR</span>
+                    <span>{t('tabOcr', 'Report OCR')}</span>
                 </button>
 
                 <button
@@ -371,7 +374,7 @@ const Records = ({ viewingPatientId, defaultTab }) => {
                     }}
                 >
                     <Pill size={16} />
-                    <span>Medicine Explainer</span>
+                    <span>{t('tabMedicines', 'Medicine Explainer')}</span>
                 </button>
             </div>
 

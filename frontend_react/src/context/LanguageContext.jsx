@@ -3,9 +3,9 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 export const LanguageContext = createContext();
 
 export const SUPPORTED_LANGUAGES = [
-    { code: 'hi', name: 'हिंदी', englishName: 'Hindi', flag: '🇮🇳' },
-    { code: 'en', name: 'English', englishName: 'English', flag: '🇬🇧' },
-    { code: 'mr', name: 'मराठी', englishName: 'Marathi', flag: '🇮🇳' }
+    { code: 'hi', name: 'हिंदी', englishName: 'Hindi', flag: '🇮🇳', nativeGreeting: 'नमस्ते' },
+    { code: 'en', name: 'English', englishName: 'English', flag: '🇬🇧', nativeGreeting: 'Hello' },
+    { code: 'mr', name: 'मराठी', englishName: 'Marathi', flag: '🇮🇳', nativeGreeting: 'नमस्कार' }
 ];
 
 export const translations = {
@@ -15,7 +15,7 @@ export const translations = {
         appTagline: 'Closed-Loop Rural Healthcare Bridge',
         abdmStandard: 'Secured by Supabase PostgreSQL • ABDM FHIR Standards • Multi-Device Sync',
         
-        // Navigation
+        // Navigation & Bottom Bar
         navHome: 'Home',
         navStatus: 'Status',
         navRecords: 'Records',
@@ -38,7 +38,7 @@ export const translations = {
 
         // Actions & Buttons
         signIn: 'Sign In',
-        signOut: 'Sign Out',
+        signOut: 'Log Out',
         register: 'New User Register',
         save: 'Save Changes',
         saving: 'Saving...',
@@ -55,12 +55,16 @@ export const translations = {
         viewDetails: 'View Details',
         trackReferral: 'Track Referral',
         bookAppointment: 'Book Appointment',
-        sosEmergency: 'Emergency SOS',
+        sosEmergency: '108 SOS',
         callAmbulance: 'Call 108 Ambulance',
         syncNow: 'Sync Offline Records',
         filter: 'Filter',
         search: 'Search...',
         exploreAllRoles: 'Explore All 6 Personas Grid',
+        feedback: 'Feedback',
+        refresh: 'Refresh',
+        download: 'Download',
+        share: 'Share with Doctor',
 
         // Personas
         rolePatient: 'Citizen / Patient',
@@ -93,6 +97,7 @@ export const translations = {
         emailAddress: 'Email Address',
         phoneNumber: 'Phone Number',
         gender: 'Gender',
+        genderSelect: 'Select Gender',
         male: 'Male',
         female: 'Female',
         other: 'Other',
@@ -104,6 +109,8 @@ export const translations = {
         state: 'State',
         pincode: 'PIN Code',
         fullAddress: 'Full Residential Address',
+        occupation: 'Occupation',
+        maritalStatus: 'Marital Status',
 
         // ABDM & IDs
         abhaId: 'ABHA Number (Health ID)',
@@ -123,6 +130,10 @@ export const translations = {
         addAllergy: 'Add Allergy',
         addCondition: 'Add Condition',
         addMedication: 'Add Medication',
+        lifestyleTitle: 'Lifestyle & Daily Habits',
+        dietPreference: 'Diet Preference',
+        physicalActivity: 'Physical Activity',
+        smokingDrinking: 'Smoking / Alcohol Consumption',
 
         // Home Page
         homeGreeting: 'Namaste',
@@ -135,6 +146,8 @@ export const translations = {
         bloodPressure: 'Blood Pressure',
         spO2: 'Oxygen (SpO2)',
         bloodSugar: 'Blood Sugar',
+        temperature: 'Temperature',
+        respiratoryRate: 'Respiratory Rate',
         recentReferrals: 'Active Closed-Loop Referrals',
         noActiveReferrals: 'No active referrals at the moment.',
         nearbyFacilities: 'Nearby Health Facilities & Live Beds',
@@ -169,6 +182,10 @@ export const translations = {
         riskUrgent: 'URGENT - Transfer to District Hospital / CHC within 24h',
         riskRoutine: 'ROUTINE - Manage at Primary Health Centre (PHC)',
         vitalSensors: 'Sensor & Field Vitals Input',
+        dangerTags: 'Quick Danger Signs & Red Flags',
+        normalPreset: 'Normal Baseline',
+        hypertensionPreset: 'Hypertension / Alert',
+        criticalPreset: 'Critical / Sepsis',
 
         // Referral Tracker
         referralTrackerTitle: 'Closed-Loop Referral Tracking System',
@@ -183,6 +200,14 @@ export const translations = {
         statusStep3: 'Triage Cleared at Destination',
         statusStep4: 'Bed Reserved & Admitted',
         statusStep5: 'Treatment Completed & Discharged',
+        stepTriaged: 'Triage Completed',
+        stepFacilityLinked: 'Facility Linked',
+        stepSlotBooked: 'Slot Booked',
+        stepInTransit: 'Patient In Transit',
+        stepArrivalConfirmed: 'Arrival Confirmed',
+        stepDoctorAssigned: 'Doctor Assigned',
+        stepCareCompleted: 'Care Completed',
+        stepLoopClosed: 'Loop Closed & Verified',
 
         // ASHA Dashboard
         ashaDashboardTitle: 'ASHA / ANM Village Health Dashboard',
@@ -199,24 +224,49 @@ export const translations = {
         opdQueue: "Today's OPD Queue",
         scribeTitle: 'AI Clinical Scribe & Prescription Generator',
         scribeDesc: 'Speak or type symptoms to generate structured prescriptions & diagnosis notes',
+        prescribeMedicine: 'Prescribe Medicine',
+        addDiagnosis: 'Add Diagnosis Note',
+        patientHistory: 'Patient EHR History',
 
-        // Facility Dashboard
+        // Records & Lab OCR
+        recordsTitle: 'Digital Health Records & Lab OCR',
+        recordsSubtitle: 'ABDM linked prescriptions, blood tests and diagnostic reports',
+        tabOcr: 'Lab Report OCR & Diagnostics',
+        tabMedicines: 'Medicine Visual Explainer & Dosage',
+        tabHistory: 'Saved Health Documents',
+        uploadReportPrompt: 'Upload or snap photo of blood test, prescription, or scan',
+        analyzeReportBtn: 'Analyze Report with MedGemma AI',
+        analyzingReport: 'Processing medical OCR and clinical metrics...',
+        summaryTitle: 'Clinical Summary & Key Findings',
+
+        // Facility Dashboard & Beds Live
         facilityDashboardTitle: 'Hospital Facility Bed & Resource Grid',
         facilitySubtitle: 'Real-time telemetry of ICU, Oxygen, and General bed availability',
         generalBeds: 'General Beds',
         icuBeds: 'ICU Beds',
         oxygenBeds: 'Oxygen Beds',
         maternityBeds: 'Maternity Beds',
+        bedOccupancy: 'Bed Occupancy',
+        available: 'Available',
+        total: 'Total',
+
+        // Family Health
+        familyTitle: 'Family Health & Proxy Management',
+        familySubtitle: 'Manage dependents, elderly parents and children health profiles',
+        addFamilyMember: '+ Add Family Member',
+        relationship: 'Relationship',
 
         // Offline & Sync
         offlineMode: 'Offline Mode Active',
         offlineDesc: 'All inputs will save locally and sync automatically when internet is restored.',
         onlineSynced: 'All data synchronized with central ABDM database.',
         
-        // Theme
+        // Theme & Help
         themeLight: 'Light Mode',
         themeDark: 'Dark Mode',
-        switchTheme: 'Toggle App Theme'
+        switchTheme: 'Toggle App Theme',
+        helpBotTitle: 'Swasthya Healthcare Assistant',
+        helpBotDesc: 'Ask health questions, medicine dosage or referral guidance in your language'
     },
     hi: {
         // App Core & Branding
@@ -224,7 +274,7 @@ export const translations = {
         appTagline: 'ग्रामीण एवं सुदूर क्षेत्रों के लिए एकीकृत स्वास्थ्य नेटवर्क',
         abdmStandard: 'सुरक्षित आयुष्मान भारत डिजिटल मिशन (ABDM) • FHIR मानक • बहु-उपकरण सिंक',
 
-        // Navigation
+        // Navigation & Bottom Bar
         navHome: 'होम',
         navStatus: 'स्थिति',
         navRecords: 'दस्तावेज़',
@@ -264,12 +314,16 @@ export const translations = {
         viewDetails: 'विवरण देखें',
         trackReferral: 'रेफरल ट्रैक करें',
         bookAppointment: 'अपॉइंटमेंट बुक करें',
-        sosEmergency: 'आपातकालीन एसओएस (108)',
+        sosEmergency: '108 आपातकालीन एसओएस',
         callAmbulance: '108 एम्बुलेंस को कॉल करें',
         syncNow: 'ऑफ़लाइन डेटा सिंक करें',
         filter: 'फ़िल्टर करें',
         search: 'खोजें...',
         exploreAllRoles: 'सभी 6 भूमिकाओं (Roles) का ग्रिड देखें',
+        feedback: 'प्रतिक्रिया दें',
+        refresh: 'ताज़ा करें',
+        download: 'डाउनलोड करें',
+        share: 'डॉक्टर के साथ साझा करें',
 
         // Personas
         rolePatient: 'नागरिक / मरीज़ (Patient)',
@@ -302,6 +356,7 @@ export const translations = {
         emailAddress: 'ईमेल पता',
         phoneNumber: 'मोबाइल नंबर',
         gender: 'लिंग',
+        genderSelect: 'लिंग चुनें',
         male: 'पुरुष (Male)',
         female: 'महिला (Female)',
         other: 'अन्य (Other)',
@@ -312,7 +367,9 @@ export const translations = {
         city: 'शहर / तालुका',
         state: 'राज्य',
         pincode: 'पिन कोड',
-        fullAddress: 'स्थाई पता',
+        fullAddress: 'स्थाई आवासीय पता',
+        occupation: 'व्यवसाय',
+        maritalStatus: 'वैवाहिक स्थिति',
 
         // ABDM & IDs
         abhaId: 'आभा संख्या (ABHA Health ID)',
@@ -332,6 +389,10 @@ export const translations = {
         addAllergy: 'एलर्जी जोड़ें',
         addCondition: 'बीमारी जोड़ें',
         addMedication: 'दवा जोड़ें',
+        lifestyleTitle: 'जीवनशैली एवं दैनिक आदतें',
+        dietPreference: 'खान-पान प्राथमिकता',
+        physicalActivity: 'शारीरिक सक्रियता',
+        smokingDrinking: 'धूम्रपान / मद्यपान आदतें',
 
         // Home Page
         homeGreeting: 'नमस्ते',
@@ -344,6 +405,8 @@ export const translations = {
         bloodPressure: 'रक्तचाप (Blood Pressure)',
         spO2: 'ऑक्सीजन स्तर (SpO2)',
         bloodSugar: 'ब्लड शुगर (Sugar)',
+        temperature: 'शरीर का तापमान',
+        respiratoryRate: 'श्वसन दर (Breathing Rate)',
         recentReferrals: 'सक्रिय क्लोज्ड-लूप रेफरल',
         noActiveReferrals: 'वर्तमान में कोई सक्रिय रेफरल नहीं है।',
         nearbyFacilities: 'निकटतम स्वास्थ्य केंद्र एवं लाइव बेड्स',
@@ -378,6 +441,10 @@ export const translations = {
         riskUrgent: 'अति आवश्यक - 24 घंटे के भीतर जिला अस्पताल/सीएचसी ले जाएं',
         riskRoutine: 'सामान्य - प्राथमिक स्वास्थ्य केंद्र (PHC) पर उपचार संभव',
         vitalSensors: 'सेंसर एवं फील्ड वाइटल्स दर्ज करें',
+        dangerTags: 'गंभीर खतरे के मुख्य लक्षण (Red Flags)',
+        normalPreset: 'सामान्य बेसलाइन (Normal)',
+        hypertensionPreset: 'उच्च रक्तचाप / सतर्कता (Alert)',
+        criticalPreset: 'गंभीर / सेप्सिस (Critical)',
 
         // Referral Tracker
         referralTrackerTitle: 'क्लोज्ड-लूप रेफरल ट्रैकिंग सिस्टम',
@@ -392,6 +459,14 @@ export const translations = {
         statusStep3: 'गंतव्य अस्पताल में ट्राइएज पास',
         statusStep4: 'बेड आरक्षित एवं मरीज़ भर्ती',
         statusStep5: 'उपचार पूर्ण व डिस्चार्ज',
+        stepTriaged: 'ट्राइएज पूर्ण',
+        stepFacilityLinked: 'अस्पताल लिंक हुआ',
+        stepSlotBooked: 'अपॉइंटमेंट स्लॉट बुक',
+        stepInTransit: 'मरीज़ रास्ते में है',
+        stepArrivalConfirmed: 'अस्पताल आगमन की पुष्टि',
+        stepDoctorAssigned: 'डॉक्टर आवंटित',
+        stepCareCompleted: 'उपचार पूर्ण',
+        stepLoopClosed: 'रेफरल लूप बंद व सत्यापित',
 
         // ASHA Dashboard
         ashaDashboardTitle: 'आशा / एएनएम ग्रामीण स्वास्थ्य डैशबोर्ड',
@@ -408,24 +483,49 @@ export const translations = {
         opdQueue: 'आज की ओपीडी मरीज़ कतार',
         scribeTitle: 'एआई क्लिनिकल स्क्राइब व डिजिटल पर्चा',
         scribeDesc: 'लक्षण बोलें या लिखें - एआई अपने आप व्यवस्थित पर्चा और डायग्नोसिस तैयार करेगा',
+        prescribeMedicine: 'दवा का पर्चा लिखें',
+        addDiagnosis: 'डायग्नोसिस नोट जोड़ें',
+        patientHistory: 'मरीज़ का मेडिकल इतिहास',
 
-        // Facility Dashboard
+        // Records & Lab OCR
+        recordsTitle: 'डिजिटल स्वास्थ्य रिकॉर्ड्स एवं लैब ओसीआर',
+        recordsSubtitle: 'एआई द्वारा रक्त परीक्षण, पर्चे और रिपोर्ट की त्वरित व्याख्या',
+        tabOcr: 'लैब रिपोर्ट ओसीआर व विश्लेषण',
+        tabMedicines: 'दवा दृश्य व्याख्या व खुराक निर्देश',
+        tabHistory: 'सहेजे गए मेडिकल दस्तावेज़',
+        uploadReportPrompt: 'ब्लड टेस्ट रिपोर्ट, पर्चे या एक्स-रे की फोटो अपलोड करें',
+        analyzeReportBtn: 'MedGemma AI से रिपोर्ट का विश्लेषण करें',
+        analyzingReport: 'मेडिकल रिपोर्ट का विश्लेषण किया जा रहा है...',
+        summaryTitle: 'क्लिनिकल सारांश एवं महत्वपूर्ण निष्कर्ष',
+
+        // Facility Dashboard & Beds Live
         facilityDashboardTitle: 'अस्पताल बेड एवं संसाधन स्थिति',
         facilitySubtitle: 'आईसीयू, ऑक्सीजन और सामान्य बेड्स की लाइव स्थिति',
         generalBeds: 'सामान्य बेड्स',
         icuBeds: 'आईसीयू बेड्स',
         oxygenBeds: 'ऑक्सीजन बेड्स',
         maternityBeds: 'मातृत्व बेड्स',
+        bedOccupancy: 'बेड उपयोग दर',
+        available: 'उपलब्ध',
+        total: 'कुल संख्या',
+
+        // Family Health
+        familyTitle: 'पारिवारिक स्वास्थ्य एवं आश्रित प्रबंधन',
+        familySubtitle: 'बुजुर्ग माता-पिता और बच्चों के स्वास्थ्य प्रोफाइल प्रबंधित करें',
+        addFamilyMember: '+ नया परिवार सदस्य जोड़ें',
+        relationship: 'पारिवारिक संबंध',
 
         // Offline & Sync
         offlineMode: 'ऑफ़लाइन मोड सक्रिय',
         offlineDesc: 'सभी डेटा फोन में सुरक्षित है और इंटरनेट आने पर स्वतः सिंक हो जाएगा।',
         onlineSynced: 'सभी डेटा राष्ट्रीय स्वास्थ्य नेटवर्क (ABDM) से सिंक है।',
 
-        // Theme
+        // Theme & Help
         themeLight: 'लाइट थीम',
         themeDark: 'डार्क थीम',
-        switchTheme: 'ऐप थीम बदलें'
+        switchTheme: 'ऐप थीम बदलें',
+        helpBotTitle: 'स्वास्थ्य सेतु एआई सहायक',
+        helpBotDesc: 'अपनी भाषा में स्वास्थ्य प्रश्न, दवा की खुराक या अस्पताल मार्गदर्शन पूछें'
     },
     mr: {
         // Marathi Translations
@@ -435,7 +535,7 @@ export const translations = {
 
         navHome: 'मुख्यपृष्ठ',
         navStatus: 'स्थिती',
-        navRecords: 'वैद्यकीय नोंदी',
+        navRecords: 'नोंदी',
         navReferrals: 'रेफरल ट्रॅकर',
         navProfile: 'माझे प्रोफाइल',
         navAshaHub: 'आशा केंद्र',
@@ -450,7 +550,7 @@ export const translations = {
         navCommandHub: 'कमांड हब',
         navBedsLive: 'लाइव्ह बेड्स',
         navMedHistory: 'वैद्यकीय इतिहास',
-        navSupport: 'मदत व सहाय्य',
+        navSupport: 'मदत',
         navNotifications: 'सूचना',
 
         signIn: 'लॉग इन करा',
@@ -471,12 +571,16 @@ export const translations = {
         viewDetails: 'तपशील पहा',
         trackReferral: 'रेफरल ट्रॅक करा',
         bookAppointment: 'अपॉइंटमेंट बुक करा',
-        sosEmergency: 'आपत्कालीन SOS (108)',
+        sosEmergency: '108 आपत्कालीन SOS',
         callAmbulance: '108 रुग्णवाहिकेला कॉल करा',
         syncNow: 'ऑफलाइन डेटा सिंक करा',
         filter: 'फिल्टर करा',
         search: 'शोधा...',
         exploreAllRoles: 'सर्व 6 भूमिका पहा',
+        feedback: 'अभिप्राय द्या',
+        refresh: 'ताजे करा',
+        download: 'डाउनलोड करा',
+        share: 'डॉक्टरांशी शेअर करा',
 
         rolePatient: 'नागरिक / रुग्ण (Patient)',
         roleAsha: 'आशा / एएनएम (ASHA / ANM)',
@@ -505,6 +609,7 @@ export const translations = {
         emailAddress: 'ईमेल पत्ता',
         phoneNumber: 'मोबाईल क्रमांक',
         gender: 'लिंग',
+        genderSelect: 'लिंग निवडा',
         male: 'पुरुष',
         female: 'स्त्री',
         other: 'इतर',
@@ -515,7 +620,7 @@ export const translations = {
         city: 'शहर / तालुका',
         state: 'राज्य',
         pincode: 'पिन कोड',
-        fullAddress: 'पूर्ण पत्ता',
+        fullAddress: 'पूर्ण निवासी पत्ता',
 
         abhaId: 'आभा क्रमांक (ABHA Health ID)',
         abhaAddress: 'आभा पत्ता (ABHA Address)',
@@ -534,20 +639,35 @@ export const translations = {
         bloodPressure: 'रक्तदाब (Blood Pressure)',
         spO2: 'ऑक्सिजन पातळी (SpO2)',
         bloodSugar: 'रक्तातील साखर (Sugar)',
+        temperature: 'शरीराचे तापमान',
+        respiratoryRate: 'श्वसन दर',
         recentReferrals: 'सक्रिय रेफरल',
         noActiveReferrals: 'सध्या कोणतेही सक्रिय रेफरल नाहीत.',
         nearbyFacilities: 'जवळची आरोग्य केंद्रे व थेट बेड्स',
         phcShirwal: 'प्राथमिक आरोग्य केंद्र शिरवळ',
         civilHospital: 'जिल्हा शासकीय रुग्णालय नाशिक',
         open24x7: '24x7 सुरू • आपत्कालीन सेवा उपलब्ध',
-        bedAvailable: 'बेड उपलब्ध'
+        bedAvailable: 'बेड उपलब्ध',
+
+        stepTriaged: 'ट्राइएज पूर्ण',
+        stepFacilityLinked: 'रुग्णालय जोडले',
+        stepSlotBooked: 'स्लॉट बुक झाले',
+        stepInTransit: 'रुग्ण प्रवासात आहे',
+        stepArrivalConfirmed: 'आगमनाची पुष्टी',
+        stepDoctorAssigned: 'डॉक्टर नियुक्त',
+        stepCareCompleted: 'उपचार पूर्ण',
+        stepLoopClosed: 'रेफरल लूप बंद',
+
+        themeLight: 'लाइट थीम',
+        themeDark: 'डार्क थीम',
+        switchTheme: 'ॲप थीम बदला'
     }
 };
 
 export const LanguageProvider = ({ children }) => {
     const [language, setLanguageState] = useState(() => {
         try {
-            return localStorage.getItem('swasthya_lang') || 'hi'; // Default to Hindi or previous saved choice
+            return localStorage.getItem('swasthya_lang') || 'hi'; // Default to Hindi
         } catch {
             return 'hi';
         }
@@ -564,20 +684,20 @@ export const LanguageProvider = ({ children }) => {
         }
     };
 
-    // Translation function with fallback
+    // Translation function with dynamic parameter interpolation and robust fallbacks
     const t = (key, fallback = '') => {
         if (!key) return fallback;
         const currentDict = translations[language] || translations.hi || translations.en;
         if (currentDict && currentDict[key] !== undefined) {
             return currentDict[key];
         }
-        // Fallback to English
-        if (translations.en && translations.en[key] !== undefined) {
-            return translations.en[key];
-        }
         // Fallback to Hindi
         if (translations.hi && translations.hi[key] !== undefined) {
             return translations.hi[key];
+        }
+        // Fallback to English
+        if (translations.en && translations.en[key] !== undefined) {
+            return translations.en[key];
         }
         return fallback || key;
     };
@@ -596,7 +716,6 @@ export const LanguageProvider = ({ children }) => {
 export const useLanguage = () => {
     const context = useContext(LanguageContext);
     if (!context) {
-        // Safe fallback if used outside Provider
         return {
             language: 'hi',
             setLanguage: () => {},

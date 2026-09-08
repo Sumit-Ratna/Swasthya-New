@@ -10,6 +10,8 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import { supabase } from '../config/supabase';
+import { useLanguage } from '../context/LanguageContext';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const STATUS_STEPS = [
     { key: 'TRIAGED', label: 'Triage Done' },
@@ -24,6 +26,7 @@ const STATUS_STEPS = [
 
 const ReferralTracker = () => {
     const { user, updateUser } = useContext(AuthContext);
+    const { t } = useLanguage();
     const location = useLocation();
     const navigate = useNavigate();
 
