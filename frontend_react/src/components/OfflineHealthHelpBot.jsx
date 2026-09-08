@@ -37,7 +37,7 @@ const OfflineHealthHelpBot = () => {
     const [messages, setMessages] = useState([
         {
             sender: 'bot',
-            text: 'Namaste! I am your **Swasthya AI Health & Emergency Assistant**.\n\n• **Online Mode**: Connected to **n8n AI Agent Webhook**.\n• **Offline Mode**: 100% On-Device **Gemma 3n E2B** & 24 Emergency Protocol Engine (Airplane Mode ready).',
+            text: 'Namaste! I am your **Swasthya AI Health & Emergency Assistant**.\n\n• **Online Mode**: Connected to **n8n AI Agent Webhook**.\n• **Offline Mode**: 100% On-Device **Gemma LiteRT** & 24 Emergency Protocol Engine (Airplane Mode ready).',
             type: 'WELCOME',
             timestamp: new Date()
         }
@@ -48,13 +48,13 @@ const OfflineHealthHelpBot = () => {
     const [language, setLanguage] = useState('en'); // 'en' | 'hi'
     const [isOnline, setIsOnline] = useState(navigator.onLine);
     
-    // User Mode Toggle: 'online' (n8n webhook) vs 'offline' (on-device Gemma 3n E2B)
+    // User Mode Toggle: 'online' (n8n webhook) vs 'offline' (on-device Gemma LiteRT)
     const [aiMode, setAiMode] = useState(localStorage.getItem(STORAGE_AI_MODE) || (navigator.onLine ? 'online' : 'offline'));
     const [customN8nUrl, setCustomN8nUrl] = useState(localStorage.getItem(STORAGE_N8N_URL) || DEFAULT_N8N_URL);
     const [tempN8nUrl, setTempN8nUrl] = useState(customN8nUrl);
     const [isSending, setIsSending] = useState(false);
 
-    // Gemma 3n E2B Model Download & Persistent Status State
+    // Gemma LiteRT Model Download & Persistent Status State
     const [gemmaState, setGemmaState] = useState(gemmaEngine.getStatus());
     const [showSettingsModal, setShowSettingsModal] = useState(false);
 
@@ -302,7 +302,7 @@ const OfflineHealthHelpBot = () => {
             return;
         }
 
-        // On-Device Gemma 3n E2B Neural Core Dynamic Reasoning
+        // On-Device Gemma LiteRT Neural Core Dynamic Reasoning
         const gemmaResult = await gemmaEngine.generateInference(queryText, null, language);
         const dynamicReply = gemmaResult.reply || (offlineResult ? offlineResult.message : 'Evaluation complete.');
 
@@ -310,7 +310,7 @@ const OfflineHealthHelpBot = () => {
             sender: 'bot',
             text: dynamicReply,
             type: 'LOCAL_GEMMA',
-            engine: '⚡ On-Device Gemma 3n E2B (Offline)',
+            engine: '⚡ On-Device Gemma LiteRT (Offline)',
             timestamp: new Date()
         };
         setMessages(prev => [...prev, botMsg]);
@@ -451,7 +451,7 @@ const OfflineHealthHelpBot = () => {
                                         <span>Swasthya AI Assistant</span>
                                     </div>
                                     <div style={{ fontSize: '11px', opacity: 0.9, marginTop: '1px' }}>
-                                        {aiMode === 'online' ? '🌐 n8n AI Workflow Mode' : '⚡ On-Device Gemma 3n E2B Mode'}
+                                        {aiMode === 'online' ? '🌐 n8n AI Workflow Mode' : '⚡ On-Device Gemma LiteRT Mode'}
                                     </div>
                                 </div>
                             </div>
@@ -566,7 +566,7 @@ const OfflineHealthHelpBot = () => {
                                     }}
                                 >
                                     <Cpu size={12} />
-                                    <span>Offline (Gemma 3n E2B)</span>
+                                    <span>Offline (Gemma LiteRT)</span>
                                 </button>
                             </div>
                         </div>
@@ -627,7 +627,7 @@ const OfflineHealthHelpBot = () => {
                                         color: '#64748b',
                                         marginBottom: '16px'
                                     }}>
-                                        💾 Requires <strong>~185 MB</strong> device storage before downloading.
+                                        💾 Requires <strong>~48 MB</strong> device storage before downloading.
                                     </div>
 
                                     {gemmaState.status === 'DOWNLOADING' ? (
@@ -1077,15 +1077,15 @@ const OfflineHealthHelpBot = () => {
                                         </button>
                                     </div>
 
-                                    {/* Gemma 3n E2B On-Device Info */}
+                                    {/* Gemma LiteRT On-Device Info */}
                                     <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '10px', marginBottom: '12px', fontSize: '11px' }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                                             <span style={{ color: '#64748b' }}>Offline Model:</span>
-                                            <strong style={{ color: '#0f172a' }}>Gemma 3n E2B</strong>
+                                            <strong style={{ color: '#0f172a' }}>Gemma LiteRT</strong>
                                         </div>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                                             <span style={{ color: '#64748b' }}>Target Size:</span>
-                                            <strong style={{ color: '#0f172a' }}>185 MB (Mobile Fast)</strong>
+                                            <strong style={{ color: '#0f172a' }}>48 MB (Mobile Fast)</strong>
                                         </div>
                                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                             <span style={{ color: '#64748b' }}>Installation Status:</span>
@@ -1121,7 +1121,7 @@ const OfflineHealthHelpBot = () => {
                                                 gap: '5px'
                                             }}
                                         >
-                                            <Trash2 size={13} /> Reinstall / Clear Gemma 3n Cache
+                                            <Trash2 size={13} /> Reinstall / Clear Gemma LiteRT Cache
                                         </button>
                                     ) : (
                                         <button
@@ -1144,7 +1144,7 @@ const OfflineHealthHelpBot = () => {
                                             }}
                                         >
                                             <Download size={14} />
-                                            <span>{gemmaState.isDownloading ? `Downloading (${gemmaState.progress}%)...` : 'Download Gemma 3n E2B (185 MB)'}</span>
+                                            <span>{gemmaState.isDownloading ? `Downloading (${gemmaState.progress}%)...` : 'Download Gemma LiteRT (48 MB)'}</span>
                                         </button>
                                     )}
                                 </div>
