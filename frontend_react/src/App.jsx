@@ -46,6 +46,7 @@ import PrescribeMedicine from './pages/PrescribeMedicine';
 import AddDiagnosis from './pages/AddDiagnosis';
 import DoctorAIScribe from './pages/DoctorAIScribe';
 import DoctorQR from './pages/DoctorQR';
+import AppPermissionsModal from './components/AppPermissionsModal';
 
 const MainApp = () => {
   const { user, loading } = useContext(AuthContext);
@@ -180,6 +181,9 @@ const MainApp = () => {
       {!hideNavRoutes.includes(location.pathname) && (
         <Navbar />
       )}
+
+      {/* Immediate App Launch Permission Request (Location & Camera) */}
+      <AppPermissionsModal />
     </>
   );
 };
