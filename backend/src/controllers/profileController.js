@@ -35,10 +35,20 @@ exports.getProfile = async (req, res, next) => {
         const user = await dbService.getUser(userId);
 
         if (!user) {
-            return res.status(404).json({
-                success: false,
-                error: "User not found",
-                code: "USER_NOT_FOUND"
+            return res.json({
+                success: true,
+                user: {
+                    id: userId,
+                    name: req.user.name || "Swasthya User",
+                    phone: req.user.phone || "",
+                    email: req.user.email || "",
+                    role: req.user.role || "PATIENT",
+                    blood_group: "",
+                    allergies: [],
+                    chronic_conditions: [],
+                    medications: [],
+                    medical_history: {}
+                }
             });
         }
 
