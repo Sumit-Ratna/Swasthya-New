@@ -13,6 +13,7 @@ import {
 import SwasthyaLogo from '../components/SwasthyaLogo';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useLanguage } from '../context/LanguageContext';
+import MedicalDataConsentStep from '../components/MedicalDataConsentStep';
 
 const INDIAN_STATES = [
     "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", 
@@ -374,6 +375,56 @@ const Login = () => {
 
     const handleProfileSubmit = async (e) => {
         if (e) e.preventDefault();
+        setLoginError('');
+
+        // For patient registration / profile completion, step 4 is Mandatory Medical Data Consent
+        if (selectedRole === 'patient') {
+            setStep(4);
+            return;
+        }
+
+        // Non-patient immediate completion fallback
+        setLoading(true);
+        try {
+            const rawPhone = profileData.phone || phoneNumber || profileData.emergency_contact || '';
+            const cleanPhone = rawPhone ? rawPhone.replace(/\D/g, '').slice(-10) : null;
+
+            if (authMode === 'register') {
+                await registerWithEmail({
+                    ...profileData,
+                    email: email,
+                    password: password,
+                    name: profileData.name || email.split('@')[0],
+                    phone: cleanPhone,
+                    role: selectedRole
+                });
+            } else {
+                const payload = {
+                    ...profileData,
+                    email: email,
+                    phone: cleanPhone,
+                    role: selectedRole
+                };
+                const res = await axios.post('/api/profile/update', {
+                    section: 'personal',
+                    data: payload
+                });
+                if (res.data?.user) {
+                    updateUser(res.data.user);
+                } else {
+                    updateUser(payload);
+                }
+            }
+            navigate(currentRole.targetRoute);
+        } catch (err) {
+            console.error("Profile / Register save error:", err);
+            setLoginError(err.response?.data?.error || err.message || "Failed to complete registration in Supabase.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleConsentAccepted = async (consentPayload) => {
         setLoading(true);
         setLoginError('');
 
@@ -381,45 +432,64 @@ const Login = () => {
             const rawPhone = profileData.phone || phoneNumber || profileData.emergency_contact || '';
             const cleanPhone = rawPhone ? rawPhone.replace(/\D/g, '').slice(-10) : null;
 
+            const fullPayload = {
+                ...profileData,
+                email: email,
+                phone: cleanPhone,
+                role: 'patient',
+                consent: {
+                    consent_version: consentPayload.consent_version || 'v1.0.0',
+                    terms_accepted: consentPayload.terms_accepted,
+                    health_data_consent: consentPayload.health_data_consent,
+                    prescription_sharing_consent: consentPayload.prescription_sharing_consent,
+                    consented_at: consentPayload.consented_at || new Date().toISOString()
+                },
+                consent_version: consentPayload.consent_version || 'v1.0.0',
+                terms_accepted: true,
+                health_data_consent: true,
+                prescription_sharing_consent: true,
+                consented_at: consentPayload.consented_at || new Date().toISOString()
+            };
+
             if (authMode === 'register') {
-                // Register new account with Gmail and Password stored in Supabase
+                // Register new account with Gmail, Password, Profile & Mandatory Consent stored in Supabase
                 await registerWithEmail({
-                    ...profileData,
-                    email: email,
+                    ...fullPayload,
                     password: password,
-                    name: profileData.name || email.split('@')[0],
-                    phone: cleanPhone,
-                    role: selectedRole || 'patient'
+                    name: profileData.name || email.split('@')[0]
                 });
             } else {
-                // Update profile in Supabase
-                const payload = {
-                    ...profileData,
-                    email: email,
-                    phone: cleanPhone,
-                    role: selectedRole || 'patient'
-                };
-
+                // Update profile in Supabase with consent
                 const res = await axios.post('/api/profile/update', {
                     section: 'personal',
-                    data: payload
+                    data: fullPayload
                 });
+
+                // Also post to consent audit endpoint if available
+                try {
+                    await axios.post('/api/profile/consent', {
+                        consent_version: consentPayload.consent_version || 'v1.0.0',
+                        terms_accepted: true,
+                        health_data_consent: true,
+                        prescription_sharing_consent: true,
+                        consented_at: consentPayload.consented_at || new Date().toISOString()
+                    });
+                } catch (cErr) {
+                    console.warn("Consent audit endpoint notice:", cErr.message);
+                }
 
                 if (res.data?.user) {
                     updateUser(res.data.user);
                 } else {
-                    updateUser(payload);
+                    updateUser(fullPayload);
                 }
             }
 
-            if (selectedRole === 'patient') {
-                navigate('/home');
-            } else {
-                navigate(currentRole.targetRoute);
-            }
+            // Successfully registered and consented -> Enter Swasthya Home
+            navigate('/home');
         } catch (err) {
-            console.error("Profile / Register save error:", err);
-            setLoginError(err.response?.data?.error || err.message || "Failed to complete registration in Supabase.");
+            console.error("Registration & Consent save error:", err);
+            setLoginError(err.response?.data?.error || err.message || "Failed to complete registration and consent in Supabase.");
         } finally {
             setLoading(false);
         }
@@ -456,13 +526,13 @@ const Login = () => {
                     borderRadius: '24px',
                     padding: '24px',
                     width: '100%',
-                    maxWidth: step === 3 ? '580px' : '440px',
+                    maxWidth: (step === 3 || step === 4) ? '580px' : '440px',
                     boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.03)',
                     border: '1px solid #f1f5f9',
                     boxSizing: 'border-box'
                 }}
             >
-                {step !== 3 && (
+                {step !== 3 && step !== 4 && (
                     <>
                         {/* 1. Login / New User Registration Segmented Switcher */}
                         <div style={{
@@ -1342,11 +1412,12 @@ const Login = () => {
                                     boxShadow: '0 4px 12px rgba(13, 148, 136, 0.3)'
                                 }}
                             >
-                                {loading ? <span>Saving Profile to Supabase...</span> : <><span>Save Profile & Enter Swasthya</span> <ArrowRight size={16} /></>}
+                                <span>Continue to Medical Consent (आगे बढ़ें)</span>
+                                <ArrowRight size={16} />
                             </button>
                             <button
                                 type="button"
-                                onClick={() => navigate('/home')}
+                                onClick={() => setStep(4)}
                                 style={{
                                     padding: '12px 16px',
                                     background: '#f1f5f9',
@@ -1358,38 +1429,50 @@ const Login = () => {
                                     cursor: 'pointer'
                                 }}
                             >
-                                Skip for Now
+                                Skip to Consent
                             </button>
                         </div>
                     </form>
                 )}
 
+                {/* STEP 4: Mandatory Medical Data Consent & Terms Acceptance */}
+                {step === 4 && (
+                    <MedicalDataConsentStep
+                        onAgree={handleConsentAccepted}
+                        onBack={() => setStep(3)}
+                        loading={loading}
+                        patientName={profileData.name || email.split('@')[0]}
+                    />
+                )}
+
                 {/* Bottom Persona Switcher Link */}
-                <div style={{
-                    marginTop: '20px',
-                    textAlign: 'center',
-                    borderTop: '1px solid #f1f5f9',
-                    paddingTop: '16px'
-                }}>
-                    <button
-                        type="button"
-                        onClick={() => navigate('/roles')}
-                        style={{
-                            background: 'none',
-                            border: 'none',
-                            color: '#0f766e',
-                            fontSize: '12px',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                        }}
-                    >
-                        <span>Explore All 6 Personas Grid</span>
-                        <ChevronRight size={14} />
-                    </button>
-                </div>
+                {step !== 4 && (
+                    <div style={{
+                        marginTop: '20px',
+                        textAlign: 'center',
+                        borderTop: '1px solid #f1f5f9',
+                        paddingTop: '16px'
+                    }}>
+                        <button
+                            type="button"
+                            onClick={() => navigate('/roles')}
+                            style={{
+                                background: 'none',
+                                border: 'none',
+                                color: '#0f766e',
+                                fontSize: '12px',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                            }}
+                        >
+                            <span>Explore All 6 Personas Grid</span>
+                            <ChevronRight size={14} />
+                        </button>
+                    </div>
+                )}
 
                 {/* Footer Security Badge */}
                 <div style={{

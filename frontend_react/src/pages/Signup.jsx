@@ -4,6 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Phone, Lock, User, Calendar, Activity, Briefcase, Building } from 'lucide-react';
+import MedicalDataConsentStep from '../components/MedicalDataConsentStep';
 
 const Signup = () => {
     const { sendOtp, register } = useContext(AuthContext);
@@ -27,7 +28,7 @@ const Signup = () => {
     });
 
     const [error, setError] = useState('');
-
+    const [loading, setLoading] = useState(false);
     const [sentOtpCode, setSentOtpCode] = useState('');
 
     const handleChange = (e) => {
@@ -63,7 +64,6 @@ const Signup = () => {
             const result = await sendOtp(formData.phone);
             const receivedOtp = result?.otp || '123456';
             setSentOtpCode(receivedOtp);
-            setConfirmationResult(result);
             setFormData(prev => ({ ...prev, otp: receivedOtp })); // auto-fill OTP
             setStep(2);
         } catch (err) {
@@ -86,6 +86,12 @@ const Signup = () => {
                 return;
             }
 
+            // If patient, proceed to Mandatory Medical Data Consent & Terms
+            if (role === 'patient') {
+                setStep(3);
+                return;
+            }
+
             const payload = {
                 ...formData,
                 otp: otpToVerify,
@@ -102,6 +108,39 @@ const Signup = () => {
             }
         } catch (err) {
             setError(err.response?.data?.error || err.message || "Registration failed. Please check details.");
+        }
+    };
+
+    const handleConsentAccepted = async (consentPayload) => {
+        setLoading(true);
+        setError('');
+        try {
+            const otpToVerify = formData.otp || sentOtpCode || '123456';
+            const payload = {
+                ...formData,
+                otp: otpToVerify,
+                role: 'patient',
+                consent: {
+                    consent_version: consentPayload.consent_version || 'v1.0.0',
+                    terms_accepted: consentPayload.terms_accepted,
+                    health_data_consent: consentPayload.health_data_consent,
+                    prescription_sharing_consent: consentPayload.prescription_sharing_consent,
+                    consented_at: consentPayload.consented_at || new Date().toISOString()
+                },
+                consent_version: consentPayload.consent_version || 'v1.0.0',
+                terms_accepted: true,
+                health_data_consent: true,
+                prescription_sharing_consent: true,
+                consented_at: consentPayload.consented_at || new Date().toISOString()
+            };
+
+            await register(payload);
+            navigate('/home');
+        } catch (err) {
+            console.error("Signup consent error:", err);
+            setError(err.response?.data?.error || err.message || "Registration failed. Please try again.");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -207,7 +246,7 @@ const Signup = () => {
                                 </span>
                             </div>
                         </>
-                    ) : (
+                    ) : step === 2 ? (
                         <>
                             <div style={{
                                 padding: '12px 14px',
@@ -360,13 +399,20 @@ const Signup = () => {
                             )}
 
                             <button className="btn-primary" onClick={handleRegister}>
-                                Complete Registration
+                                {role === 'patient' ? 'Continue to Consent & Terms →' : 'Complete Registration'}
                             </button>
 
                             <button onClick={() => setStep(1)} className="btn-outline" style={{ marginTop: '16px', border: 'none', background: 'transparent' }}>
                                 ← Back to Phone
                             </button>
                         </>
+                    ) : (
+                        <MedicalDataConsentStep
+                            onAgree={handleConsentAccepted}
+                            onBack={() => setStep(2)}
+                            loading={loading}
+                            patientName={formData.name}
+                        />
                     )}
                 </div>
             </motion.div>

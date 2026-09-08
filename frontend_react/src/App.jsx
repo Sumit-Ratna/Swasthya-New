@@ -37,6 +37,7 @@ import RoleSelection from './pages/RoleSelection';
 import Login from './pages/Login';
 import DoctorLogin from './pages/DoctorLogin';
 import Signup from './pages/Signup';
+import TermsAndConditions from './pages/TermsAndConditions';
 
 // Doctor Pages
 import DoctorDashboard from './pages/DoctorDashboard';
@@ -104,7 +105,8 @@ const MainApp = () => {
     '/', '/home', '/login', '/login/patient', '/login/doctor', '/signup', 
     '/admin', '/referrals', '/facilities', '/triage',
     '/asha', '/caregiver', '/facility-dashboard', '/roles',
-    '/services', '/records', '/medical-history', '/history', '/status', '/care-team', '/family', '/learn-medicine', '/learn-medicines'
+    '/services', '/records', '/medical-history', '/history', '/status', '/care-team', '/family', '/learn-medicine', '/learn-medicines',
+    '/terms', '/consent'
   ];
   if (!user && !publicRoutes.includes(location.pathname)) {
     console.log("Redirecting to / from", location.pathname);
@@ -133,6 +135,8 @@ const MainApp = () => {
           <Route path="/login" element={!user ? <Login /> : <Navigate to={getRoleHome(user.role)} replace />} />
           <Route path="/login/patient" element={!user ? <Login /> : <Navigate to="/home" replace />} />
           <Route path="/login/doctor" element={!user ? <DoctorLogin /> : <Navigate to="/doctor/dashboard" replace />} />
+          <Route path="/terms" element={<TermsAndConditions />} />
+          <Route path="/consent" element={<TermsAndConditions />} />
 
           {/* Dedicated Healthcare Dashboards */}
           <Route path="/asha" element={<AshaDashboard />} />
