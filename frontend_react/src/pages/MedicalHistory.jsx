@@ -102,42 +102,88 @@ const MedicalHistory = () => {
         }
     };
 
-    // 2. Fetch Confirmed Appointments from Referrals & Booking System
+    // 2. Fetch Confirmed Appointments from Referrals, Supabase User Profile & Booking System
     const fetchConfirmedAppointments = async () => {
+        const appointmentMap = new Map();
+
+        // Source A: Backend Referrals endpoint
         try {
             const token = localStorage.getItem('accessToken');
             const authHeader = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
             const res = await axios.get(`/api/referrals/patient/${targetUserId}`, authHeader);
             const list = res.data?.data || (Array.isArray(res.data) ? res.data : []);
             if (list && Array.isArray(list)) {
-                const confirmed = list.filter(r => 
-                    r.status === 'APPOINTMENT_BOOKED' || 
-                    r.status === 'CONFIRMED' || 
-                    r.status === 'PATIENT_IN_TRANSIT' ||
-                    r.status === 'PATIENT_REACHED' ||
-                    r.status === 'CONSULTATION_IN_PROGRESS' ||
-                    r.status === 'TREATMENT_COMPLETED' ||
-                    r.status === 'COMPLETED'
-                );
-                
-                const hydrated = confirmed.map(r => ({
-                    ...r,
-                    facility_name: r.facilities?.name || r.facility_name || 'Healthcare Centre',
-                    doctor_name: r.doctors?.name || r.doctor_name || 'Specialist Doctor',
-                    department: r.specialty_required || r.department || 'Specialist OPD',
-                    slot_date: r.appointment_slot_time ? r.appointment_slot_time.split(' at ')[0] : (r.created_at ? r.created_at.split('T')[0] : ''),
-                    slot_time: r.appointment_slot_time ? (r.appointment_slot_time.split(' at ')[1] || r.appointment_slot_time) : '',
-                    queue_token: r.slot_token || 'Token'
-                }));
-
-                setConfirmedAppointments(hydrated);
-                return;
+                list.forEach(r => {
+                    if (
+                        r.status === 'APPOINTMENT_BOOKED' || 
+                        r.status === 'CONFIRMED' || 
+                        r.status === 'PATIENT_IN_TRANSIT' ||
+                        r.status === 'PATIENT_REACHED' ||
+                        r.status === 'CONSULTATION_IN_PROGRESS' ||
+                        r.status === 'TREATMENT_COMPLETED' ||
+                        r.status === 'COMPLETED'
+                    ) {
+                        const key = r.id || r.slot_token;
+                        appointmentMap.set(key, {
+                            ...r,
+                            id: r.id,
+                            referral_id: r.id,
+                            facility_name: r.facilities?.name || r.facility_name || 'Healthcare Centre',
+                            doctor_name: r.doctors?.name || r.doctor_name || 'Specialist Doctor',
+                            department: r.specialty_required || r.department || 'Specialist OPD',
+                            slot_date: r.appointment_slot_time ? r.appointment_slot_time.split(' at ')[0] : (r.created_at ? r.created_at.split('T')[0] : ''),
+                            slot_time: r.appointment_slot_time ? (r.appointment_slot_time.split(' at ')[1] || r.appointment_slot_time) : '',
+                            queue_token: r.slot_token || 'OPD-Token',
+                            status: r.status,
+                            reason: r.primary_complaint || r.reason_for_referral || 'Doctor Consultation'
+                        });
+                    }
+                });
             }
         } catch (err) {
             console.warn("Referral appointments fetch notice:", err.message);
         }
 
-        setConfirmedAppointments([]);
+        // Source B: Supabase User Profile medical_history.confirmed_appointments
+        try {
+            let profileApts = user?.medical_history?.confirmed_appointments || [];
+            if (!Array.isArray(profileApts) || profileApts.length === 0) {
+                const { data: userData } = await supabase
+                    .from('users')
+                    .select('medical_history')
+                    .eq('id', targetUserId)
+                    .maybeSingle();
+                if (userData?.medical_history?.confirmed_appointments) {
+                    profileApts = userData.medical_history.confirmed_appointments;
+                }
+            }
+
+            if (Array.isArray(profileApts)) {
+                profileApts.forEach(apt => {
+                    const key = apt.referral_id || apt.id || apt.queue_token;
+                    if (!appointmentMap.has(key)) {
+                        appointmentMap.set(key, {
+                            ...apt,
+                            id: apt.id,
+                            referral_id: apt.referral_id || apt.id,
+                            facility_name: apt.facility_name || 'Healthcare Facility',
+                            doctor_name: apt.doctor_name || 'Assigned Duty Medical Officer',
+                            department: apt.department || apt.category || 'General Consultation',
+                            slot_date: apt.record_date || (apt.created_at ? apt.created_at.split('T')[0] : ''),
+                            slot_time: apt.slot_time || 'Morning OPD',
+                            queue_token: apt.queue_token || 'OPD-Token',
+                            status: apt.status || 'APPOINTMENT_BOOKED',
+                            reason: apt.notes || apt.title || 'Consultation'
+                        });
+                    }
+                });
+            }
+        } catch (supaAptErr) {
+            console.warn("Profile appointments fetch notice:", supaAptErr.message);
+        }
+
+        const consolidated = Array.from(appointmentMap.values());
+        setConfirmedAppointments(consolidated);
     };
 
     // 3. Fetch Old Past Records from Supabase user.medical_history

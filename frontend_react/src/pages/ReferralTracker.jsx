@@ -188,6 +188,49 @@ const ReferralTracker = () => {
                 { id: 'ev-book', to_status: 'APPOINTMENT_BOOKED', actor_role: 'PATIENT', reason: `Confirmed slot on ${slotDateTimeString}`, created_at: new Date().toISOString() }
             ]);
 
+            // Sync with user's Medical History under Supabase users table & AuthContext
+            try {
+                const historyEntry = {
+                    id: `ref_apt_${createdReferralObj.id}`,
+                    referral_id: createdReferralObj.id,
+                    title: `Referral Consultation at ${incomingHospital.name}`,
+                    category: 'Doctor Consultation',
+                    facility_name: incomingHospital.name,
+                    doctor_name: createdReferralObj.doctors?.name || 'Assigned OPD Specialist',
+                    record_date: bookingDate,
+                    slot_time: bookingTime,
+                    queue_token: createdReferralObj.slot_token || newSlotToken,
+                    status: 'APPOINTMENT_BOOKED',
+                    notes: bookingComplaint,
+                    address: incomingHospital.address || 'Civil Hospital Campus',
+                    phone: incomingHospital.phone || '',
+                    created_at: new Date().toISOString()
+                };
+
+                const existingHist = user?.medical_history || {};
+                const existingPast = Array.isArray(existingHist.past_records) ? existingHist.past_records : [];
+                const existingApts = Array.isArray(existingHist.confirmed_appointments) ? existingHist.confirmed_appointments : [];
+
+                const updatedMedicalHistory = {
+                    ...existingHist,
+                    past_records: [historyEntry, ...existingPast.filter(p => p.referral_id !== createdReferralObj.id)],
+                    confirmed_appointments: [historyEntry, ...existingApts.filter(a => a.referral_id !== createdReferralObj.id)],
+                    last_updated_at: new Date().toISOString()
+                };
+
+                updateUser({ medical_history: updatedMedicalHistory });
+
+                await supabase
+                    .from('users')
+                    .update({
+                        medical_history: updatedMedicalHistory,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', patientId);
+            } catch (supaErr) {
+                console.warn('[REFERRAL_BOOKING] Supabase user medical history update notice:', supaErr.message);
+            }
+
             // Clear incoming hospital state only upon successful persistence
             const savedHospitalName = incomingHospital.name;
             setIncomingHospital(null);
@@ -207,6 +250,7 @@ const ReferralTracker = () => {
      */
     const handleUpdateStatus = async (toStatus, reason) => {
         if (!selectedReferral) return;
+        const targetUserId = user?.id || 'default_user';
         try {
             const token = localStorage.getItem('accessToken');
             const authHeader = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
@@ -225,6 +269,35 @@ const ReferralTracker = () => {
 
             const updatedList = referrals.map(r => r.id === selectedReferral.id ? updatedReferral : r);
             setReferrals(updatedList);
+
+            // Sync updated status to Supabase users.medical_history
+            try {
+                const existingHist = user?.medical_history || {};
+                const existingPast = Array.isArray(existingHist.past_records) ? existingHist.past_records : [];
+                const existingApts = Array.isArray(existingHist.confirmed_appointments) ? existingHist.confirmed_appointments : [];
+
+                const updatedApts = existingApts.map(a => a.referral_id === selectedReferral.id ? { ...a, status: toStatus } : a);
+                const updatedPast = existingPast.map(p => p.referral_id === selectedReferral.id ? { ...p, status: toStatus } : p);
+
+                const updatedMedicalHistory = {
+                    ...existingHist,
+                    confirmed_appointments: updatedApts,
+                    past_records: updatedPast,
+                    last_updated_at: new Date().toISOString()
+                };
+
+                updateUser({ medical_history: updatedMedicalHistory });
+
+                await supabase
+                    .from('users')
+                    .update({
+                        medical_history: updatedMedicalHistory,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', targetUserId);
+            } catch (syncErr) {
+                console.warn("Status sync to user medical history notice:", syncErr.message);
+            }
 
             const newEvent = {
                 id: 'ev-' + Date.now(),

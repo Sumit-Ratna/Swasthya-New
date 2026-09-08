@@ -577,6 +577,41 @@ exports.updateStatus = async (req, res, next) => {
             payload: payload || {}
         });
 
+        // Synchronize updated referral status to patient's Supabase medical_history
+        try {
+            const patientId = result.referral?.patient_id;
+            if (patientId) {
+                const { data: usr } = await supabase.from('users').select('medical_history').eq('id', patientId).maybeSingle();
+                const medHist = usr?.medical_history || {};
+                const currentPastRecords = Array.isArray(medHist.past_records) ? medHist.past_records : [];
+                const currentApts = Array.isArray(medHist.confirmed_appointments) ? medHist.confirmed_appointments : [];
+
+                const updatedApts = currentApts.map(a => a.referral_id === id ? { ...a, status: to_status } : a);
+                const updatedPast = currentPastRecords.map(p => p.referral_id === id ? { ...p, status: to_status } : p);
+
+                await supabase.from('users').update({
+                    medical_history: {
+                        ...medHist,
+                        confirmed_appointments: updatedApts,
+                        past_records: updatedPast,
+                        last_updated_at: new Date().toISOString()
+                    },
+                    updated_at: new Date().toISOString()
+                }).eq('id', patientId);
+            }
+        } catch (mErr) {
+            console.warn('[UPDATE_STATUS] User medical history sync notice:', mErr.message);
+        }
+
+        if (to_status === 'COMPLETED' || to_status === 'ATTENDED') {
+            try {
+                await supabase.from('appointments').update({
+                    status: 'completed',
+                    updated_at: new Date().toISOString()
+                }).eq('patient_id', result.referral?.patient_id);
+            } catch (aErr) {}
+        }
+
         return res.json({
             success: true,
             message: `Referral status successfully updated to ${to_status}`,
