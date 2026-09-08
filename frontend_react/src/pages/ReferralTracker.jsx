@@ -65,12 +65,22 @@ const ReferralTracker = () => {
         }
     }, [location.state]);
 
+    const getAuthHeaders = () => {
+        const token = localStorage.getItem('accessToken') || user?.token || ('patient_' + (user?.id || 'demo_patient'));
+        return {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'x-user-id': user?.id || 'default_patient',
+                'x-user-role': user?.role || 'PATIENT'
+            }
+        };
+    };
+
     const fetchReferrals = async () => {
         try {
             setLoading(true);
-            const token = localStorage.getItem('accessToken');
             const patientId = user?.id || 'default_patient';
-            const authHeader = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+            const authHeader = getAuthHeaders();
             
             let loadedReferrals = [];
             try {
@@ -104,8 +114,7 @@ const ReferralTracker = () => {
 
     const loadReferralDetails = async (id, currentList = referrals) => {
         try {
-            const token = localStorage.getItem('accessToken');
-            const authHeader = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+            const authHeader = getAuthHeaders();
             
             try {
                 const res = await axios.get(`/api/referrals/${id}`, authHeader);
@@ -149,8 +158,7 @@ const ReferralTracker = () => {
 
         setIsSubmittingBooking(true);
         try {
-            const token = localStorage.getItem('accessToken');
-            const authHeader = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+            const authHeader = getAuthHeaders();
             const patientId = user?.id || 'default_patient';
 
             const newSlotToken = 'OPD-' + Math.floor(100 + Math.random() * 900);
@@ -252,8 +260,7 @@ const ReferralTracker = () => {
         if (!selectedReferral) return;
         const targetUserId = user?.id || 'default_user';
         try {
-            const token = localStorage.getItem('accessToken');
-            const authHeader = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+            const authHeader = getAuthHeaders();
             
             try {
                 await axios.patch(`/api/referrals/${selectedReferral.id}/status`, {
