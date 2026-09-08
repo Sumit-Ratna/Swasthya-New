@@ -22,13 +22,9 @@ import {
     saveFacilitiesToLocalCache 
 } from '../services/osmHealthcareService';
 
-// Standard fallback region coordinates if browser GPS is loading/denied
+// Default GPS Region
 const DEFAULT_REGIONS = [
-    { name: 'Current GPS Location', lat: null, lon: null },
-    { name: 'Nashik District (Maharashtra)', lat: 19.9975, lon: 73.7898 },
-    { name: 'Pune Division (Maharashtra)', lat: 18.5204, lon: 73.8567 },
-    { name: 'Mumbai Metropolitan', lat: 19.0760, lon: 72.8777 },
-    { name: 'Delhi NCR Healthcare Zone', lat: 28.6139, lon: 77.2090 }
+    { name: 'Current GPS Location', lat: null, lon: null }
 ];
 
 const FacilityFinder = () => {
@@ -966,34 +962,49 @@ const FacilityFinder = () => {
                 </div>
             </div>
 
-            {/* Quick Preset Regions Horizontal Bar */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '12px', scrollbarWidth: 'none' }}>
-                <span style={{ fontSize: '11px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.4px', whiteSpace: 'nowrap', marginRight: '2px' }}>
+            {/* Active GPS Region Indicator */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.4px', whiteSpace: 'nowrap' }}>
                     Region:
                 </span>
-                {DEFAULT_REGIONS.map((region, idx) => {
-                    const isSelected = selectedRegionName === region.name;
-                    return (
-                        <button
-                            key={idx}
-                            onClick={() => handleSelectRegion(region)}
-                            style={{
-                                padding: '4px 10px',
-                                borderRadius: '10px',
-                                border: isSelected ? '1.5px solid #0d9488' : '1px solid #e2e8f0',
-                                background: isSelected ? '#f0fdfa' : '#ffffff',
-                                color: isSelected ? '#0f766e' : '#64748b',
-                                fontWeight: isSelected ? 800 : 600,
-                                fontSize: '11px',
-                                cursor: 'pointer',
-                                whiteSpace: 'nowrap',
-                                transition: 'all 0.15s ease'
-                            }}
-                        >
-                            {region.name}
-                        </button>
-                    );
-                })}
+                <button
+                    onClick={() => {
+                        setFollowUser(true);
+                        startContinuousGpsTracking();
+                        if (mapRef.current && userLocation?.lat && userLocation?.lon) {
+                            mapRef.current.flyTo({
+                                center: [userLocation.lon, userLocation.lat],
+                                zoom: 14.5,
+                                essential: true
+                            });
+                        }
+                    }}
+                    style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '5px 12px',
+                        borderRadius: '12px',
+                        border: '1.5px solid #0d9488',
+                        background: '#f0fdfa',
+                        color: '#0f766e',
+                        fontWeight: 800,
+                        fontSize: '11.5px',
+                        cursor: 'pointer',
+                        boxShadow: '0 1px 4px rgba(13, 148, 136, 0.12)',
+                        transition: 'all 0.15s ease'
+                    }}
+                >
+                    <span style={{
+                        width: '7px',
+                        height: '7px',
+                        borderRadius: '50%',
+                        backgroundColor: '#0d9488',
+                        boxShadow: '0 0 6px #0d9488',
+                        display: 'inline-block'
+                    }} />
+                    <span>Current GPS Location</span>
+                </button>
             </div>
 
             {/* Interactive Map Section */}
