@@ -9,11 +9,12 @@ import {
     Stethoscope, Search, Sparkles, BookOpen, Pill, Clock, ArrowRight 
 } from 'lucide-react';
 import MedicalExplainerVideo from '../components/MedicalExplainerVideo';
+import FamilyMemberSwitcher from '../components/FamilyMemberSwitcher';
 import { useLanguage } from '../context/LanguageContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const Records = ({ viewingPatientId, defaultTab }) => {
-    const { user } = useContext(AuthContext);
+    const { user, effectiveUser, activeMember } = useContext(AuthContext);
     const { t } = useLanguage();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -40,8 +41,8 @@ const Records = ({ viewingPatientId, defaultTab }) => {
     const [reportText, setReportText] = useState('');
     const [analyzingText, setAnalyzingText] = useState(false);
 
-    // Target User: Either the family member being viewed, or the logged-in user
-    const targetUserId = viewingPatientId || user?.id;
+    // Target User: Either the explicitly passed ID, or the active family proxy member, or logged-in user
+    const targetUserId = viewingPatientId || effectiveUser?.id || user?.id;
 
     useEffect(() => {
         const tabParam = searchParams.get('tab');
@@ -298,8 +299,11 @@ const Records = ({ viewingPatientId, defaultTab }) => {
     return (
         <div style={{ padding: '20px 16px 120px 16px', maxWidth: '1000px', margin: '0 auto', fontFamily: 'Inter, system-ui, sans-serif' }}>
             
+            {/* Active Family Member Switcher & Global Proxy Status */}
+            <FamilyMemberSwitcher showBanner={true} />
+
             {/* Header */}
-            <header style={{ marginBottom: '20px' }}>
+            <header style={{ marginBottom: '20px', marginTop: '10px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                     <span style={{
                         background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',

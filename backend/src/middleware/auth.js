@@ -22,8 +22,19 @@ module.exports = async (req, res, next) => {
     const authHeader = req.header('Authorization');
     const token = authHeader?.replace('Bearer ', '')?.trim();
 
+    if (!token && !req.header('x-user-id')) {
+        return res.status(401).json({
+            success: false,
+            code: "UNAUTHORIZED",
+            message: "Authentication required. Missing Authorization token.",
+            requestId: req.id,
+            timestamp: new Date().toISOString()
+        });
+    }
+
     let authenticatedUserId = null;
     let tokenRoleHint = null;
+    let isExpiredToken = false;
 
     if (token) {
         const knownSecrets = [
@@ -42,24 +53,24 @@ module.exports = async (req, res, next) => {
                 if (decoded && (decoded.id || decoded.userId || decoded.sub)) {
                     authenticatedUserId = decoded.id || decoded.userId || decoded.sub;
                     tokenRoleHint = decoded.role;
+                    isExpiredToken = false;
                     break;
                 }
             } catch (jwtErr) {
-                // Try next secret
+                if (jwtErr.name === 'TokenExpiredError') {
+                    isExpiredToken = true;
+                }
             }
         }
 
-        // 1b. If verification failed (e.g. expired or signing secret rotated), safely decode payload
-        if (!authenticatedUserId) {
-            try {
-                const decodedPayload = jwt.decode(token);
-                if (decodedPayload && (decodedPayload.id || decodedPayload.userId || decodedPayload.sub)) {
-                    authenticatedUserId = decodedPayload.id || decodedPayload.userId || decodedPayload.sub;
-                    tokenRoleHint = decodedPayload.role;
-                }
-            } catch (decErr) {
-                // Not a standard JWT string
-            }
+        if (isExpiredToken && !authenticatedUserId) {
+            return res.status(401).json({
+                success: false,
+                code: "TOKEN_EXPIRED",
+                message: "Authentication token has expired. Please re-authenticate.",
+                requestId: req.id,
+                timestamp: new Date().toISOString()
+            });
         }
 
         // 2. Resilient Support for Direct UUIDs / Offline / Mock / Guest tokens
@@ -101,15 +112,20 @@ module.exports = async (req, res, next) => {
         }
     }
 
-    // 4. Resilient Fallback to headers or request payload identifiers
+    // 4. Resilient Fallback to header identifier
     if (!authenticatedUserId) {
-        authenticatedUserId = req.header('x-user-id') || 
-                              req.body?.patient_id || 
-                              req.body?.userId || 
-                              req.query?.patient_id || 
-                              req.query?.userId ||
-                              'default_patient';
+        authenticatedUserId = req.header('x-user-id');
         tokenRoleHint = req.header('x-user-role') || 'PATIENT';
+    }
+
+    if (!authenticatedUserId) {
+        return res.status(401).json({
+            success: false,
+            code: "UNAUTHORIZED",
+            message: "Authentication failed. Invalid or unrecognized credentials.",
+            requestId: req.id,
+            timestamp: new Date().toISOString()
+        });
     }
 
     try {

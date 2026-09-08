@@ -145,15 +145,67 @@ exports.uploadReport = async (req, res) => {
 exports.getDocuments = async (req, res) => {
     try {
         const { patient_id } = req.params;
+        const userId = req.user?.id;
+        const role = (req.user?.role || '').toUpperCase();
+
+        const isPatientSelf = String(userId) === String(patient_id);
         const docs = await dbService.getDocumentsByPatient(patient_id);
 
-        // Filter hidden documents
-        const visibleDocs = docs.filter(doc =>
+        let visibleDocs = docs.filter(doc =>
             doc.extracted_data?.hidden_for_patient !== 'true'
         );
 
+        // If requester is not the patient themselves (e.g. family proxy or caregiver), filter out records flagged as private to patient
+        if (!isPatientSelf && role !== 'ADMIN' && role !== 'DOCTOR') {
+            visibleDocs = visibleDocs.filter(doc => {
+                const data = doc.extracted_data || {};
+                return data.hidden_from_family !== true && data.hidden_from_family !== 'true';
+            });
+        }
+
         res.json(visibleDocs);
     } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.toggleFamilyVisibility = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { hidden_from_family } = req.body;
+        const userId = req.user?.id;
+        const role = (req.user?.role || '').toLowerCase();
+
+        const doc = await dbService.getDocument(id);
+        if (!doc) return res.status(404).json({ error: "Document not found" });
+
+        // Only the owning patient or an admin can update family privacy controls
+        if (String(doc.patient_id) !== String(userId) && role !== 'admin') {
+            return res.status(403).json({ error: "Permission Denied. Only the patient can adjust family privacy settings." });
+        }
+
+        const isHidden = hidden_from_family !== undefined 
+            ? Boolean(hidden_from_family) 
+            : !(doc.extracted_data?.hidden_from_family === true || doc.extracted_data?.hidden_from_family === 'true');
+
+        const updatedExtracted = {
+            ...(doc.extracted_data || {}),
+            hidden_from_family: isHidden
+        };
+
+        await dbService.updateDocument(id, {
+            extracted_data: updatedExtracted
+        });
+
+        res.json({
+            success: true,
+            message: isHidden 
+                ? "Record is now private to you (hidden from family & caregivers)." 
+                : "Record is now visible to authorized family members.",
+            hidden_from_family: isHidden
+        });
+    } catch (err) {
+        console.error("Toggle family visibility error:", err);
         res.status(500).json({ error: err.message });
     }
 };

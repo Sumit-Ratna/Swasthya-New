@@ -21,18 +21,20 @@ import {
     getFacilitiesFromLocalCache, 
     saveFacilitiesToLocalCache 
 } from '../services/osmHealthcareService';
+import FamilyMemberSwitcher from '../components/FamilyMemberSwitcher';
 
 // Default GPS Region
 const DEFAULT_REGIONS = [
+    { name: 'Galgotias University (Dankaur)', lat: 28.3639, lon: 77.5404 },
     { name: 'Current GPS Location', lat: null, lon: null }
 ];
 
 const FacilityFinder = () => {
-    const { user } = useContext(AuthContext);
+    const { user, effectiveUser, activeMember } = useContext(AuthContext);
     const navigate = useNavigate();
 
-    // Real-Time Geolocation States
-    const [userLocation, setUserLocation] = useState({ lat: 19.9975, lon: 73.7898, isDefault: true, accuracy: null });
+    // Real-Time Geolocation States (Default: Galgotias University, Yamuna Expressway / Dankaur, UP)
+    const [userLocation, setUserLocation] = useState({ lat: 28.3639, lon: 77.5404, isDefault: true, accuracy: null });
     const [locationStatus, setLocationStatus] = useState('prompt'); // 'prompt' | 'locating' | 'granted' | 'denied' | 'error'
     const [locationError, setLocationError] = useState(null);
     const [liveGpsActive, setLiveGpsActive] = useState(false);
@@ -51,7 +53,7 @@ const FacilityFinder = () => {
 
     // 1-Click Quick Filter States ('government' | 'hospital' | 'ALL')
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState('government'); // Default to Gov Hospital or 1-click select
+    const [selectedCategory, setSelectedCategory] = useState('ALL'); // Default to ALL so all nearby hospitals are immediately visible
     const [emergencyOnly, setEmergencyOnly] = useState(false);
     const [searchRadius, setSearchRadius] = useState(8000); // 8 km in meters
     const [selectedFacility, setSelectedFacility] = useState(null);
@@ -211,8 +213,8 @@ const FacilityFinder = () => {
      * Fetch real OpenStreetMap healthcare facilities & Auto-Preload Local Map
      */
     const loadOsmFacilities = useCallback(async (targetLat, targetLon, forceRefresh = false) => {
-        const lat = targetLat || userLocation?.lat || 19.9975;
-        const lon = targetLon || userLocation?.lon || 73.7898;
+        const lat = targetLat || userLocation?.lat || 28.3639;
+        const lon = targetLon || userLocation?.lon || 77.5404;
 
         // Prevent repeated re-fetches for tiny GPS jitter (< 800 meters) unless forceRefresh is true
         if (!forceRefresh && lastFetchedCenterRef.current) {
@@ -322,8 +324,8 @@ const FacilityFinder = () => {
                 ]
             };
 
-            const initialLat = userLocation?.lat || 19.9975;
-            const initialLon = userLocation?.lon || 73.7898;
+            const initialLat = userLocation?.lat || 28.3639;
+            const initialLon = userLocation?.lon || 77.5404;
 
             const map = new Map({
                 container: mapContainerRef.current,
@@ -432,8 +434,9 @@ const FacilityFinder = () => {
 
         const isAnyHospital = 
             f.typeKey === 'hospital' || 
+            f.typeKey === 'clinic' ||
             isGovHospital || 
-            /hospital|general hospital|superspeciality|multi-speciality|multispeciality|nursing home|medical college|sanatorium|infirmary/i.test(
+            /hospital|general hospital|superspeciality|multi-speciality|multispeciality|nursing home|medical college|sanatorium|infirmary|clinic|centre|health/i.test(
                 `${f.name || ''} ${f.typeLabel || ''} ${f.rawTags?.amenity || ''} ${f.rawTags?.healthcare || ''}`
             );
 
@@ -586,8 +589,8 @@ const FacilityFinder = () => {
         setDownloadSuccess(false);
 
         try {
-            const lat = userLocation?.lat || 19.9975;
-            const lon = userLocation?.lon || 73.7898;
+            const lat = userLocation?.lat || 28.3639;
+            const lon = userLocation?.lon || 77.5404;
 
             setDownloadProgress(45);
             const result = await fetchNearbyOsmHealthcare(lat, lon, searchRadius);
@@ -612,23 +615,25 @@ const FacilityFinder = () => {
     };
 
     /**
-     * Referral Booking Submission
+     * Referral Booking Submission (supports proxy booking for Family Member)
      */
     const handleCreateReferral = async (e) => {
         e.preventDefault();
         try {
             const token = localStorage.getItem('accessToken');
-            const patientId = user?.id || 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+            const patientId = effectiveUser?.id || user?.id || 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
 
             await axios.post('/api/referrals', {
                 patient_id: patientId,
+                patient_name: effectiveUser?.name || user?.name || 'Patient',
+                booked_by_proxy_id: activeMember ? user?.id : undefined,
                 receiving_facility_id: bookingFacility.id,
                 facility_name: bookingFacility.name,
                 facility_address: bookingFacility.address,
                 specialty_required: specialty,
                 urgency: urgency,
                 risk_level: urgency === 'EMERGENCY' ? 'HIGH' : 'MODERATE',
-                primary_complaint: complaint || 'General Referral Request',
+                primary_complaint: complaint || (activeMember ? `OPD Consultation for ${activeMember.name} (${activeMember.relation || 'Family'})` : 'General Referral Request'),
                 reason_for_referral: `Referred to ${bookingFacility.name} for ${specialty}`
             }, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -654,8 +659,11 @@ const FacilityFinder = () => {
     return (
         <div style={{ padding: '16px 14px 120px 14px', maxWidth: '1080px', margin: '0 auto', color: '#0f172a', fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
             
+            {/* Active Family Member Switcher & Global Proxy Status */}
+            <FamilyMemberSwitcher showBanner={true} />
+
             {/* Top Status & Brand Header */}
-            <div style={{ marginBottom: '16px' }}>
+            <div style={{ marginBottom: '16px', marginTop: '10px' }}>
 
 
                 {/* Main Heading */}
@@ -1253,7 +1261,7 @@ const FacilityFinder = () => {
                                         }}
                                         onClick={() => navigate('/referrals', { state: { selectedHospital: facility } })}
                                     >
-                                        <span>Referral</span>
+                                        <span>Book & Refer</span>
                                         <ArrowRight size={13} />
                                     </button>
                                 </div>

@@ -9,15 +9,16 @@ import LanguageSwitcher from '../components/LanguageSwitcher';
 import {
     FileText, Calendar, Clock, Plus, Upload, CheckCircle2,
     AlertCircle, MapPin, Stethoscope, Search, Filter, Trash2,
-    Eye, Download, Share2, History, Sparkles, ShieldCheck,
+    Eye, Download, Share2, History, Sparkles, ShieldCheck, ShieldAlert,
     Pill, ArrowLeft, Building2, ExternalLink, X, Activity,
     CalendarCheck, UserCheck, ChevronRight, FileCheck, Phone,
     HeartPulse, RefreshCw, Check
 } from 'lucide-react';
 import PatientConsentModal from '../components/PatientConsentModal';
+import FamilyMemberSwitcher from '../components/FamilyMemberSwitcher';
 
 const MedicalHistory = () => {
-    const { user, updateUser } = useContext(AuthContext);
+    const { user, effectiveUser, activeMember, updateUser } = useContext(AuthContext);
     const { t } = useLanguage();
     const navigate = useNavigate();
 
@@ -67,11 +68,11 @@ const MedicalHistory = () => {
         setTimeout(() => setToastMessage(null), 4000);
     };
 
-    const targetUserId = user?.id || 'default_user';
+    const targetUserId = effectiveUser?.id || user?.id || 'default_user';
 
     useEffect(() => {
         fetchAllData();
-    }, [user]);
+    }, [user, effectiveUser, activeMember]);
 
     const fetchAllData = async () => {
         setLoading(true);
@@ -420,6 +421,24 @@ const MedicalHistory = () => {
         }
     };
 
+    // Toggle Family Privacy for Document
+    const handleToggleFamilyPrivacy = async (docId, currentHidden, e) => {
+        if (e) e.stopPropagation();
+        try {
+            const token = localStorage.getItem('accessToken');
+            const authHeader = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+            const res = await axios.patch(`/api/documents/${docId}/family-visibility`, {
+                hidden_from_family: !currentHidden
+            }, authHeader);
+
+            showToast(res.data?.message || (!currentHidden ? "Record hidden from family members" : "Record visible to family members"));
+            fetchUserDocuments();
+        } catch (err) {
+            console.error("Family visibility toggle error:", err);
+            showToast("Failed to update family privacy setting", "error");
+        }
+    };
+
     // Consolidated Timeline Stream (Combining Documents, Confirmed Appointments, and Old Records)
     const combinedTimeline = [
         ...confirmedAppointments.map(apt => ({
@@ -583,6 +602,9 @@ const MedicalHistory = () => {
 
             {/* Main Container */}
             <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '16px' }}>
+
+                {/* Active Family Member Switcher & Global Proxy Status */}
+                <FamilyMemberSwitcher showBanner={true} />
 
                 {/* Toast Notification */}
                 <AnimatePresence>
@@ -940,6 +962,33 @@ const MedicalHistory = () => {
                                                 >
                                                     <Eye size={14} />
                                                     <span>Details</span>
+                                                </button>
+                                            )}
+
+                                            {isDoc && (
+                                                <button
+                                                    onClick={(e) => handleToggleFamilyPrivacy(
+                                                        item.id,
+                                                        item.raw?.extracted_data?.hidden_from_family === true || item.raw?.extracted_data?.hidden_from_family === 'true',
+                                                        e
+                                                    )}
+                                                    title={item.raw?.extracted_data?.hidden_from_family ? "Private to you (Hidden from family)" : "Visible to authorized family members"}
+                                                    style={{
+                                                        background: (item.raw?.extracted_data?.hidden_from_family === true || item.raw?.extracted_data?.hidden_from_family === 'true') ? '#fff1f2' : '#f0fdf4',
+                                                        color: (item.raw?.extracted_data?.hidden_from_family === true || item.raw?.extracted_data?.hidden_from_family === 'true') ? '#e11d48' : '#16a34a',
+                                                        border: `1px solid ${(item.raw?.extracted_data?.hidden_from_family === true || item.raw?.extracted_data?.hidden_from_family === 'true') ? '#fecdd3' : '#bbf7d0'}`,
+                                                        borderRadius: '8px',
+                                                        padding: '6px 10px',
+                                                        fontSize: '11.5px',
+                                                        fontWeight: '700',
+                                                        cursor: 'pointer',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '4px'
+                                                    }}
+                                                >
+                                                    {(item.raw?.extracted_data?.hidden_from_family === true || item.raw?.extracted_data?.hidden_from_family === 'true') ? <ShieldAlert size={13} /> : <ShieldCheck size={13} />}
+                                                    <span>{(item.raw?.extracted_data?.hidden_from_family === true || item.raw?.extracted_data?.hidden_from_family === 'true') ? 'Private' : 'Family'}</span>
                                                 </button>
                                             )}
 
@@ -1468,7 +1517,7 @@ const MedicalHistory = () => {
                                     </div>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #e2e8f0', paddingBottom: '8px' }}>
                                         <span style={{ color: '#64748b' }}>Facility Address:</span>
-                                        <span style={{ textAlign: 'right', maxWidth: '240px' }}>{selectedAppointmentSlip.address || 'Civil Hospital Campus, Nashik'}</span>
+                                        <span style={{ textAlign: 'right', maxWidth: '240px' }}>{selectedAppointmentSlip.address || 'PHC Dankaur / GIMS Kasna, Greater Noida'}</span>
                                     </div>
                                 </div>
 

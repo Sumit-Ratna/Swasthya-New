@@ -121,3 +121,23 @@ exports.sendOTP = async (phone, otp) => {
         otp: otp 
     };
 };
+
+exports.sendFamilyInviteSMS = async (phone, { requesterName, relation, code, link }) => {
+    const rawDigits = String(phone || '').replace(/\D/g, '');
+    const nationalNumber = rawDigits.length === 12 && rawDigits.startsWith('91') 
+        ? rawDigits.slice(2) 
+        : rawDigits.slice(-10);
+    const formattedE164 = `+91${nationalNumber}`;
+
+    const text = `Swasthya Health: ${requesterName || 'A family member'} has invited you to connect as ${relation || 'Family'}. Verification Code: ${code}. Link: ${link || 'https://swasthya-zeta.vercel.app/family/accept'}`;
+
+    console.log(`📡 [SMS DISPATCH] Family Invitation SMS to ${formattedE164}: "${text}"`);
+
+    // Use sendOTP infrastructure for delivery
+    const res = await exports.sendOTP(phone, code);
+    return {
+        ...res,
+        messageText: text
+    };
+};
+

@@ -7,13 +7,13 @@ const hostname = typeof window !== 'undefined' ? window.location.hostname : 'loc
 const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
 
 // Developer Machine LAN IP for physical device over local Wi-Fi
-export const DEV_LAN_IP = '192.168.29.111';
-export const LOCAL_API_URL = isNative ? `http://${DEV_LAN_IP}:8000` : 'http://localhost:8000';
+export const DEV_LAN_IP = '10.10.158.164';
+export const LOCAL_API_URL = isNative ? `http://127.0.0.1:8000` : 'http://localhost:8000';
 
-// In production cloud deployment (e.g., Vercel), relative API requests seamlessly target the same origin.
-// In native mobile app (Capacitor), default to production backend or LAN IP.
+// In production cloud deployment, relative API requests seamlessly target origin.
+// In native mobile app (Capacitor), default to local backend via adb reverse / LAN.
 const getFallbackApiUrl = () => {
-    if (isNative) return 'https://swasthya-zeta.vercel.app';
+    if (isNative) return 'http://127.0.0.1:8000';
     if (typeof window !== 'undefined' && !isLocalhost) return '';
     return 'http://localhost:8000';
 };

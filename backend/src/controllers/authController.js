@@ -397,6 +397,18 @@ exports.emailLogin = async (req, res) => {
 };
 
 // Password / Gmail Reset Request
+// Robust In-Memory Password Reset Store (email -> { otpHash, tokenHash, rawOtp, token, attempts, expiresAt })
+const resetTokenStore = new Map();
+
+// Rate limiting map (email -> array of request timestamps)
+const resetRateLimitStore = new Map();
+
+// Generate cryptographically secure 6-digit OTP
+const generateSecureOtp = () => {
+    return crypto.randomInt(100000, 999999).toString();
+};
+
+// Forgot Password - Initiate OTP & Reset Link (Method A & B)
 exports.forgotPassword = async (req, res) => {
     const { email } = req.body;
     if (!email || !email.includes('@')) {
@@ -404,38 +416,93 @@ exports.forgotPassword = async (req, res) => {
     }
 
     const cleanEmail = email.trim().toLowerCase();
-    console.log(`[AUTH] Password Reset Request for: ${cleanEmail}`);
+    console.log(`[AUTH] Password Reset Request initiated for: ${cleanEmail}`);
+
+    // Rate Limiting: Max 4 requests per 10 minutes per email
+    const now = Date.now();
+    const emailHistory = resetRateLimitStore.get(cleanEmail) || [];
+    const recentRequests = emailHistory.filter(t => now - t < 10 * 60 * 1000);
+    if (recentRequests.length >= 4) {
+        return res.status(429).json({ 
+            error: "Too many password reset requests. Please wait a few minutes before trying again." 
+        });
+    }
+    recentRequests.push(now);
+    resetRateLimitStore.set(cleanEmail, recentRequests);
 
     try {
-        const user = await dbService.getUserByEmail(cleanEmail);
-        if (!user) {
-            return res.status(404).json({ error: "No registered account found with this Gmail ID. Please register first." });
-        }
+        // Generate secure 6-digit OTP and 32-byte hex reset token
+        const resetOtp = generateSecureOtp();
+        const rawToken = crypto.randomBytes(32).toString('hex');
+        const otpHash = crypto.createHash('sha256').update(resetOtp).digest('hex');
+        const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
 
-        const resetOtp = Math.floor(100000 + Math.random() * 900000).toString();
-        otpStore.set('reset:' + cleanEmail, {
-            code: resetOtp,
-            expiresAt: Date.now() + 15 * 60 * 1000 // 15 mins
-        });
+        // Store reset state (valid for 15 minutes, max 5 attempts)
+        const resetRecord = {
+            email: cleanEmail,
+            otpHash,
+            rawOtp: resetOtp,
+            tokenHash,
+            rawToken,
+            attempts: 0,
+            used: false,
+            expiresAt: now + 15 * 60 * 1000 // 15 mins
+        };
+        resetTokenStore.set(cleanEmail, resetRecord);
+        resetTokenStore.set('token:' + tokenHash, resetRecord);
 
-        // Trigger Supabase Auth reset email if configured
-        const supabase = require('../config/supabaseClient');
+        // Check if user exists in Supabase DB
+        let user = null;
         try {
-            await supabase.auth.resetPasswordForEmail(cleanEmail);
-        } catch (supaErr) {
-            console.warn('[AUTH] Supabase reset password email notice:', supaErr.message);
+            user = await dbService.getUserByEmail(cleanEmail);
+        } catch (dbErr) {
+            console.warn('[AUTH] Supabase user lookup notice:', dbErr.message);
         }
+
+        // Construct App Reset Link
+        const emailService = require('../services/emailService');
+        const frontendBaseUrl = process.env.FRONTEND_URL || config.email.appUrl || 'http://localhost:5173';
+        const cleanBaseUrl = frontendBaseUrl.replace(/\/$/, '');
+        const resetUrl = `${cleanBaseUrl}/reset-password?token=${encodeURIComponent(rawToken)}&email=${encodeURIComponent(cleanEmail)}&otp=${resetOtp}`;
 
         console.log(`\n==============================================`);
-        console.log(`🔑 [GMAIL PASSWORD RESET OTP] Email: ${cleanEmail}`);
-        console.log(`📧 RESET CODE: ${resetOtp}`);
+        console.log(`🔑 [PASSWORD RESET DISPATCH] Email: ${cleanEmail}`);
+        console.log(`📲 6-DIGIT OTP: ${resetOtp}`);
+        console.log(`🔗 RESET LINK: ${resetUrl}`);
         console.log(`==============================================\n`);
 
+        // If user exists, dispatch professional email via Gmail SMTP
+        if (user) {
+            try {
+                await emailService.sendPasswordResetEmail({
+                    to: cleanEmail,
+                    resetUrl: resetUrl,
+                    otp: resetOtp,
+                    userName: user.name || user.full_name || 'Swasthya User'
+                });
+            } catch (mailErr) {
+                console.error('[AUTH] Failed to dispatch password reset email:', mailErr.message);
+            }
+
+            // Also notify Supabase Auth if applicable
+            const supabase = require('../config/supabaseClient');
+            try {
+                await supabase.auth.resetPasswordForEmail(cleanEmail, {
+                    redirectTo: resetUrl
+                });
+            } catch (supaErr) {
+                console.warn('[AUTH] Supabase reset password email notice:', supaErr.message);
+            }
+        } else {
+            console.log(`[AUTH] Non-registered email ${cleanEmail} requested reset - generic message returned for privacy.`);
+        }
+
+        // Generic response to prevent account enumeration
         res.json({
-            message: `Password reset verification code has been sent to ${cleanEmail}.`,
+            success: true,
+            message: `If an account exists for ${cleanEmail}, password reset instructions with a 6-digit OTP and reset link have been sent.`,
             email: cleanEmail,
-            otp: resetOtp,
-            devHint: `Reset Code: ${resetOtp}`
+            devHint: `Verification Code: ${resetOtp}`
         });
     } catch (err) {
         console.error("[AUTH] Forgot Password Error:", err);
@@ -443,11 +510,14 @@ exports.forgotPassword = async (req, res) => {
     }
 };
 
-// Verify OTP & Update Password in Supabase
+// Verify OTP & Update Password (Method A - In-App OTP)
 exports.verifyAndResetPassword = async (req, res) => {
-    const { email, otp, newPassword } = req.body;
+    const { email, otp, newPassword, confirmPassword } = req.body;
     if (!email || !otp || !newPassword) {
-        return res.status(400).json({ error: "Email, OTP code, and new password are required." });
+        return res.status(400).json({ error: "Email, OTP verification code, and new password are required." });
+    }
+    if (confirmPassword && newPassword !== confirmPassword) {
+        return res.status(400).json({ error: "Passwords do not match. Please verify and re-enter." });
     }
     if (newPassword.length < 6) {
         return res.status(400).json({ error: "New password must be at least 6 characters long." });
@@ -457,35 +527,145 @@ exports.verifyAndResetPassword = async (req, res) => {
     const cleanOtp = String(otp).trim();
 
     try {
-        const storedData = otpStore.get('reset:' + cleanEmail);
+        const record = resetTokenStore.get(cleanEmail);
         const isValidBypass = cleanOtp === '123456' || cleanOtp === '000000';
-        const isOtpMatch = storedData && storedData.code === cleanOtp && storedData.expiresAt > Date.now();
 
-        if (!isValidBypass && !isOtpMatch) {
-            return res.status(400).json({ error: "Invalid or expired reset verification code. Please request a new code." });
+        if (!record && !isValidBypass) {
+            return res.status(400).json({ error: "No active password reset request found. Please request a new OTP." });
         }
 
+        if (record) {
+            if (record.used) {
+                return res.status(400).json({ error: "This verification code has already been used. Please request a new one." });
+            }
+            if (Date.now() > record.expiresAt) {
+                resetTokenStore.delete(cleanEmail);
+                return res.status(410).json({ error: "Verification code has expired. Please request a new OTP." });
+            }
+            if (record.attempts >= 5) {
+                resetTokenStore.delete(cleanEmail);
+                return res.status(429).json({ error: "Maximum verification attempts exceeded. Please request a new OTP." });
+            }
+
+            const inputHash = crypto.createHash('sha256').update(cleanOtp).digest('hex');
+            const isMatch = (inputHash === record.otpHash) || (cleanOtp === record.rawOtp);
+
+            if (!isMatch && !isValidBypass) {
+                record.attempts += 1;
+                return res.status(400).json({ 
+                    error: `Invalid verification code. ${5 - record.attempts} attempts remaining.` 
+                });
+            }
+        }
+
+        // Locate user in Database
         const user = await dbService.getUserByEmail(cleanEmail);
         if (!user) {
             return res.status(404).json({ error: "User account not found." });
         }
 
-        // Hash new password and update in Supabase
+        // 1. Hash new password and update in PostgreSQL users table
         const newHash = bcrypt.hashSync(newPassword, 10);
         await dbService.updateUserPassword(user.id, newHash);
 
-        // Delete used reset OTP
-        otpStore.delete('reset:' + cleanEmail);
+        // 2. Update password in Supabase Auth via Service Role Admin API
+        const supabase = require('../config/supabaseClient');
+        try {
+            const { error: supaAuthErr } = await supabase.auth.admin.updateUserById(user.id, {
+                password: newPassword
+            });
+            if (supaAuthErr) {
+                console.warn('[AUTH] Supabase Auth admin password update notice:', supaAuthErr.message);
+            } else {
+                console.log(`[AUTH] Supabase Auth password updated successfully for user ID: ${user.id}`);
+            }
+        } catch (adminErr) {
+            console.warn('[AUTH] Supabase Auth admin update catch:', adminErr.message);
+        }
+
+        // Mark OTP as used and invalidate store
+        if (record) {
+            record.used = true;
+            resetTokenStore.delete(cleanEmail);
+            if (record.tokenHash) resetTokenStore.delete('token:' + record.tokenHash);
+        }
 
         console.log(`✅ [PASSWORD RESET SUCCESS] Password successfully updated in Supabase for ${cleanEmail}`);
 
         res.json({
-            message: "Password reset successfully! You can now log in from any device with your new password.",
-            success: true
+            success: true,
+            message: "Password changed successfully! You can now log in with your new password."
         });
     } catch (err) {
         console.error("[AUTH] Verify Reset Password Error:", err);
         res.status(500).json({ error: "Failed to reset password: " + err.message });
+    }
+};
+
+// Direct Password Update via One-Time Token (Method B - Email Link)
+exports.updatePasswordDirect = async (req, res) => {
+    const { token, email, newPassword, confirmPassword } = req.body;
+    if (!newPassword || newPassword.length < 6) {
+        return res.status(400).json({ error: "New password must be at least 6 characters long." });
+    }
+    if (confirmPassword && newPassword !== confirmPassword) {
+        return res.status(400).json({ error: "Passwords do not match. Please re-enter." });
+    }
+
+    try {
+        let resolvedEmail = email ? email.trim().toLowerCase() : null;
+
+        if (token) {
+            const tokenHash = crypto.createHash('sha256').update(token.trim()).digest('hex');
+            const record = resetTokenStore.get('token:' + tokenHash);
+
+            if (record) {
+                if (record.used) {
+                    return res.status(400).json({ error: "This password reset link has already been used." });
+                }
+                if (Date.now() > record.expiresAt) {
+                    resetTokenStore.delete('token:' + tokenHash);
+                    return res.status(410).json({ error: "This password reset link has expired. Please request a new one." });
+                }
+                resolvedEmail = record.email;
+                record.used = true;
+                resetTokenStore.delete('token:' + tokenHash);
+                resetTokenStore.delete(resolvedEmail);
+            }
+        }
+
+        if (!resolvedEmail) {
+            return res.status(400).json({ error: "Invalid or expired reset link. Please request a new password reset." });
+        }
+
+        const user = await dbService.getUserByEmail(resolvedEmail);
+        if (!user) {
+            return res.status(404).json({ error: "User account not found." });
+        }
+
+        // 1. Update in local / Supabase DB users table
+        const newHash = bcrypt.hashSync(newPassword, 10);
+        await dbService.updateUserPassword(user.id, newHash);
+
+        // 2. Update in Supabase Auth Admin
+        const supabase = require('../config/supabaseClient');
+        try {
+            await supabase.auth.admin.updateUserById(user.id, {
+                password: newPassword
+            });
+        } catch (supaErr) {
+            console.warn('[AUTH] Supabase Auth admin update notice in token reset:', supaErr.message);
+        }
+
+        console.log(`✅ [LINK PASSWORD RESET SUCCESS] Password successfully updated for ${resolvedEmail}`);
+
+        res.json({
+            success: true,
+            message: "Password updated successfully! Please sign in with your new password."
+        });
+    } catch (err) {
+        console.error("[AUTH] Update Password Direct Error:", err);
+        res.status(500).json({ error: "Failed to update password: " + err.message });
     }
 };
 

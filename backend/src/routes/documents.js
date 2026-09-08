@@ -12,6 +12,7 @@ const upload = multer({ storage: storage, limits: { fileSize: 25 * 1024 * 1024 }
 router.post('/upload', auth, upload.single('report'), documentController.uploadReport);
 router.get('/patient/:patient_id', auth, requirePatientAccess, documentController.getDocuments);
 router.patch('/:id/share', auth, documentController.updateSharing);
+router.patch('/:id/family-visibility', auth, documentController.toggleFamilyVisibility);
 router.post('/:id/analyze', auth, documentController.analyzeDocument);
 router.delete('/:id', auth, documentController.deleteDocument);
 

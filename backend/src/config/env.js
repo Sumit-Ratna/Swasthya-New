@@ -15,7 +15,16 @@ const config = {
     n8nWebhookUrl: process.env.N8N_WEBHOOK_URL || 'https://saadkhan104.app.n8n.cloud/webhook/78c07e24-c57c-4e71-8f21-ed98b5d3c73a',
     corsOrigins: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',').map(s => s.trim()) : ['*'],
     enableAuditChain: process.env.ENABLE_AUDIT_CHAIN !== 'false',
-    demoMode: process.env.DEMO_MODE === 'true'
+    demoMode: process.env.DEMO_MODE === 'true',
+    email: {
+        host: process.env.SMTP_HOST || '',
+        port: parseInt(process.env.SMTP_PORT || '587', 10),
+        secure: process.env.SMTP_SECURE === 'true',
+        user: process.env.SMTP_USER || '',
+        pass: process.env.SMTP_PASS || '',
+        from: process.env.FROM_EMAIL || process.env.SMTP_FROM || 'Swasthya Health <no-reply@swasthya.org>',
+        appUrl: process.env.APP_URL || process.env.FRONTEND_URL || 'http://localhost:5173'
+    }
 };
 
 module.exports = config;

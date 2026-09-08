@@ -15,11 +15,116 @@ export const AuthProvider = ({ children }) => {
     });
     const [loading, setLoading] = useState(false);
 
+    // Active Family Member Switcher State (Proxy Persona)
+    const [activeMember, setActiveMember] = useState(() => {
+        try {
+            const saved = localStorage.getItem('activeFamilyMember');
+            return saved ? JSON.parse(saved) : null;
+        } catch (e) {
+            return null;
+        }
+    });
+
+    const [familyMembers, setFamilyMembers] = useState([]);
+
+    const switchActiveMember = (member) => {
+        if (!member || member.id === user?.id || member.is_self) {
+            setActiveMember(null);
+            localStorage.removeItem('activeFamilyMember');
+            console.log("Switched active profile back to Self:", user?.name || user?.email);
+        } else {
+            const memberProfile = {
+                id: member.caregiver_id || member.patient?.id || member.id,
+                name: member.member_name || member.patient?.full_name || member.name || 'Family Member',
+                full_name: member.member_name || member.patient?.full_name || member.name || 'Family Member',
+                email: member.member_phone?.includes('@') ? member.member_phone : (member.patient?.email || member.email || ''),
+                phone: member.patient?.phone || member.phone || member.member_phone || '',
+                relation: member.relation || member.relationship_type || 'Family',
+                relationship_type: member.relation || member.relationship_type || 'Family',
+                permission_scope: member.access_level || member.permission_scope || 'FULL_ACCESS',
+                gender: member.gender || member.patient?.gender || 'Not specified',
+                dob: member.dob || member.patient?.dob || '2000-01-01',
+                blood_group: member.blood_group || member.patient?.blood_group || 'O+',
+                abha_id: member.abha_id || member.patient?.abha_id || '',
+                medical_history: member.medical_history || member.patient?.medical_history || {},
+                is_proxy: true,
+                proxy_manager_id: user?.id,
+                proxy_manager_name: user?.name || user?.full_name || 'Primary Account Holder'
+            };
+            setActiveMember(memberProfile);
+            localStorage.setItem('activeFamilyMember', JSON.stringify(memberProfile));
+            console.log("Switched active family profile to:", memberProfile.name, `(${memberProfile.relation})`);
+        }
+    };
+
+    const fetchFamilyMembers = async () => {
+        if (!user) return [];
+        try {
+            const token = localStorage.getItem('accessToken');
+            const headers = token ? { Authorization: `Bearer ${token}` } : {};
+            let list = [];
+
+            // 1. Try Backend Family API
+            try {
+                const res = await axios.get('/api/family/list', { headers });
+                if (Array.isArray(res.data)) list = res.data;
+            } catch (e) {}
+
+            // 2. Fetch from Supabase Cloud DB for instant Realtime Sync
+            try {
+                const userId = user.id;
+                const userEmail = (user.email || '').toLowerCase();
+                const userPhone = (user.phone || '').toLowerCase();
+
+                const { data: supaLinks } = await supabase
+                    .from('family_links')
+                    .select('*');
+
+                if (supaLinks && Array.isArray(supaLinks)) {
+                    supaLinks.forEach(link => {
+                        const isRequester = link.user_id === userId || (link.member_phone && link.member_phone.toLowerCase() === userPhone);
+                        const isTarget = link.family_member_id === userId || (link.member_phone && link.member_phone.toLowerCase() === userEmail);
+
+                        if (link.status === 'active' || link.is_verified) {
+                            const exists = list.some(m => m.id === link.id || m.caregiver_id === link.family_member_id);
+                            if (!exists) {
+                                list.push({
+                                    id: link.id,
+                                    caregiver_id: link.family_member_id || link.id,
+                                    name: link.member_name || 'Family Member',
+                                    relation: link.relation || 'Family',
+                                    relationship_type: link.relation || 'Family',
+                                    permission_scope: link.access_level || 'FULL_ACCESS',
+                                    status: 'ACTIVE',
+                                    patient: {
+                                        id: link.family_member_id || link.id,
+                                        full_name: link.member_name || 'Family Member',
+                                        email: link.member_phone || 'family@swasthya.org',
+                                        gender: 'Verified'
+                                    }
+                                });
+                            }
+                        }
+                    });
+                }
+            } catch (supaErr) {
+                console.warn("Supabase family links sync notice:", supaErr.message);
+            }
+
+            setFamilyMembers(list);
+            return list;
+        } catch (err) {
+            console.warn("Fetch family members error:", err.message);
+            return [];
+        }
+    };
+
     useEffect(() => {
         const token = localStorage.getItem('accessToken');
         if (token) {
             axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
             fetchUser();
+            fetchFamilyMembers();
         }
     }, []);
 
@@ -391,9 +496,29 @@ export const AuthProvider = ({ children }) => {
         setUser(merged);
     };
 
+    const effectiveUser = activeMember ? {
+        ...user,
+        ...activeMember,
+        id: activeMember.id,
+        name: activeMember.name || activeMember.full_name,
+        email: activeMember.email,
+        phone: activeMember.phone,
+        gender: activeMember.gender,
+        dob: activeMember.dob,
+        blood_group: activeMember.blood_group,
+        abha_id: activeMember.abha_id,
+        is_proxy: true,
+        primary_user: user
+    } : user;
+
     return (
         <AuthContext.Provider value={{ 
             user, 
+            effectiveUser,
+            activeMember,
+            switchActiveMember,
+            familyMembers,
+            fetchFamilyMembers,
             loading, 
             sendOtp, 
             verifyOtp, 

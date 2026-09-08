@@ -21,6 +21,7 @@ import LearnMedicines from './pages/LearnMedicines';
 import ConsultationDetails from './pages/ConsultationDetails';
 import FamilyHealth from './pages/FamilyHealth';
 import FamilyMemberDetails from './pages/FamilyMemberDetails';
+import FamilyAcceptInvite from './pages/FamilyAcceptInvite';
 import Notifications from './pages/Notifications';
 
 // Swasthya Core Healthcare Features
@@ -38,6 +39,7 @@ import Login from './pages/Login';
 import DoctorLogin from './pages/DoctorLogin';
 import Signup from './pages/Signup';
 import TermsAndConditions from './pages/TermsAndConditions';
+import ResetPassword from './pages/ResetPassword';
 
 // Doctor Pages
 import DoctorDashboard from './pages/DoctorDashboard';
@@ -105,8 +107,8 @@ const MainApp = () => {
     '/', '/home', '/login', '/login/patient', '/login/doctor', '/signup', 
     '/admin', '/referrals', '/facilities', '/triage',
     '/asha', '/caregiver', '/facility-dashboard', '/roles',
-    '/services', '/records', '/medical-history', '/history', '/status', '/care-team', '/family', '/learn-medicine', '/learn-medicines',
-    '/terms', '/consent'
+    '/services', '/records', '/medical-history', '/history', '/status', '/care-team', '/family', '/family/accept', '/learn-medicine', '/learn-medicines',
+    '/terms', '/consent', '/reset-password', '/update-password'
   ];
   if (!user && !publicRoutes.includes(location.pathname)) {
     console.log("Redirecting to / from", location.pathname);
@@ -135,6 +137,8 @@ const MainApp = () => {
           <Route path="/login" element={!user ? <Login /> : <Navigate to={getRoleHome(user.role)} replace />} />
           <Route path="/login/patient" element={!user ? <Login /> : <Navigate to="/home" replace />} />
           <Route path="/login/doctor" element={!user ? <DoctorLogin /> : <Navigate to="/doctor/dashboard" replace />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/update-password" element={<ResetPassword />} />
           <Route path="/terms" element={<TermsAndConditions />} />
           <Route path="/consent" element={<TermsAndConditions />} />
 
@@ -156,6 +160,7 @@ const MainApp = () => {
           <Route path="/status" element={<Status />} />
           <Route path="/care-team" element={<CareTeam />} />
           <Route path="/family" element={<FamilyHealth />} />
+          <Route path="/family/accept" element={<FamilyAcceptInvite />} />
           <Route path="/family/:memberId" element={<FamilyMemberDetails />} />
           <Route path="/learn-medicine" element={<Records defaultTab="medicines" />} />
           <Route path="/learn-medicines" element={<Records defaultTab="medicines" />} />

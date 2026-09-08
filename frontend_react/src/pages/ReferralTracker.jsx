@@ -34,9 +34,12 @@ const ReferralTracker = () => {
     const [incomingHospital, setIncomingHospital] = useState(location.state?.selectedHospital || null);
     
     // Booking Form State for selected incoming hospital
-    const [bookingStep, setBookingStep] = useState(incomingHospital ? 'ASK_STATUS' : null); // 'ASK_STATUS' | 'FILL_DETAILS' | null
+    // Steps: 'CALL_HOSPITAL' (call receptionist / find on google maps) -> 'FILL_DETAILS' (enter confirmed appointment details)
+    const [bookingStep, setBookingStep] = useState(incomingHospital ? 'CALL_HOSPITAL' : null);
     const [bookingDate, setBookingDate] = useState(new Date().toISOString().split('T')[0]);
     const [bookingTime, setBookingTime] = useState('10:30 AM');
+    const [bookingDoctor, setBookingDoctor] = useState('');
+    const [bookingToken, setBookingToken] = useState('');
     const [bookingComplaint, setBookingComplaint] = useState('Doctor Consultation & Specialist Follow-up');
     const [bookingUrgency, setBookingUrgency] = useState('ROUTINE');
     const [isSubmittingBooking, setIsSubmittingBooking] = useState(false);
@@ -61,9 +64,21 @@ const ReferralTracker = () => {
     useEffect(() => {
         if (location.state?.selectedHospital) {
             setIncomingHospital(location.state.selectedHospital);
-            setBookingStep('ASK_STATUS');
+            setBookingStep('CALL_HOSPITAL');
         }
     }, [location.state]);
+
+    const openGoogleWebSearch = (facility) => {
+        if (!facility) return;
+        const query = `${facility.name || 'Hospital'} ${facility.address || ''} phone number contact receptionist`;
+        const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query.trim())}`;
+        window.open(searchUrl, '_blank');
+    };
+
+    const makePhoneCall = (phoneNumber) => {
+        if (!phoneNumber) return;
+        window.location.href = `tel:${phoneNumber.replace(/\s+/g, '')}`;
+    };
 
     const getAuthHeaders = () => {
         const token = localStorage.getItem('accessToken') || user?.token || ('patient_' + (user?.id || 'demo_patient'));
@@ -161,8 +176,9 @@ const ReferralTracker = () => {
             const authHeader = getAuthHeaders();
             const patientId = user?.id || 'default_patient';
 
-            const newSlotToken = 'OPD-' + Math.floor(100 + Math.random() * 900);
+            const newSlotToken = (bookingToken && bookingToken.trim()) || ('OPD-' + Math.floor(100 + Math.random() * 900));
             const slotDateTimeString = `${bookingDate} at ${bookingTime}`;
+            const doctorName = (bookingDoctor && bookingDoctor.trim()) || 'Assigned OPD Specialist';
 
             const referralPayload = {
                 patient_id: patientId,
@@ -174,10 +190,11 @@ const ReferralTracker = () => {
                 risk_level: bookingUrgency === 'EMERGENCY' ? 'CRITICAL' : 'MODERATE',
                 urgency: bookingUrgency,
                 primary_complaint: bookingComplaint.trim() || 'General Specialist Consultation',
-                clinical_summary: `Direct referral booking at ${incomingHospital.name.trim()}. Distance: ${incomingHospital.distanceFormatted || 'Nearby'}.`,
+                clinical_summary: `Direct referral booking at ${incomingHospital.name.trim()}. Doctor: ${doctorName}. Distance: ${incomingHospital.distanceFormatted || 'Nearby'}.`,
                 reason_for_referral: `Scheduled appointment on ${slotDateTimeString}`,
                 appointment_slot_time: slotDateTimeString,
-                slot_token: newSlotToken
+                slot_token: newSlotToken,
+                doctor_name: doctorName
             };
 
             let createdReferralObj = null;
@@ -201,10 +218,11 @@ const ReferralTracker = () => {
                         urgency: bookingUrgency,
                         specialty_required: incomingHospital.typeLabel || 'Specialist Consultation',
                         primary_complaint: bookingComplaint.trim() || 'General Specialist Consultation',
-                        clinical_summary: `Direct referral booking at ${incomingHospital.name.trim()}.`,
+                        clinical_summary: `Direct referral booking at ${incomingHospital.name.trim()}. Doctor: ${doctorName}.`,
                         reason_for_referral: `Scheduled appointment on ${slotDateTimeString}`,
                         appointment_slot_time: slotDateTimeString,
                         slot_token: newSlotToken,
+                        doctor_name: doctorName,
                         created_at: new Date().toISOString(),
                         updated_at: new Date().toISOString()
                     };
@@ -218,20 +236,23 @@ const ReferralTracker = () => {
                     if (!supaDirectErr && directSupaData) {
                         createdReferralObj = {
                             ...directSupaData,
-                            facilities: incomingHospital
+                            facilities: incomingHospital,
+                            doctors: { name: doctorName }
                         };
                     } else {
                         createdReferralObj = {
                             id: fallbackRefId,
                             ...referralPayload,
-                            facilities: incomingHospital
+                            facilities: incomingHospital,
+                            doctors: { name: doctorName }
                         };
                     }
                 } catch (fallbackEx) {
                     createdReferralObj = {
                         id: 'ref_' + Date.now(),
                         ...referralPayload,
-                        facilities: incomingHospital
+                        facilities: incomingHospital,
+                        doctors: { name: doctorName }
                     };
                 }
             }
@@ -242,7 +263,7 @@ const ReferralTracker = () => {
             setTimeline([
                 { id: 'ev-init', to_status: 'TRIAGED', actor_role: 'SYSTEM', reason: 'Triage assessment verified', created_at: new Date().toISOString() },
                 { id: 'ev-fac', to_status: 'FACILITY_SELECTED', actor_role: 'PATIENT', reason: `Linked to ${incomingHospital.name}`, created_at: new Date().toISOString() },
-                { id: 'ev-book', to_status: 'APPOINTMENT_BOOKED', actor_role: 'PATIENT', reason: `Confirmed slot on ${slotDateTimeString}`, created_at: new Date().toISOString() }
+                { id: 'ev-book', to_status: 'APPOINTMENT_BOOKED', actor_role: 'PATIENT', reason: `Confirmed slot on ${slotDateTimeString} with receptionist`, created_at: new Date().toISOString() }
             ]);
 
             // Sync with user's Medical History under Supabase users table & AuthContext
@@ -253,7 +274,7 @@ const ReferralTracker = () => {
                     title: `Referral Consultation at ${incomingHospital.name}`,
                     category: 'Doctor Consultation',
                     facility_name: incomingHospital.name,
-                    doctor_name: createdReferralObj.doctors?.name || 'Assigned OPD Specialist',
+                    doctor_name: doctorName,
                     record_date: bookingDate,
                     slot_time: bookingTime,
                     queue_token: createdReferralObj.slot_token || newSlotToken,
@@ -288,6 +309,25 @@ const ReferralTracker = () => {
                 console.warn('[REFERRAL_BOOKING] Supabase user medical history update notice:', supaErr.message);
             }
 
+            // Sync to local storage for instant Home and cross-page tracking
+            try {
+                localStorage.setItem('swasthya_recent_referral', JSON.stringify(createdReferralObj));
+                localStorage.setItem('swasthya_recent_booked_appointment', JSON.stringify({
+                    id: createdReferralObj.id,
+                    referral_id: createdReferralObj.id,
+                    facility_name: incomingHospital.name,
+                    category: incomingHospital.typeLabel || 'Specialist Consultation',
+                    doctor_name: doctorName,
+                    record_date: bookingDate,
+                    slot_time: bookingTime,
+                    queue_token: createdReferralObj.slot_token || newSlotToken,
+                    status: 'APPOINTMENT_BOOKED',
+                    address: incomingHospital.address || 'Civil Hospital Campus',
+                    phone: incomingHospital.phone || '',
+                    created_at: new Date().toISOString()
+                }));
+            } catch (locErr) {}
+
             // Clear incoming hospital state only upon successful persistence
             const savedHospitalName = incomingHospital.name;
             setIncomingHospital(null);
@@ -297,6 +337,63 @@ const ReferralTracker = () => {
             console.error("Booking submission error:", err);
             const errMsg = err.response?.data?.message || err.message || "Your appointment could not be saved. Please try again.";
             showToast(errMsg, "error");
+        } finally {
+            setIsSubmittingBooking(false);
+        }
+    };
+
+    /**
+     * Save Hospital as Pending Referral (Call Later)
+     */
+    const handleSavePendingReferral = async () => {
+        if (!incomingHospital || !incomingHospital.name?.trim()) return;
+        setIsSubmittingBooking(true);
+        try {
+            const authHeader = getAuthHeaders();
+            const patientId = user?.id || 'default_patient';
+            const pendingPayload = {
+                patient_id: patientId,
+                receiving_facility_id: incomingHospital.id || null,
+                facility_name: incomingHospital.name.trim(),
+                facility_address: incomingHospital.address || 'Local Healthcare Centre',
+                specialty_required: incomingHospital.typeLabel || 'Specialist Consultation',
+                status: 'FACILITY_SELECTED',
+                risk_level: 'MODERATE',
+                urgency: bookingUrgency,
+                primary_complaint: bookingComplaint.trim() || 'Inquiry / Pending Reception Call',
+                clinical_summary: `Facility selected: ${incomingHospital.name.trim()}. Contact pending with receptionist.`,
+                reason_for_referral: `Hospital selected from nearby facilities. Reception contact pending.`,
+                appointment_slot_time: 'Pending Receptionist Confirmation',
+                slot_token: 'PENDING'
+            };
+
+            let createdReferralObj = null;
+            try {
+                const res = await axios.post('/api/referrals', pendingPayload, authHeader);
+                createdReferralObj = res.data?.data || res.data?.referral || (res.data?.success && res.data);
+            } catch (e) {
+                console.warn("Backend API notice, falling back to local:", e.message);
+            }
+
+            if (!createdReferralObj || !createdReferralObj.id) {
+                createdReferralObj = {
+                    id: 'ref_' + Date.now(),
+                    ...pendingPayload,
+                    facilities: incomingHospital,
+                    created_at: new Date().toISOString()
+                };
+            }
+
+            setReferrals(prev => [createdReferralObj, ...prev.filter(r => r.id !== createdReferralObj.id)]);
+            setSelectedReferral(createdReferralObj);
+            setIncomingHospital(null);
+            setBookingStep(null);
+            showToast(`Hospital saved! You can call reception anytime from here.`);
+        } catch (err) {
+            console.error("Save pending referral error:", err);
+            showToast("Saved to your referral list.", "info");
+            setIncomingHospital(null);
+            setBookingStep(null);
         } finally {
             setIsSubmittingBooking(false);
         }
@@ -325,6 +422,11 @@ const ReferralTracker = () => {
 
             const updatedList = referrals.map(r => r.id === selectedReferral.id ? updatedReferral : r);
             setReferrals(updatedList);
+
+            // Sync updated status to localStorage
+            try {
+                localStorage.setItem('swasthya_recent_referral', JSON.stringify(updatedReferral));
+            } catch (e) {}
 
             // Sync updated status to Supabase users.medical_history
             try {
@@ -575,23 +677,25 @@ const getGoogleSearchUrl = (facility) => {
             <AnimatePresence>
                 {incomingHospital && (
                     <motion.div
-                        initial={{ opacity: 0, y: -8 }}
+                        initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -8 }}
+                        exit={{ opacity: 0, y: -10 }}
                         style={{
-                            padding: '14px',
-                            borderRadius: '14px',
-                            border: '1.5px solid #0d9488',
+                            padding: '16px',
+                            borderRadius: '16px',
+                            border: '2px solid #0d9488',
                             backgroundColor: '#f0fdfa',
-                            marginBottom: '14px'
+                            marginBottom: '18px',
+                            boxShadow: '0 4px 20px rgba(13, 148, 136, 0.12)'
                         }}
                     >
+                        {/* Hospital Header */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px' }}>
-                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
                                 <div style={{
-                                    width: '36px',
-                                    height: '36px',
-                                    borderRadius: '10px',
+                                    width: '42px',
+                                    height: '42px',
+                                    borderRadius: '12px',
                                     backgroundColor: '#ccfbf1',
                                     display: 'flex',
                                     alignItems: 'center',
@@ -599,136 +703,385 @@ const getGoogleSearchUrl = (facility) => {
                                     color: '#0d9488',
                                     flexShrink: 0
                                 }}>
-                                    <Building2 size={18} />
+                                    <Building2 size={22} />
                                 </div>
                                 <div>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                                        <span style={{ fontSize: '10px', fontWeight: '800', backgroundColor: '#0d9488', color: '#ffffff', padding: '1px 6px', borderRadius: '4px' }}>
+                                        <span style={{ fontSize: '10px', fontWeight: '800', backgroundColor: '#0d9488', color: '#ffffff', padding: '2px 8px', borderRadius: '6px' }}>
                                             {incomingHospital.typeLabel || 'Selected Facility'}
                                         </span>
                                         {incomingHospital.distanceFormatted && (
-                                            <span style={{ fontSize: '10.5px', fontWeight: '700', color: '#0f766e' }}>
+                                            <span style={{ fontSize: '11px', fontWeight: '700', color: '#0f766e', background: '#e6fffa', padding: '2px 6px', borderRadius: '6px' }}>
                                                 📍 {incomingHospital.distanceFormatted} away
                                             </span>
                                         )}
                                     </div>
-                                    <h3 style={{ fontSize: '15px', fontWeight: '800', margin: '4px 0 2px', color: '#0f172a' }}>
+                                    <h3 style={{ fontSize: '16px', fontWeight: '800', margin: '6px 0 2px', color: '#0f172a' }}>
                                         {incomingHospital.name}
                                     </h3>
-                                    <p style={{ fontSize: '11.5px', color: '#64748b', margin: 0 }}>
-                                        {incomingHospital.address || 'Address provided via OpenStreetMap'}
+                                    <p style={{ fontSize: '12px', color: '#64748b', margin: 0, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        <MapPin size={13} style={{ flexShrink: 0 }} />
+                                        <span>{incomingHospital.address || 'Address provided via OpenStreetMap'}</span>
                                     </p>
                                 </div>
                             </div>
 
                             <button 
                                 onClick={() => { setIncomingHospital(null); setBookingStep(null); }}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: '2px' }}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: '4px' }}
+                                title="Cancel"
                             >
-                                <X size={18} />
+                                <X size={20} />
                             </button>
                         </div>
 
-                        {/* Booking Details Flow */}
-                        {bookingStep === 'ASK_STATUS' && (
-                            <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #ccfbf1', display: 'flex', gap: '8px' }}>
-                                <button
-                                    onClick={() => setBookingStep('FILL_DETAILS')}
-                                    style={{
-                                        flex: 1,
-                                        padding: '9px 12px',
-                                        background: '#0d9488',
-                                        color: '#fff',
-                                        border: 'none',
-                                        borderRadius: '8px',
-                                        fontSize: '12px',
-                                        fontWeight: 700,
-                                        cursor: 'pointer'
-                                    }}
-                                >
-                                    Book OPD Appointment Slot
-                                </button>
-                                <button
-                                    onClick={() => handleFastTrackReferral(incomingHospital)}
-                                    style={{
-                                        padding: '9px 12px',
-                                        background: '#ffffff',
-                                        color: '#0f766e',
-                                        border: '1px solid #0d9488',
-                                        borderRadius: '8px',
-                                        fontSize: '12px',
-                                        fontWeight: 700,
-                                        cursor: 'pointer'
-                                    }}
-                                >
-                                    Quick Link
-                                </button>
+                        {/* STEP 1: CALL RECEPTIONIST / CONTACT STEP */}
+                        <div style={{
+                            marginTop: '14px',
+                            padding: '12px 14px',
+                            background: '#ffffff',
+                            borderRadius: '12px',
+                            border: '1px solid #ccfbf1'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                                <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#0d9488', color: '#fff', fontSize: '12px', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    1
+                                </div>
+                                <strong style={{ fontSize: '13px', color: '#0f766e' }}>
+                                    Step 1: Contact Hospital Receptionist
+                                </strong>
                             </div>
-                        )}
+                            <p style={{ fontSize: '11.5px', color: '#64748b', margin: '0 0 10px 0', lineHeight: 1.4 }}>
+                                Please call the hospital reception desk first to verify doctor availability, OPD timings, and schedule your appointment.
+                            </p>
 
-                        {bookingStep === 'FILL_DETAILS' && (
-                            <form onSubmit={handleConfirmBooking} style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                                    <div>
-                                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '3px' }}>Date *</label>
-                                        <input
-                                            type="date"
-                                            required
-                                            value={bookingDate}
-                                            min={new Date().toISOString().split('T')[0]}
-                                            onChange={(e) => setBookingDate(e.target.value)}
-                                            style={{ width: '100%', padding: '7px 9px', borderRadius: '7px', border: '1px solid #cbd5e1', fontSize: '12px', boxSizing: 'border-box' }}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '3px' }}>Slot *</label>
-                                        <input
-                                            type="text"
-                                            required
-                                            value={bookingTime}
-                                            placeholder="10:30 AM"
-                                            onChange={(e) => setBookingTime(e.target.value)}
-                                            style={{ width: '100%', padding: '7px 9px', borderRadius: '7px', border: '1px solid #cbd5e1', fontSize: '12px', boxSizing: 'border-box' }}
-                                        />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '3px' }}>Complaint / Reason *</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={bookingComplaint}
-                                        onChange={(e) => setBookingComplaint(e.target.value)}
-                                        style={{ width: '100%', padding: '7px 9px', borderRadius: '7px', border: '1px solid #cbd5e1', fontSize: '12px', boxSizing: 'border-box' }}
-                                    />
-                                </div>
-                                <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                            {/* Contact Actions */}
+                            {incomingHospital.phone ? (
+                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                                     <button
-                                        type="submit"
-                                        disabled={isSubmittingBooking}
+                                        type="button"
+                                        onClick={() => makePhoneCall(incomingHospital.phone)}
                                         style={{
                                             flex: 1,
-                                            padding: '8px 14px',
-                                            background: '#0d9488',
+                                            minWidth: '160px',
+                                            padding: '10px 14px',
+                                            background: 'linear-gradient(135deg, #0d9488, #0f766e)',
                                             color: '#ffffff',
                                             border: 'none',
-                                            borderRadius: '8px',
-                                            fontSize: '12px',
-                                            fontWeight: 700,
-                                            cursor: 'pointer'
+                                            borderRadius: '10px',
+                                            fontSize: '12.5px',
+                                            fontWeight: 800,
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: '6px',
+                                            boxShadow: '0 2px 8px rgba(13, 148, 136, 0.25)'
                                         }}
                                     >
-                                        {isSubmittingBooking ? 'Saving...' : 'Confirm Appointment'}
+                                        <Phone size={15} />
+                                        <span>Call Reception ({incomingHospital.phone})</span>
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={() => setBookingStep('ASK_STATUS')}
-                                        style={{ padding: '8px 12px', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '8px', fontSize: '12px', cursor: 'pointer' }}
+                                        onClick={() => openGoogleWebSearch(incomingHospital)}
+                                        style={{
+                                            padding: '10px 14px',
+                                            background: '#f8fafc',
+                                            color: '#0284c7',
+                                            border: '1px solid #bae6fd',
+                                            borderRadius: '10px',
+                                            fontSize: '12px',
+                                            fontWeight: 700,
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '5px'
+                                        }}
+                                    >
+                                        <ExternalLink size={14} />
+                                        <span>Search on Google Web</span>
+                                    </button>
+                                </div>
+                            ) : (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <div style={{
+                                        padding: '8px 10px',
+                                        background: '#eff6ff',
+                                        border: '1px solid #bfdbfe',
+                                        borderRadius: '8px',
+                                        fontSize: '11px',
+                                        color: '#1e40af',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '6px'
+                                    }}>
+                                        <AlertCircle size={14} style={{ flexShrink: 0 }} />
+                                        <span>Direct phone number not available in offline listing. Search Google in your web browser for their live reception phone & OPD hours.</span>
+                                    </div>
+
+                                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                        <button
+                                            type="button"
+                                            onClick={() => openGoogleWebSearch(incomingHospital)}
+                                            style={{
+                                                flex: 1,
+                                                padding: '10px 14px',
+                                                background: 'linear-gradient(135deg, #0284c7, #0369a1)',
+                                                color: '#ffffff',
+                                                border: 'none',
+                                                borderRadius: '10px',
+                                                fontSize: '12.5px',
+                                                fontWeight: 800,
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: '6px',
+                                                boxShadow: '0 2px 8px rgba(2, 132, 199, 0.25)'
+                                            }}
+                                        >
+                                            <ExternalLink size={15} />
+                                            <span>Search Contact & Reception on Google</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* STEP 2: DID YOU BOOK QUESTION */}
+                        {bookingStep !== 'FILL_DETAILS' && (
+                            <div style={{
+                                marginTop: '12px',
+                                padding: '12px 14px',
+                                background: '#ffffff',
+                                borderRadius: '12px',
+                                border: '1px solid #ccfbf1'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                                    <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#0284c7', color: '#fff', fontSize: '12px', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        2
+                                    </div>
+                                    <strong style={{ fontSize: '13px', color: '#0f172a' }}>
+                                        Step 2: Did you contact the hospital and book your appointment?
+                                    </strong>
+                                </div>
+                                <p style={{ fontSize: '11.5px', color: '#64748b', margin: '0 0 12px 0' }}>
+                                    Please confirm whether the hospital receptionist scheduled your OPD slot or consultation time.
+                                </p>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                                    <button
+                                        type="button"
+                                        onClick={() => setBookingStep('FILL_DETAILS')}
+                                        style={{
+                                            padding: '11px 12px',
+                                            background: '#0d9488',
+                                            color: '#ffffff',
+                                            border: 'none',
+                                            borderRadius: '10px',
+                                            fontSize: '12px',
+                                            fontWeight: 800,
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: '6px',
+                                            boxShadow: '0 2px 8px rgba(13, 148, 136, 0.2)'
+                                        }}
+                                    >
+                                        <CheckCircle2 size={15} />
+                                        <span>Yes, Booked with Reception</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleSavePendingReferral}
+                                        style={{
+                                            padding: '11px 12px',
+                                            background: '#f8fafc',
+                                            color: '#475569',
+                                            border: '1.5px solid #cbd5e1',
+                                            borderRadius: '10px',
+                                            fontSize: '12px',
+                                            fontWeight: 700,
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: '6px'
+                                        }}
+                                    >
+                                        <Clock size={15} />
+                                        <span>Not Yet, Call Later</span>
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* STEP 3: FILL CONFIRMED APPOINTMENT DETAILS FORM */}
+                        {bookingStep === 'FILL_DETAILS' && (
+                            <div style={{
+                                marginTop: '12px',
+                                padding: '14px',
+                                background: '#ffffff',
+                                borderRadius: '12px',
+                                border: '1.5px solid #0d9488'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#0d9488', color: '#fff', fontSize: '12px', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            ✓
+                                        </div>
+                                        <strong style={{ fontSize: '13px', color: '#0f766e' }}>
+                                            Record Confirmed Appointment Details
+                                        </strong>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setBookingStep('CALL_HOSPITAL')}
+                                        style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '11.5px', fontWeight: 700, cursor: 'pointer' }}
                                     >
                                         Back
                                     </button>
                                 </div>
-                            </form>
+
+                                <form onSubmit={handleConfirmBooking} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                                        <div>
+                                            <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#334155', marginBottom: '3px' }}>
+                                                Appointment Date *
+                                            </label>
+                                            <input
+                                                type="date"
+                                                required
+                                                value={bookingDate}
+                                                min={new Date().toISOString().split('T')[0]}
+                                                onChange={(e) => setBookingDate(e.target.value)}
+                                                style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '12px', boxSizing: 'border-box' }}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#334155', marginBottom: '3px' }}>
+                                                Appointment Time / Slot *
+                                            </label>
+                                            <input
+                                                type="text"
+                                                required
+                                                value={bookingTime}
+                                                placeholder="e.g. 10:30 AM or Morning OPD"
+                                                onChange={(e) => setBookingTime(e.target.value)}
+                                                style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '12px', boxSizing: 'border-box' }}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Quick Time Chips */}
+                                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                                        {['09:30 AM', '11:00 AM', '02:30 PM', '04:30 PM'].map((chip) => (
+                                            <button
+                                                key={chip}
+                                                type="button"
+                                                onClick={() => setBookingTime(chip)}
+                                                style={{
+                                                    padding: '3px 8px',
+                                                    fontSize: '10.5px',
+                                                    fontWeight: 600,
+                                                    borderRadius: '6px',
+                                                    border: bookingTime === chip ? '1px solid #0d9488' : '1px solid #e2e8f0',
+                                                    background: bookingTime === chip ? '#ccfbf1' : '#f8fafc',
+                                                    color: bookingTime === chip ? '#0f766e' : '#64748b',
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                {chip}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                                        <div>
+                                            <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#334155', marginBottom: '3px' }}>
+                                                Doctor / Department (Optional)
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={bookingDoctor}
+                                                placeholder="e.g. Dr. Verma / Cardiology OPD"
+                                                onChange={(e) => setBookingDoctor(e.target.value)}
+                                                style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '12px', boxSizing: 'border-box' }}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#334155', marginBottom: '3px' }}>
+                                                Token / Slip No. (Optional)
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={bookingToken}
+                                                placeholder="e.g. Token #14 / Room 102"
+                                                onChange={(e) => setBookingToken(e.target.value)}
+                                                style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '12px', boxSizing: 'border-box' }}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#334155', marginBottom: '3px' }}>
+                                            Primary Reason / Symptoms *
+                                        </label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={bookingComplaint}
+                                            placeholder="e.g. Specialist Follow-up Consultation"
+                                            onChange={(e) => setBookingComplaint(e.target.value)}
+                                            style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '12px', boxSizing: 'border-box' }}
+                                        />
+                                    </div>
+
+                                    <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+                                        <button
+                                            type="submit"
+                                            disabled={isSubmittingBooking}
+                                            style={{
+                                                flex: 1,
+                                                padding: '10px 16px',
+                                                background: 'linear-gradient(135deg, #0d9488, #0f766e)',
+                                                color: '#ffffff',
+                                                border: 'none',
+                                                borderRadius: '10px',
+                                                fontSize: '12.5px',
+                                                fontWeight: 800,
+                                                cursor: 'pointer',
+                                                boxShadow: '0 2px 10px rgba(13, 148, 136, 0.25)',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: '6px'
+                                            }}
+                                        >
+                                            <CheckCircle2 size={16} />
+                                            <span>{isSubmittingBooking ? 'Saving Confirmed Appointment...' : 'Confirm & Track Appointment'}</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setBookingStep('CALL_HOSPITAL')}
+                                            style={{
+                                                padding: '10px 14px',
+                                                background: '#f1f5f9',
+                                                color: '#475569',
+                                                border: 'none',
+                                                borderRadius: '10px',
+                                                fontSize: '12px',
+                                                fontWeight: 700,
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            Back
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
                         )}
                     </motion.div>
                 )}

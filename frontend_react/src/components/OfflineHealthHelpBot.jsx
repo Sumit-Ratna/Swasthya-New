@@ -1055,36 +1055,17 @@ const OfflineHealthHelpBot = () => {
                                         </button>
                                     </div>
 
-                                    {/* On-Device Neural Model Info & Selector */}
+                                    {/* On-Device Neural Model Info */}
                                     <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '10px', marginBottom: '12px', fontSize: '11px' }}>
                                         <div style={{ fontWeight: 800, color: '#0f172a', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '5px' }}>
                                             <Cpu size={14} color="#0d9488" />
-                                            <span>On-Device Neural Model (Offline):</span>
+                                            <span>On-Device Model (Universal Offline):</span>
                                         </div>
 
-                                        <select
-                                            value={gemmaState.id}
-                                            onChange={(e) => gemmaEngine.setModel(e.target.value)}
-                                            disabled={gemmaState.isDownloading}
-                                            style={{
-                                                width: '100%',
-                                                padding: '6px 8px',
-                                                borderRadius: '6px',
-                                                border: '1px solid #cbd5e1',
-                                                fontSize: '11px',
-                                                fontWeight: 700,
-                                                marginBottom: '8px',
-                                                color: '#0f172a',
-                                                background: '#ffffff'
-                                            }}
-                                        >
-                                            {(gemmaState.models || []).map(m => (
-                                                <option key={m.id} value={m.id}>
-                                                    {m.name} ({m.sizeFormatted}) {m.recommended ? '★ Recommended' : ''}
-                                                </option>
-                                            ))}
-                                        </select>
-
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                            <span style={{ color: '#64748b' }}>Model:</span>
+                                            <strong style={{ color: '#0d9488' }}>{gemmaState.name}</strong>
+                                        </div>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                                             <span style={{ color: '#64748b' }}>Download Size:</span>
                                             <strong style={{ color: '#0f172a' }}>{gemmaState.size}</strong>

@@ -154,61 +154,8 @@ const INITIAL_DATA = {
             opd_timing: '10:00 AM - 04:00 PM'
         }
     ],
-    referrals: [
-        {
-            id: 'dddddddd-dddd-dddd-dddd-dddddddddddd',
-            patient_id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
-            receiving_facility_id: '22222222-2222-2222-2222-222222222222',
-            assigned_doctor_id: '44444444-4444-4444-4444-444444444444',
-            status: 'APPOINTMENT_BOOKED',
-            risk_level: 'HIGH',
-            urgency: 'URGENT',
-            specialty_required: 'OBSTETRICS',
-            primary_complaint: 'Maternal hypertension at 32 weeks ANC',
-            clinical_summary: 'BP 150/98, elevated protein, referred for ultrasound and specialist consult.',
-            slot_token: 'Token #A-14',
-            created_at: new Date(Date.now() - 3600000).toISOString(),
-            facilities: {
-                name: 'District Hospital Nashik',
-                tier: 'DISTRICT_HOSPITAL',
-                address: 'Civil Hospital Road, Nashik',
-                district: 'Nashik'
-            },
-            doctors: {
-                name: 'Dr. Anand Deshmukh',
-                specialty_name: 'OBSTETRICS'
-            }
-        }
-    ],
-    referral_events: [
-        {
-            id: 'ev-1',
-            referral_id: 'dddddddd-dddd-dddd-dddd-dddddddddddd',
-            from_status: 'INIT',
-            to_status: 'TRIAGED',
-            actor_role: 'HEALTH_WORKER',
-            reason: 'Health Worker vitals check (High Maternal Risk)',
-            created_at: new Date(Date.now() - 3600000).toISOString()
-        },
-        {
-            id: 'ev-2',
-            referral_id: 'dddddddd-dddd-dddd-dddd-dddddddddddd',
-            from_status: 'TRIAGED',
-            to_status: 'FACILITY_SELECTED',
-            actor_role: 'SYSTEM',
-            reason: 'District Hospital Nashik matched by Obstetrics capability',
-            created_at: new Date(Date.now() - 2800000).toISOString()
-        },
-        {
-            id: 'ev-3',
-            referral_id: 'dddddddd-dddd-dddd-dddd-dddddddddddd',
-            from_status: 'FACILITY_SELECTED',
-            to_status: 'APPOINTMENT_BOOKED',
-            actor_role: 'FACILITY_STAFF',
-            reason: 'Appointment confirmed with Slot Token #A-14',
-            created_at: new Date(Date.now() - 1500000).toISOString()
-        }
-    ],
+    referrals: [],
+    referral_events: [],
     assessments: [
         {
             id: 'ass-1',
@@ -224,23 +171,7 @@ const INITIAL_DATA = {
             created_at: new Date(Date.now() - 3600000).toISOString()
         }
     ],
-    appointments: [
-        {
-            id: 'apt-1',
-            patient_id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
-            doctor_id: '44444444-4444-4444-4444-444444444444',
-            appointment_date: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-            slot_time: '10:30 AM',
-            status: 'CONFIRMED',
-            type: 'OPD_CONSULT',
-            doctor: {
-                id: '44444444-4444-4444-4444-444444444444',
-                name: 'Dr. Anand Deshmukh',
-                specialization: 'OBSTETRICS',
-                hospital_name: 'District Hospital Nashik'
-            }
-        }
-    ],
+    appointments: [],
     documents: [
         {
             id: 'doc-1',

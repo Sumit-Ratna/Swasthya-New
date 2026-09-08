@@ -8,7 +8,7 @@ import {
     Building2, ShieldAlert, Sparkles, CheckCircle2, ArrowRight, 
     RefreshCw, KeyRound, AlertCircle, ChevronRight, UserCheck,
     User, Calendar, MapPin, Heart, Shield, ShieldCheck, Activity, FileText,
-    UserPlus, LogIn, HelpCircle, Eye, EyeOff, Check, Zap
+    UserPlus, LogIn, HelpCircle, Eye, EyeOff, Check, Zap, X
 } from 'lucide-react';
 import SwasthyaLogo from '../components/SwasthyaLogo';
 import LanguageSwitcher from '../components/LanguageSwitcher';
@@ -62,14 +62,6 @@ const Login = () => {
     const [successMessage, setSuccessMessage] = useState('');
     const [loading, setLoading] = useState(false);
     const [timer, setTimer] = useState(60);
-
-    // Password Reset Modal States
-    const [showForgotModal, setShowForgotModal] = useState(false);
-    const [forgotEmail, setForgotEmail] = useState('');
-    const [forgotStep, setForgotStep] = useState(1); // 1: Enter email, 2: Enter OTP & New Password
-    const [resetOtp, setResetOtp] = useState('');
-    const [newPassword, setNewPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
 
     // Patient Indian Citizen Profile Form Data
     const [profileData, setProfileData] = useState({
@@ -347,53 +339,19 @@ const Login = () => {
         setStep(3); // Proceed to Indian Citizen Demographics
     };
 
-    const handleSendResetCode = async (e) => {
-        if (e) e.preventDefault();
-        if (!forgotEmail || !forgotEmail.includes('@')) {
-            alert("Please enter your registered email address");
+    const handleForgotPasswordClick = async () => {
+        if (!email || !email.includes('@')) {
+            navigate('/reset-password');
             return;
         }
-
         setLoading(true);
+        setLoginError('');
+        setSuccessMessage('');
         try {
-            const res = await resetPassword(forgotEmail);
-            alert(res.message || `Password reset code sent to ${forgotEmail}`);
-            setForgotStep(2);
+            const res = await resetPassword(email);
+            setSuccessMessage(res.message || `Password reset instructions sent to ${email}. Please check your Gmail.`);
         } catch (err) {
-            alert(err.response?.data?.error || err.message || "Could not send reset code. Please check your Gmail address.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleConfirmResetPassword = async (e) => {
-        if (e) e.preventDefault();
-        if (!resetOtp || resetOtp.length < 6) {
-            alert("Please enter the 6-digit verification code sent to your Gmail");
-            return;
-        }
-        if (!newPassword || newPassword.length < 6) {
-            alert("New password must be at least 6 characters long");
-            return;
-        }
-        if (newPassword !== confirmPassword) {
-            alert("Passwords do not match. Please re-enter.");
-            return;
-        }
-
-        setLoading(true);
-        try {
-            const res = await verifyAndResetPassword(forgotEmail, resetOtp, newPassword);
-            alert(res.message || "Password updated successfully in Supabase! You can now log in with your new password.");
-            setEmail(forgotEmail);
-            setPassword(newPassword);
-            setShowForgotModal(false);
-            setForgotStep(1);
-            setResetOtp('');
-            setNewPassword('');
-            setConfirmPassword('');
-        } catch (err) {
-            alert(err.response?.data?.error || err.message || "Failed to reset password. Please check your reset code.");
+            setLoginError(err.response?.data?.error || err.message || "Failed to send reset instructions.");
         } finally {
             setLoading(false);
         }
@@ -1052,11 +1010,7 @@ const Login = () => {
                                         </label>
                                         <button
                                             type="button"
-                                            onClick={() => { 
-                                                setForgotEmail(email); 
-                                                setForgotStep(1); 
-                                                setShowForgotModal(true); 
-                                            }}
+                                            onClick={handleForgotPasswordClick}
                                             style={{ background: 'none', border: 'none', color: '#0284c7', fontSize: '12px', fontWeight: 700, cursor: 'pointer', padding: 0 }}
                                         >
                                             Forgot Password?
@@ -1736,179 +1690,6 @@ const Login = () => {
                 )}
             </motion.div>
 
-            {/* Forgot Password / Gmail Reset Modal */}
-            <AnimatePresence>
-                {showForgotModal && (
-                    <div style={{
-                        position: 'fixed',
-                        inset: 0,
-                        background: 'rgba(0,0,0,0.5)',
-                        backdropFilter: 'blur(4px)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        padding: '16px',
-                        zIndex: 1000
-                    }}>
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            style={{
-                                background: 'white',
-                                borderRadius: '20px',
-                                padding: '24px',
-                                width: '100%',
-                                maxWidth: '420px',
-                                boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)'
-                            }}
-                        >
-                            <h3 style={{ margin: '0 0 6px 0', fontSize: '18px', fontWeight: 800, color: '#0f172a' }}>
-                                {forgotStep === 1 ? 'Reset Password via Gmail' : 'Enter Verification Code & New Password'}
-                            </h3>
-                            <p style={{ margin: '0 0 16px 0', fontSize: '12px', color: '#64748b' }}>
-                                {forgotStep === 1 
-                                    ? 'Enter your registered Gmail address. We will send a secure 6-digit verification code to reset your password in Supabase.'
-                                    : `We sent a 6-digit verification code to ${forgotEmail}. Please enter the code and your new password.`}
-                            </p>
-
-                            {forgotStep === 1 ? (
-                                <form onSubmit={handleSendResetCode} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                                    <div>
-                                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
-                                            Email Address *
-                                        </label>
-                                        <input
-                                            type="email"
-                                            required
-                                            value={forgotEmail}
-                                            onChange={(e) => setForgotEmail(e.target.value)}
-                                            placeholder="your.email@gmail.com"
-                                            style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', border: '1.5px solid #cbd5e1', fontSize: '14px', boxSizing: 'border-box' }}
-                                            autoFocus
-                                        />
-                                    </div>
-                                    <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
-                                        <button
-                                            type="submit"
-                                            disabled={loading}
-                                            style={{
-                                                flex: 1,
-                                                padding: '10px',
-                                                background: '#0284c7',
-                                                color: 'white',
-                                                border: 'none',
-                                                borderRadius: '10px',
-                                                fontWeight: 700,
-                                                cursor: loading ? 'not-allowed' : 'pointer'
-                                            }}
-                                        >
-                                            {loading ? 'Sending Code...' : 'Send Verification Code'}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowForgotModal(false)}
-                                            style={{
-                                                padding: '10px 16px',
-                                                background: '#f1f5f9',
-                                                color: '#475569',
-                                                border: 'none',
-                                                borderRadius: '10px',
-                                                fontWeight: 600,
-                                                cursor: 'pointer'
-                                            }}
-                                        >
-                                            Cancel
-                                        </button>
-                                    </div>
-                                </form>
-                            ) : (
-                                <form onSubmit={handleConfirmResetPassword} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                    <div>
-                                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
-                                            6-Digit Verification Code (Gmail OTP) *
-                                        </label>
-                                        <input
-                                            type="text"
-                                            required
-                                            maxLength={6}
-                                            value={resetOtp}
-                                            onChange={(e) => setResetOtp(e.target.value.replace(/\D/g, ''))}
-                                            placeholder="123456"
-                                            style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', border: '1.5px solid #cbd5e1', fontSize: '16px', fontWeight: 700, letterSpacing: '4px', boxSizing: 'border-box' }}
-                                            autoFocus
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
-                                            New Password *
-                                        </label>
-                                        <input
-                                            type="password"
-                                            required
-                                            minLength={6}
-                                            value={newPassword}
-                                            onChange={(e) => setNewPassword(e.target.value)}
-                                            placeholder="Enter new password (min 6 chars)"
-                                            style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', border: '1.5px solid #cbd5e1', fontSize: '14px', boxSizing: 'border-box' }}
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
-                                            Confirm New Password *
-                                        </label>
-                                        <input
-                                            type="password"
-                                            required
-                                            minLength={6}
-                                            value={confirmPassword}
-                                            onChange={(e) => setConfirmPassword(e.target.value)}
-                                            placeholder="Re-enter new password"
-                                            style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', border: '1.5px solid #cbd5e1', fontSize: '14px', boxSizing: 'border-box' }}
-                                        />
-                                    </div>
-
-                                    <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
-                                        <button
-                                            type="submit"
-                                            disabled={loading}
-                                            style={{
-                                                flex: 1,
-                                                padding: '10px',
-                                                background: '#0d9488',
-                                                color: 'white',
-                                                border: 'none',
-                                                borderRadius: '10px',
-                                                fontWeight: 700,
-                                                cursor: loading ? 'not-allowed' : 'pointer'
-                                            }}
-                                        >
-                                            {loading ? 'Updating Password...' : 'Reset & Update Password'}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setForgotStep(1)}
-                                            style={{
-                                                padding: '10px 16px',
-                                                background: '#f1f5f9',
-                                                color: '#475569',
-                                                border: 'none',
-                                                borderRadius: '10px',
-                                                fontWeight: 600,
-                                                cursor: 'pointer'
-                                            }}
-                                        >
-                                            Back
-                                        </button>
-                                    </div>
-                                </form>
-                            )}
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
         </div>
     );
 };
