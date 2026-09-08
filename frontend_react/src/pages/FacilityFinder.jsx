@@ -656,471 +656,545 @@ const FacilityFinder = () => {
     };
 
     return (
-        <div style={{ padding: '20px 16px 120px 16px', maxWidth: '1100px', margin: '0 auto', color: 'var(--text-primary)', fontFamily: 'Inter, system-ui, sans-serif' }}>
+        <div style={{ padding: '16px 14px 120px 14px', maxWidth: '1080px', margin: '0 auto', color: '#0f172a', fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
             
-            {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
-                <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
+            {/* Top Status & Brand Header */}
+            <div style={{ marginBottom: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
+                    
+                    {/* Live Badges */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                         <span style={{
-                            background: 'linear-gradient(135deg, #0d9488, #0f766e)',
-                            color: 'white',
+                            background: liveGpsActive 
+                                ? 'linear-gradient(135deg, rgba(22, 163, 74, 0.12), rgba(34, 197, 94, 0.18))' 
+                                : 'linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(59, 130, 246, 0.18))',
+                            color: liveGpsActive ? '#15803d' : '#1d4ed8',
                             fontSize: '11px',
                             fontWeight: 800,
-                            padding: '3px 8px',
-                            borderRadius: '6px',
-                            letterSpacing: '0.5px'
-                        }}>
-                            OPENSTREETMAP + MAPLIBRE
-                        </span>
-
-                        {/* Live GPS Active Badge */}
-                        <span style={{
-                            background: liveGpsActive ? '#dcfce7' : '#e0f2fe',
-                            color: liveGpsActive ? '#166534' : '#0369a1',
-                            fontSize: '11px',
-                            fontWeight: 700,
-                            padding: '3px 8px',
-                            borderRadius: '6px',
-                            border: `1px solid ${liveGpsActive ? '#bbf7d0' : '#bae6fd'}`,
+                            padding: '4px 10px',
+                            borderRadius: '20px',
+                            border: `1px solid ${liveGpsActive ? 'rgba(34, 197, 94, 0.3)' : 'rgba(59, 130, 246, 0.3)'}`,
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '4px'
+                            gap: '5px',
+                            letterSpacing: '0.2px'
                         }}>
-                            <Radio size={12} className={liveGpsActive ? 'spin' : ''} />
-                            {liveGpsActive ? `Live GPS Active (±${userLocation.accuracy || 5}m)` : 'GPS Locating...'}
+                            <span style={{
+                                width: '7px',
+                                height: '7px',
+                                borderRadius: '50%',
+                                backgroundColor: liveGpsActive ? '#22c55e' : '#3b82f6',
+                                boxShadow: liveGpsActive ? '0 0 8px #22c55e' : 'none',
+                                display: 'inline-block'
+                            }} />
+                            {liveGpsActive ? `Live GPS (±${userLocation.accuracy || 5}m)` : 'GPS Locating...'}
                         </span>
 
-                        {/* Auto-Installed Local Map Badge */}
                         <span style={{
-                            background: '#f0fdfa',
+                            background: 'linear-gradient(135deg, rgba(13, 148, 136, 0.1), rgba(20, 184, 166, 0.15))',
                             color: '#0f766e',
                             fontSize: '11px',
-                            fontWeight: 700,
-                            padding: '3px 8px',
-                            borderRadius: '6px',
-                            border: '1px solid #ccfbf1',
+                            fontWeight: 800,
+                            padding: '4px 10px',
+                            borderRadius: '20px',
+                            border: '1px solid rgba(20, 184, 166, 0.3)',
                             display: 'flex',
                             alignItems: 'center',
                             gap: '4px'
                         }}>
-                            <ShieldCheck size={12} />
-                            Offline Map Ready ({offlineSavedCount || facilities.length} POIs)
+                            <ShieldCheck size={13} />
+                            Offline Map Ready
                         </span>
                     </div>
 
-                    <h1 style={{ fontSize: '24px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '10px', margin: '4px 0', color: '#1e293b' }}>
-                        <Building2 color="var(--primary-color)" size={28} />
-                        HealthCentres Nearby & Smart Directory
-                    </h1>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '13.5px', margin: 0 }}>
-                        Real-time GPS tracking of hospitals & health centers • Auto-cached local offline map
-                    </p>
+                    {/* Quick GPS Action Controls */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <button
+                            onClick={() => {
+                                setFollowUser(true);
+                                if (mapRef.current && userLocation?.lat && userLocation?.lon) {
+                                    mapRef.current.flyTo({
+                                        center: [userLocation.lon, userLocation.lat],
+                                        zoom: 14.5,
+                                        essential: true
+                                    });
+                                }
+                            }}
+                            style={{
+                                background: followUser 
+                                    ? 'linear-gradient(135deg, #2563eb, #1d4ed8)' 
+                                    : '#ffffff',
+                                color: followUser ? '#ffffff' : '#2563eb',
+                                border: followUser ? 'none' : '1px solid #e2e8f0',
+                                padding: '6px 12px',
+                                borderRadius: '12px',
+                                fontSize: '11.5px',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '5px',
+                                boxShadow: followUser ? '0 3px 10px rgba(37, 99, 235, 0.3)' : '0 1px 3px rgba(0,0,0,0.04)',
+                                transition: 'all 0.2s ease'
+                            }}
+                        >
+                            <Crosshair size={13} />
+                            <span>{followUser ? 'Locked on GPS' : 'Center GPS'}</span>
+                        </button>
+
+                        <button
+                            onClick={() => loadOsmFacilities(userLocation.lat, userLocation.lon, true)}
+                            disabled={loading}
+                            style={{
+                                background: '#ffffff',
+                                border: '1px solid #e2e8f0',
+                                padding: '6px 10px',
+                                borderRadius: '12px',
+                                fontSize: '11.5px',
+                                fontWeight: 700,
+                                color: '#475569',
+                                cursor: loading ? 'not-allowed' : 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+                            }}
+                            title="Re-sync facilities"
+                        >
+                            <RefreshCw size={12} className={loading ? 'spin' : ''} />
+                            <span>Sync</span>
+                        </button>
+                    </div>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                    <button
-                        onClick={() => {
-                            setFollowUser(true);
-                            if (mapRef.current && userLocation?.lat && userLocation?.lon) {
-                                mapRef.current.flyTo({
-                                    center: [userLocation.lon, userLocation.lat],
-                                    zoom: 14.5,
-                                    essential: true
-                                });
-                            }
-                        }}
-                        style={{
-                            background: followUser ? 'linear-gradient(135deg, #2563eb, #1d4ed8)' : '#ffffff',
-                            border: followUser ? 'none' : '1px solid var(--border-color)',
-                            padding: '8px 14px',
-                            borderRadius: '10px',
-                            fontSize: '12.5px',
-                            fontWeight: 700,
-                            color: followUser ? '#ffffff' : '#2563eb',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            boxShadow: followUser ? '0 2px 8px rgba(37, 99, 235, 0.3)' : '0 1px 3px rgba(0,0,0,0.05)'
-                        }}
-                    >
-                        <Crosshair size={15} />
-                        <span>{followUser ? '📍 Following GPS' : 'Center on GPS'}</span>
-                    </button>
-
-                    <button
-                        onClick={() => loadOsmFacilities(userLocation.lat, userLocation.lon, true)}
-                        disabled={loading}
-                        style={{
-                            background: '#ffffff',
-                            border: '1px solid var(--border-color)',
-                            padding: '8px 12px',
-                            borderRadius: '10px',
-                            fontSize: '12.5px',
-                            fontWeight: 700,
-                            color: 'var(--text-primary)',
-                            cursor: loading ? 'not-allowed' : 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
-                        }}
-                        title="Re-sync healthcare facilities around your GPS location"
-                    >
-                        <RefreshCw size={14} className={loading ? 'spin' : ''} />
-                        <span>Re-Sync</span>
-                    </button>
+                {/* Main Heading */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{
+                        width: '42px',
+                        height: '42px',
+                        borderRadius: '12px',
+                        background: 'linear-gradient(135deg, #0d9488, #0284c7)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#ffffff',
+                        boxShadow: '0 4px 12px rgba(13, 148, 136, 0.3)',
+                        flexShrink: 0
+                    }}>
+                        <Building2 size={22} />
+                    </div>
+                    <div>
+                        <h1 style={{ fontSize: '21px', fontWeight: '900', margin: 0, color: '#0f172a', letterSpacing: '-0.3px' }}>
+                            Nearby Hospitals & HealthCentres
+                        </h1>
+                        <p style={{ color: '#64748b', fontSize: '12.5px', margin: '2px 0 0 0', fontWeight: 500 }}>
+                            Real-time GPS road distances • 100% verified OpenStreetMap network
+                        </p>
+                    </div>
                 </div>
             </div>
 
-            {/* 1-CLICK QUICK FILTER BAR (HOSPITALS / GOVT HOSPITALS / ALL) */}
+            {/* ⚡ 1-CLICK QUICK FILTER BAR (MODERN SEGMENTED CARDS) */}
             <div style={{
-                background: '#ffffff',
+                background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
                 border: '1px solid #e2e8f0',
-                borderRadius: '16px',
-                padding: '12px 14px',
-                marginBottom: '16px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: '10px'
+                borderRadius: '18px',
+                padding: '10px',
+                marginBottom: '14px',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.04)'
             }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', flex: 1 }}>
-                    <span style={{ fontSize: '12px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginRight: '4px' }}>
-                        ⚡ 1-Click Filters:
-                    </span>
-
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(135px, 1fr))', gap: '8px' }}>
+                    
                     {/* 1-CLICK: Gov. Hospital */}
                     <button
                         onClick={() => setSelectedCategory('government')}
                         style={{
-                            background: selectedCategory === 'government' ? 'linear-gradient(135deg, #0284c7, #0369a1)' : '#f0f9ff',
+                            background: selectedCategory === 'government' 
+                                ? 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)' 
+                                : '#ffffff',
                             color: selectedCategory === 'government' ? '#ffffff' : '#0369a1',
-                            border: selectedCategory === 'government' ? '2px solid #0284c7' : '1px solid #bae6fd',
-                            padding: '8px 16px',
-                            borderRadius: '10px',
-                            fontSize: '13px',
+                            border: selectedCategory === 'government' ? '2px solid #0284c7' : '1px solid #e2e8f0',
+                            padding: '10px 12px',
+                            borderRadius: '14px',
+                            fontSize: '12.5px',
                             fontWeight: 800,
                             cursor: 'pointer',
                             display: 'flex',
+                            flexDirection: 'column',
                             alignItems: 'center',
-                            gap: '6px',
-                            boxShadow: selectedCategory === 'government' ? '0 3px 10px rgba(2, 132, 199, 0.35)' : 'none',
-                            transition: 'all 0.2s ease'
+                            justifyContent: 'center',
+                            gap: '4px',
+                            boxShadow: selectedCategory === 'government' ? '0 6px 18px rgba(2, 132, 199, 0.35)' : 'none',
+                            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                            position: 'relative'
                         }}
                     >
-                        <span style={{ fontSize: '15px' }}>🏛️</span>
-                        <span>Gov. Hospital Only</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ fontSize: '16px' }}>🏛️</span>
+                            <span style={{ fontWeight: 800 }}>Gov. Hospital</span>
+                        </div>
+                        <span style={{
+                            fontSize: '10px',
+                            fontWeight: 700,
+                            color: selectedCategory === 'government' ? '#e0f2fe' : '#64748b',
+                            background: selectedCategory === 'government' ? 'rgba(255,255,255,0.2)' : '#f1f5f9',
+                            padding: '1px 7px',
+                            borderRadius: '10px',
+                            marginTop: '2px'
+                        }}>
+                            Civil • PHC • CHC
+                        </span>
                     </button>
 
                     {/* 1-CLICK: All Hospitals */}
                     <button
                         onClick={() => setSelectedCategory('hospital')}
                         style={{
-                            background: selectedCategory === 'hospital' ? 'linear-gradient(135deg, #dc2626, #b91c1c)' : '#fef2f2',
-                            color: selectedCategory === 'hospital' ? '#ffffff' : '#dc2626',
-                            border: selectedCategory === 'hospital' ? '2px solid #dc2626' : '1px solid #fecaca',
-                            padding: '8px 16px',
-                            borderRadius: '10px',
-                            fontSize: '13px',
+                            background: selectedCategory === 'hospital' 
+                                ? 'linear-gradient(135deg, #e11d48 0%, #be123c 100%)' 
+                                : '#ffffff',
+                            color: selectedCategory === 'hospital' ? '#ffffff' : '#e11d48',
+                            border: selectedCategory === 'hospital' ? '2px solid #e11d48' : '1px solid #e2e8f0',
+                            padding: '10px 12px',
+                            borderRadius: '14px',
+                            fontSize: '12.5px',
                             fontWeight: 800,
                             cursor: 'pointer',
                             display: 'flex',
+                            flexDirection: 'column',
                             alignItems: 'center',
-                            gap: '6px',
-                            boxShadow: selectedCategory === 'hospital' ? '0 3px 10px rgba(220, 38, 38, 0.35)' : 'none',
-                            transition: 'all 0.2s ease'
+                            justifyContent: 'center',
+                            gap: '4px',
+                            boxShadow: selectedCategory === 'hospital' ? '0 6px 18px rgba(225, 29, 72, 0.35)' : 'none',
+                            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
                         }}
                     >
-                        <span style={{ fontSize: '15px' }}>🏥</span>
-                        <span>All Hospitals</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ fontSize: '16px' }}>🏥</span>
+                            <span style={{ fontWeight: 800 }}>All Hospitals</span>
+                        </div>
+                        <span style={{
+                            fontSize: '10px',
+                            fontWeight: 700,
+                            color: selectedCategory === 'hospital' ? '#ffe4e6' : '#64748b',
+                            background: selectedCategory === 'hospital' ? 'rgba(255,255,255,0.2)' : '#f1f5f9',
+                            padding: '1px 7px',
+                            borderRadius: '10px',
+                            marginTop: '2px'
+                        }}>
+                            Govt + Private
+                        </span>
                     </button>
 
-                    {/* 1-CLICK: All Facility Types */}
+                    {/* 1-CLICK: All Facilities */}
                     <button
                         onClick={() => setSelectedCategory('ALL')}
                         style={{
-                            background: selectedCategory === 'ALL' ? 'linear-gradient(135deg, #0d9488, #0f766e)' : '#f0fdfa',
+                            background: selectedCategory === 'ALL' 
+                                ? 'linear-gradient(135deg, #0d9488 0%, #0f766e 100%)' 
+                                : '#ffffff',
                             color: selectedCategory === 'ALL' ? '#ffffff' : '#0f766e',
-                            border: selectedCategory === 'ALL' ? '2px solid #0d9488' : '1px solid #ccfbf1',
-                            padding: '8px 16px',
-                            borderRadius: '10px',
-                            fontSize: '13px',
+                            border: selectedCategory === 'ALL' ? '2px solid #0d9488' : '1px solid #e2e8f0',
+                            padding: '10px 12px',
+                            borderRadius: '14px',
+                            fontSize: '12.5px',
                             fontWeight: 800,
                             cursor: 'pointer',
                             display: 'flex',
+                            flexDirection: 'column',
                             alignItems: 'center',
-                            gap: '6px',
-                            boxShadow: selectedCategory === 'ALL' ? '0 3px 10px rgba(13, 148, 136, 0.35)' : 'none',
-                            transition: 'all 0.2s ease'
+                            justifyContent: 'center',
+                            gap: '4px',
+                            boxShadow: selectedCategory === 'ALL' ? '0 6px 18px rgba(13, 148, 136, 0.35)' : 'none',
+                            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
                         }}
                     >
-                        <span style={{ fontSize: '15px' }}>🌐</span>
-                        <span>All Facilities</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ fontSize: '16px' }}>🌐</span>
+                            <span style={{ fontWeight: 800 }}>All Facilities</span>
+                        </div>
+                        <span style={{
+                            fontSize: '10px',
+                            fontWeight: 700,
+                            color: selectedCategory === 'ALL' ? '#ccfbf1' : '#64748b',
+                            background: selectedCategory === 'ALL' ? 'rgba(255,255,255,0.2)' : '#f1f5f9',
+                            padding: '1px 7px',
+                            borderRadius: '10px',
+                            marginTop: '2px'
+                        }}>
+                            Hospitals & Clinics
+                        </span>
                     </button>
 
-                    {/* 1-CLICK: Emergency Toggle */}
+                    {/* 1-CLICK: 24x7 Emergency Toggle */}
                     <button
                         onClick={() => setEmergencyOnly(prev => !prev)}
                         style={{
                             background: emergencyOnly ? '#991b1b' : '#ffffff',
                             color: emergencyOnly ? '#ffffff' : '#991b1b',
-                            border: emergencyOnly ? '2px solid #7f1d1d' : '1px solid #fca5a5',
-                            padding: '8px 14px',
-                            borderRadius: '10px',
+                            border: emergencyOnly ? '2px solid #7f1d1d' : '1px solid #fecaca',
+                            padding: '10px 12px',
+                            borderRadius: '14px',
                             fontSize: '12.5px',
                             fontWeight: 800,
                             cursor: 'pointer',
                             display: 'flex',
+                            flexDirection: 'column',
                             alignItems: 'center',
-                            gap: '5px',
+                            justifyContent: 'center',
+                            gap: '4px',
+                            boxShadow: emergencyOnly ? '0 4px 14px rgba(153, 27, 27, 0.3)' : 'none',
                             transition: 'all 0.2s ease'
                         }}
                     >
-                        <span>🚨 24x7 Emergency</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ fontSize: '16px' }}>🚨</span>
+                            <span style={{ fontWeight: 800 }}>Emergency</span>
+                        </div>
+                        <span style={{
+                            fontSize: '10px',
+                            fontWeight: 700,
+                            color: emergencyOnly ? '#fee2e2' : '#dc2626',
+                            background: emergencyOnly ? 'rgba(255,255,255,0.2)' : '#fee2e2',
+                            padding: '1px 7px',
+                            borderRadius: '10px',
+                            marginTop: '2px'
+                        }}>
+                            {emergencyOnly ? 'Active Only' : '24x7 Filter'}
+                        </span>
                     </button>
-                </div>
-
-                <div style={{ fontSize: '12px', fontWeight: 700, color: '#0f766e', background: '#ccfbf1', padding: '4px 10px', borderRadius: '8px', whiteSpace: 'nowrap' }}>
-                    {filteredFacilities.length} {selectedCategory === 'government' ? 'Gov. Hospitals' : (selectedCategory === 'hospital' ? 'Hospitals' : 'Facilities')} Found
                 </div>
             </div>
 
-            {/* Region Selector Bar */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '12px' }}>
-                <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748b', whiteSpace: 'nowrap', marginRight: '4px' }}>
-                    Preset Region:
+            {/* Quick Preset Regions Horizontal Bar */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '12px', scrollbarWidth: 'none' }}>
+                <span style={{ fontSize: '11px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.4px', whiteSpace: 'nowrap', marginRight: '2px' }}>
+                    Region:
                 </span>
-                {DEFAULT_REGIONS.map((region, idx) => (
-                    <button
-                        key={idx}
-                        onClick={() => handleSelectRegion(region)}
-                        style={{
-                            padding: '5px 11px',
-                            borderRadius: '8px',
-                            border: selectedRegionName === region.name ? '1px solid #0d9488' : '1px solid var(--border-color)',
-                            background: selectedRegionName === region.name ? '#f0fdfa' : '#ffffff',
-                            color: selectedRegionName === region.name ? '#0f766e' : '#475569',
-                            fontWeight: selectedRegionName === region.name ? 700 : 500,
-                            fontSize: '11.5px',
-                            cursor: 'pointer',
-                            whiteSpace: 'nowrap'
-                        }}
-                    >
-                        {region.name}
-                    </button>
-                ))}
+                {DEFAULT_REGIONS.map((region, idx) => {
+                    const isSelected = selectedRegionName === region.name;
+                    return (
+                        <button
+                            key={idx}
+                            onClick={() => handleSelectRegion(region)}
+                            style={{
+                                padding: '4px 10px',
+                                borderRadius: '10px',
+                                border: isSelected ? '1.5px solid #0d9488' : '1px solid #e2e8f0',
+                                background: isSelected ? '#f0fdfa' : '#ffffff',
+                                color: isSelected ? '#0f766e' : '#64748b',
+                                fontWeight: isSelected ? 800 : 600,
+                                fontSize: '11px',
+                                cursor: 'pointer',
+                                whiteSpace: 'nowrap',
+                                transition: 'all 0.15s ease'
+                            }}
+                        >
+                            {region.name}
+                        </button>
+                    );
+                })}
             </div>
-
-            {/* Geolocation Status / Error Banner */}
-            {locationStatus === 'locating' && (
-                <div style={{ background: '#e0f2fe', border: '1px solid #bae6fd', borderRadius: '12px', padding: '10px 14px', marginBottom: '16px', color: '#0369a1', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <RefreshCw className="spin" size={16} />
-                    <span>Continuous GPS tracking active: updating coordinates in real time...</span>
-                </div>
-            )}
-
-            {locationError && (
-                <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '12px', padding: '12px 14px', marginBottom: '16px', color: '#b91c1c', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <AlertCircle size={18} style={{ flexShrink: 0 }} />
-                        <span>{locationError}</span>
-                    </div>
-                    <button
-                        onClick={startContinuousGpsTracking}
-                        style={{ background: '#dc2626', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '6px', fontWeight: 700, fontSize: '12px', cursor: 'pointer', whiteSpace: 'nowrap' }}
-                    >
-                        Retry GPS
-                    </button>
-                </div>
-            )}
-
-            {dataError && (
-                <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '12px', padding: '12px 14px', marginBottom: '16px', color: '#b45309', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <AlertCircle size={18} style={{ flexShrink: 0 }} />
-                        <span>{dataError}</span>
-                    </div>
-                    <button
-                        onClick={() => loadOsmFacilities(userLocation.lat, userLocation.lon, true)}
-                        style={{ background: '#d97706', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '6px', fontWeight: 700, fontSize: '12px', cursor: 'pointer', whiteSpace: 'nowrap' }}
-                    >
-                        Retry Sync
-                    </button>
-                </div>
-            )}
 
             {/* Interactive Map Section */}
-            <div className="card" style={{ padding: 0, overflow: 'hidden', marginBottom: '20px', borderRadius: '16px', border: '1px solid var(--border-color)', position: 'relative' }}>
+            <div style={{
+                position: 'relative',
+                borderRadius: '20px',
+                overflow: 'hidden',
+                border: '1px solid #e2e8f0',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.06)',
+                marginBottom: '16px',
+                background: '#f8fafc'
+            }}>
                 {!mapGlError ? (
                     <div 
                         ref={mapContainerRef} 
                         style={{ 
                             width: '100%', 
-                            height: '380px', 
+                            height: '320px', 
                             background: '#f1f5f9' 
                         }} 
                     />
                 ) : (
-                    /* Fallback Safe View if WebGL is disabled */
-                    <div style={{ width: '100%', height: '340px', background: 'linear-gradient(180deg, #f0fdfa 0%, #f8fafc 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', textAlign: 'center' }}>
-                        <Globe size={40} color="#0d9488" style={{ marginBottom: '10px' }} />
-                        <h3 style={{ margin: '0 0 6px', fontSize: '16px', fontWeight: 800, color: '#1e293b' }}>
-                            OpenStreetMap Healthcare Radar View
+                    <div style={{ width: '100%', height: '280px', background: 'linear-gradient(180deg, #f0fdfa 0%, #f8fafc 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', textAlign: 'center' }}>
+                        <Globe size={36} color="#0d9488" style={{ marginBottom: '8px' }} />
+                        <h3 style={{ margin: '0 0 4px', fontSize: '15px', fontWeight: 800, color: '#1e293b' }}>
+                            Healthcare Radar View
                         </h3>
-                        <p style={{ margin: '0 0 14px', fontSize: '13px', color: '#64748b', maxWidth: '450px' }}>
-                            Displaying {filteredFacilities.length} real healthcare facilities found near your coordinates.
+                        <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>
+                            Displaying {filteredFacilities.length} facilities near your coordinates.
                         </p>
                     </div>
                 )}
 
-                {/* Map Floating Real-Time GPS Overlay */}
+                {/* Map Floating HUD: Live Status */}
                 <div style={{
                     position: 'absolute',
-                    top: '12px',
-                    left: '12px',
-                    background: 'rgba(255, 255, 255, 0.95)',
-                    backdropFilter: 'blur(8px)',
-                    padding: '8px 12px',
-                    borderRadius: '10px',
-                    border: '1px solid rgba(0,0,0,0.1)',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                    fontSize: '11.5px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '4px',
-                    pointerEvents: 'auto',
-                    maxWidth: '250px'
+                    top: '10px',
+                    left: '10px',
+                    background: 'rgba(255, 255, 255, 0.92)',
+                    backdropFilter: 'blur(10px)',
+                    padding: '6px 12px',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(255, 255, 255, 0.8)',
+                    boxShadow: '0 4px 14px rgba(0,0,0,0.08)',
+                    fontSize: '11px',
+                    pointerEvents: 'none',
+                    maxWidth: '220px'
                 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 800, color: '#1e293b' }}>
-                        <Radio size={14} color={liveGpsActive ? '#16a34a' : '#2563eb'} className={liveGpsActive ? 'spin' : ''} />
-                        <span>{liveGpsActive ? 'Live Real-Time GPS Tracking' : 'GPS Initialized'}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 800, color: '#0f172a' }}>
+                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16a34a' }}></span>
+                        <span>{selectedCategory === 'government' ? 'Gov. Hospitals' : (selectedCategory === 'hospital' ? 'All Hospitals' : 'All Facilities')} ({filteredFacilities.length})</span>
                     </div>
-                    {userLocation ? (
-                        <div style={{ color: '#64748b', fontSize: '10.5px' }}>
-                            📍 Lat: <strong>{userLocation.lat.toFixed(4)}</strong>, Lon: <strong>{userLocation.lon.toFixed(4)}</strong>
-                            {userLocation.accuracy && ` (±${userLocation.accuracy}m)`}
-                        </div>
-                    ) : (
-                        <div style={{ color: '#b45309', fontSize: '10.5px' }}>
-                            Waiting for GPS fix...
+                    {userLocation?.lat && (
+                        <div style={{ color: '#64748b', fontSize: '10px', marginTop: '1px' }}>
+                            📍 {userLocation.lat.toFixed(4)}, {userLocation.lon.toFixed(4)}
                         </div>
                     )}
-                    <div style={{ color: selectedCategory === 'government' ? '#0369a1' : (selectedCategory === 'hospital' ? '#dc2626' : '#0d9488'), fontWeight: 800, fontSize: '11px' }}>
-                        {selectedCategory === 'government' ? '🏛️ Showing Govt. Hospitals Only' : (selectedCategory === 'hospital' ? '🏥 Showing All Hospitals' : '🌐 Showing All Facilities')} ({filteredFacilities.length})
-                    </div>
                 </div>
 
-                {/* Map Category Legend */}
+                {/* Map Category Legend (Bottom Left Minimalist) */}
                 <div style={{
                     position: 'absolute',
-                    bottom: '24px',
-                    right: '12px',
-                    background: 'rgba(255, 255, 255, 0.95)',
-                    backdropFilter: 'blur(8px)',
-                    padding: '6px 10px',
-                    borderRadius: '8px',
-                    border: '1px solid rgba(0,0,0,0.1)',
+                    bottom: '10px',
+                    left: '10px',
+                    background: 'rgba(255, 255, 255, 0.92)',
+                    backdropFilter: 'blur(10px)',
+                    padding: '4px 10px',
+                    borderRadius: '10px',
+                    border: '1px solid rgba(255, 255, 255, 0.8)',
                     boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
                     fontSize: '10px',
                     display: 'flex',
                     gap: '8px',
-                    flexWrap: 'wrap',
-                    alignItems: 'center'
+                    alignItems: 'center',
+                    pointerEvents: 'none'
                 }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontWeight: 700, color: '#0369a1' }}><span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#0284c7' }}></span> Govt. Hospital</span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontWeight: 700, color: '#dc2626' }}><span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#dc2626' }}></span> Hospital</span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}><span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#0d9488' }}></span> Clinic</span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}><span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#7c3aed' }}></span> Doctors</span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}><span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#16a34a' }}></span> Pharmacy</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontWeight: 700, color: '#0284c7' }}><span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#0284c7' }}></span> Govt</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontWeight: 700, color: '#dc2626' }}><span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#dc2626' }}></span> Hospital</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontWeight: 700, color: '#0d9488' }}><span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#0d9488' }}></span> Clinic</span>
                 </div>
             </div>
 
-            {/* Filter Search and Radius Bar */}
-            <div className="card" style={{ padding: '14px', marginBottom: '20px', display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', borderRadius: '14px' }}>
-                <div style={{ flex: 1, minWidth: '220px', position: 'relative' }}>
-                    <input 
-                        type="text"
-                        placeholder="Search hospital name, street, or locality..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        style={{ paddingLeft: '38px', width: '100%', fontSize: '13.5px' }}
-                    />
-                    <Search size={18} color="var(--text-secondary)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
-                </div>
+            {/* Unified Search & Radius Control */}
+            <div style={{
+                background: '#ffffff',
+                border: '1px solid #e2e8f0',
+                borderRadius: '16px',
+                padding: '8px 12px',
+                marginBottom: '18px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+            }}>
+                <Search size={16} color="#94a3b8" style={{ flexShrink: 0 }} />
+                
+                <input 
+                    type="text"
+                    placeholder="Search hospital name, street, or area..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    style={{
+                        border: 'none',
+                        outline: 'none',
+                        flex: 1,
+                        fontSize: '13px',
+                        fontWeight: 500,
+                        color: '#0f172a',
+                        background: 'transparent'
+                    }}
+                />
 
-                {/* Search Radius Selector */}
+                {searchTerm && (
+                    <button 
+                        onClick={() => setSearchTerm('')}
+                        style={{ border: 'none', background: '#f1f5f9', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}
+                    >
+                        ✕
+                    </button>
+                )}
+
+                <div style={{ width: '1px', height: '22px', background: '#e2e8f0', margin: '0 2px' }} />
+
+                {/* Radius Select Chip */}
                 <select 
                     value={searchRadius} 
                     onChange={(e) => setSearchRadius(Number(e.target.value))}
-                    style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--card-bg)', color: 'var(--text-primary)', fontSize: '13px', fontWeight: 600 }}
+                    style={{
+                        border: 'none',
+                        outline: 'none',
+                        background: '#f8fafc',
+                        padding: '6px 10px',
+                        borderRadius: '10px',
+                        fontSize: '11.5px',
+                        fontWeight: 700,
+                        color: '#334155',
+                        cursor: 'pointer'
+                    }}
                 >
-                    <option value="3000">Radius: 3 km</option>
-                    <option value="5000">Radius: 5 km</option>
-                    <option value="8000">Radius: 8 km</option>
-                    <option value="15000">Radius: 15 km</option>
-                    <option value="25000">Radius: 25 km</option>
+                    <option value="3000">3 km</option>
+                    <option value="5000">5 km</option>
+                    <option value="8000">8 km</option>
+                    <option value="15000">15 km</option>
+                    <option value="25000">25 km</option>
                 </select>
             </div>
 
-            {/* Results Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
-                <div style={{ fontSize: '14px', fontWeight: 700, color: '#334155' }}>
-                    {selectedCategory === 'government' ? '🏛️ Government Hospitals' : (selectedCategory === 'hospital' ? '🏥 All Hospitals' : 'Healthcare Facilities')} ({filteredFacilities.length} found)
-                    <span style={{ fontSize: '12px', fontWeight: 500, color: '#64748b', marginLeft: '6px' }}>
-                        • Live GPS distance sorted
+            {/* Results Title Bar */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '6px' }}>
+                <div style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>{selectedCategory === 'government' ? '🏛️ Government Hospitals' : (selectedCategory === 'hospital' ? '🏥 Hospitals' : 'Healthcare Facilities')}</span>
+                    <span style={{ fontSize: '11px', fontWeight: 800, color: '#0d9488', background: '#f0fdfa', padding: '2px 8px', borderRadius: '12px', border: '1px solid #ccfbf1' }}>
+                        {filteredFacilities.length} Found
                     </span>
                 </div>
 
-                <div style={{ fontSize: '11px', color: '#64748b' }}>
-                    Source: <strong style={{ color: '#0f766e' }}>{dataSourceInfo}</strong>
+                <div style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 600 }}>
+                    📍 Sorted by nearest road distance
                 </div>
             </div>
 
-            {/* Facility Grid */}
+            {/* Facility Cards Grid */}
             {loading ? (
-                <div className="card" style={{ textAlign: 'center', padding: '50px 0', color: 'var(--text-secondary)' }}>
-                    <RefreshCw className="spin" size={28} color="var(--primary-color)" style={{ margin: '0 auto 12px' }} />
-                    <div style={{ fontWeight: 700, fontSize: '15px', color: '#1e293b' }}>Syncing OpenStreetMap Healthcare POIs...</div>
-                    <p style={{ fontSize: '13px', color: '#64748b', marginTop: '4px' }}>
-                        Calculating actual road distances from your live GPS location
+                <div style={{ textAlign: 'center', padding: '40px 0', background: '#ffffff', borderRadius: '18px', border: '1px solid #e2e8f0' }}>
+                    <RefreshCw className="spin" size={26} color="#0d9488" style={{ margin: '0 auto 10px' }} />
+                    <div style={{ fontWeight: 800, fontSize: '14px', color: '#0f172a' }}>Syncing OpenStreetMap Healthcare POIs...</div>
+                    <p style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                        Calculating GPS road distances in real time
                     </p>
                 </div>
             ) : filteredFacilities.length === 0 ? (
-                <div className="card" style={{ textAlign: 'center', padding: '40px 20px', borderRadius: '16px' }}>
-                    <AlertCircle size={40} color="var(--primary-color)" style={{ margin: '0 auto 12px' }} />
-                    <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 800 }}>No Matching Facilities Found</h3>
-                    <p style={{ color: 'var(--text-secondary)', marginTop: '8px', fontSize: '13.5px', maxWidth: '500px', margin: '8px auto 16px' }}>
-                        {dataError || 'No facilities matched your current filter or radius. Try expanding search radius to 25 km.'}
+                <div style={{ textAlign: 'center', padding: '36px 20px', background: '#ffffff', borderRadius: '18px', border: '1px solid #e2e8f0' }}>
+                    <AlertCircle size={36} color="#0d9488" style={{ margin: '0 auto 10px' }} />
+                    <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>No Facilities In Current Radius</h3>
+                    <p style={{ color: '#64748b', marginTop: '6px', fontSize: '12.5px', maxWidth: '420px', margin: '6px auto 14px' }}>
+                        Try increasing your coverage radius to 25 km or clearing filters.
                     </p>
-                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                        <button
-                            onClick={() => {
-                                setSearchTerm('');
-                                setSelectedCategory('ALL');
-                                setEmergencyOnly(false);
-                                setSearchRadius(25000);
-                            }}
-                            style={{
-                                background: 'var(--primary-color)',
-                                color: 'white',
-                                border: 'none',
-                                padding: '8px 16px',
-                                borderRadius: '8px',
-                                fontWeight: 700,
-                                fontSize: '13px',
-                                cursor: 'pointer'
-                            }}
-                        >
-                            Expand Radius to 25 km & Show All
-                        </button>
-                    </div>
+                    <button
+                        onClick={() => {
+                            setSearchTerm('');
+                            setSelectedCategory('ALL');
+                            setEmergencyOnly(false);
+                            setSearchRadius(25000);
+                        }}
+                        style={{
+                            background: 'linear-gradient(135deg, #0d9488, #0f766e)',
+                            color: '#ffffff',
+                            border: 'none',
+                            padding: '9px 18px',
+                            borderRadius: '12px',
+                            fontWeight: 800,
+                            fontSize: '12.5px',
+                            cursor: 'pointer',
+                            boxShadow: '0 3px 10px rgba(13, 148, 136, 0.3)'
+                        }}
+                    >
+                        Expand Radius to 25 km
+                    </button>
                 </div>
             ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))', gap: '14px' }}>
                     {filteredFacilities.map(facility => {
                         const isSelected = selectedFacility?.id === facility.id;
 
@@ -1128,98 +1202,104 @@ const FacilityFinder = () => {
                             <motion.div 
                                 id={`facility-card-${facility.id}`}
                                 key={facility.id}
-                                className="card"
-                                whileHover={{ y: -2 }}
+                                whileHover={{ y: -3 }}
                                 style={{ 
-                                    padding: '18px', 
+                                    padding: '16px', 
                                     display: 'flex', 
                                     flexDirection: 'column', 
                                     justifyContent: 'space-between', 
-                                    border: isSelected ? '2px solid var(--primary-color)' : '1px solid var(--border-color)',
-                                    borderRadius: '14px',
-                                    backgroundColor: isSelected ? '#f0fdfa' : 'var(--card-bg)',
-                                    boxShadow: isSelected ? '0 4px 14px rgba(13, 148, 136, 0.15)' : 'var(--shadow-sm)',
-                                    transition: 'all 0.2s ease'
+                                    border: isSelected ? '2px solid #0d9488' : '1px solid #e2e8f0',
+                                    borderRadius: '18px',
+                                    backgroundColor: isSelected ? '#f0fdfa' : '#ffffff',
+                                    boxShadow: isSelected ? '0 8px 24px rgba(13, 148, 136, 0.18)' : '0 2px 10px rgba(0,0,0,0.03)',
+                                    transition: 'all 0.2s ease',
+                                    position: 'relative'
                                 }}
                             >
                                 <div>
-                                    {/* Top Badges */}
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px', flexWrap: 'wrap', gap: '4px' }}>
-                                        <span style={{ 
-                                            fontSize: '11px', 
-                                            fontWeight: '700', 
-                                            padding: '3px 8px', 
-                                            borderRadius: '8px',
-                                            backgroundColor: facility.badgeBg,
-                                            color: facility.badgeColor,
-                                            border: `1px solid ${facility.pinColor}33`
-                                        }}>
-                                            {facility.typeLabel}
-                                        </span>
+                                    {/* Top Micro Badges */}
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', gap: '6px' }}>
+                                        <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
+                                            {facility.is_government ? (
+                                                <span style={{
+                                                    fontSize: '10.5px',
+                                                    fontWeight: 800,
+                                                    color: '#0369a1',
+                                                    backgroundColor: '#e0f2fe',
+                                                    padding: '3px 8px',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid #bae6fd',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '3px'
+                                                }}>
+                                                    🏛️ Govt. Hospital
+                                                </span>
+                                            ) : (
+                                                <span style={{ 
+                                                    fontSize: '10.5px', 
+                                                    fontWeight: 800, 
+                                                    padding: '3px 8px', 
+                                                    borderRadius: '8px',
+                                                    backgroundColor: facility.badgeBg,
+                                                    color: facility.badgeColor,
+                                                    border: `1px solid ${facility.pinColor}22`
+                                                }}>
+                                                    {facility.typeLabel}
+                                                </span>
+                                            )}
 
-                                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                                            {facility.is_government && (
-                                                <span style={{ fontSize: '10.5px', fontWeight: '800', color: '#0369a1', backgroundColor: '#e0f2fe', padding: '2px 7px', borderRadius: '6px', border: '1px solid #bae6fd' }}>
-                                                    🏛️ Govt.
-                                                </span>
-                                            )}
                                             {facility.emergency_capable && (
-                                                <span style={{ fontSize: '10.5px', fontWeight: '800', color: '#DC2626', backgroundColor: '#FEE2E2', padding: '2px 7px', borderRadius: '6px' }}>
-                                                    24x7 Emergency
+                                                <span style={{ fontSize: '10px', fontWeight: 800, color: '#dc2626', backgroundColor: '#fee2e2', padding: '3px 7px', borderRadius: '8px', border: '1px solid #fecaca' }}>
+                                                    🚨 24x7
                                                 </span>
                                             )}
-                                            <span style={{
-                                                fontSize: '11px',
-                                                fontWeight: '800',
-                                                color: '#0f766e',
-                                                background: '#ccfbf1',
-                                                padding: '2px 7px',
-                                                borderRadius: '6px'
-                                            }}>
-                                                📍 {facility.distanceFormatted}
-                                            </span>
                                         </div>
+
+                                        {/* Distance Pill */}
+                                        <span style={{
+                                            fontSize: '11px',
+                                            fontWeight: 800,
+                                            color: '#0f766e',
+                                            background: '#ccfbf1',
+                                            padding: '3px 8px',
+                                            borderRadius: '8px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '3px'
+                                        }}>
+                                            📍 {facility.distanceFormatted}
+                                        </span>
                                     </div>
 
-                                    {/* Name & Address */}
-                                    <h3 style={{ fontSize: '15.5px', fontWeight: '800', margin: '4px 0 6px', color: '#1e293b' }}>
+                                    {/* Hospital Name & Address */}
+                                    <h3 style={{ fontSize: '16px', fontWeight: '800', margin: '0 0 6px 0', color: '#0f172a', lineHeight: 1.3 }}>
                                         {facility.name}
                                     </h3>
                                     
-                                    <p style={{ fontSize: '12.5px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'flex-start', gap: '4px', marginBottom: '10px', lineHeight: '1.4' }}>
-                                        <MapPin size={14} style={{ flexShrink: 0, marginTop: '2px', color: '#64748b' }} />
+                                    <p style={{ fontSize: '12px', color: '#64748b', display: 'flex', alignItems: 'flex-start', gap: '4px', marginBottom: '12px', lineHeight: '1.4' }}>
+                                        <MapPin size={13} style={{ flexShrink: 0, marginTop: '2px', color: '#94a3b8' }} />
                                         <span>{facility.address}</span>
                                     </p>
 
-                                    {/* Real OSM Meta Specs */}
-                                    <div style={{ background: 'var(--bg-color)', padding: '10px', borderRadius: '10px', marginBottom: '14px', fontSize: '12px' }}>
+                                    {/* Real Meta Specs Box */}
+                                    <div style={{ background: '#f8fafc', padding: '8px 10px', borderRadius: '12px', marginBottom: '14px', fontSize: '11.5px', border: '1px solid #f1f5f9' }}>
                                         {facility.phone ? (
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#0369a1', marginBottom: '4px', fontWeight: 600 }}>
-                                                <Phone size={13} />
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#0369a1', marginBottom: '3px', fontWeight: 700 }}>
+                                                <Phone size={12} />
                                                 <a href={`tel:${facility.phone}`} style={{ color: '#0284c7', textDecoration: 'none' }}>
                                                     {facility.phone}
                                                 </a>
                                             </div>
                                         ) : (
-                                            <div style={{ color: '#94a3b8', fontSize: '11.5px', marginBottom: '4px' }}>
-                                                📞 Phone not specified in OSM
-                                            </div>
-                                        )}
-
-                                        {facility.opening_hours ? (
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#166534', fontSize: '11.5px', fontWeight: 600 }}>
-                                                <Clock size={13} />
-                                                <span>Hours: {facility.opening_hours}</span>
-                                            </div>
-                                        ) : (
-                                            <div style={{ color: '#94a3b8', fontSize: '11.5px' }}>
-                                                ⏰ Hours: Open for public healthcare
+                                            <div style={{ color: '#94a3b8', fontSize: '11px', marginBottom: '3px' }}>
+                                                📞 Standard OPD Reception
                                             </div>
                                         )}
 
                                         {facility.operator && (
-                                            <div style={{ color: '#475569', fontSize: '11px', marginTop: '4px' }}>
-                                                🏛️ Operator: {facility.operator}
+                                            <div style={{ color: '#475569', fontSize: '11px', fontWeight: 600 }}>
+                                                🏛️ {facility.operator}
                                             </div>
                                         )}
                                     </div>
@@ -1231,33 +1311,39 @@ const FacilityFinder = () => {
                                         onClick={() => handleFocusFacility(facility)}
                                         style={{
                                             padding: '9px',
-                                            borderRadius: '8px',
+                                            borderRadius: '10px',
                                             background: '#ffffff',
-                                            border: '1px solid var(--border-color)',
+                                            border: '1.5px solid #e2e8f0',
                                             color: '#334155',
-                                            fontWeight: 700,
-                                            fontSize: '12px',
+                                            fontWeight: 800,
+                                            fontSize: '11.5px',
                                             cursor: 'pointer',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
-                                            gap: '4px'
+                                            gap: '4px',
+                                            transition: 'all 0.15s ease'
                                         }}
                                     >
-                                        <Compass size={14} color="#0d9488" />
+                                        <Compass size={13} color="#0d9488" />
                                         <span>View on Map</span>
                                     </button>
 
                                     <button 
-                                        className="btn-primary" 
                                         style={{ 
                                             padding: '9px', 
                                             display: 'flex', 
                                             justifyContent: 'center', 
                                             alignItems: 'center', 
                                             gap: '4px', 
-                                            fontSize: '12px',
-                                            borderRadius: '8px'
+                                            fontSize: '11.5px',
+                                            fontWeight: 800,
+                                            borderRadius: '10px',
+                                            border: 'none',
+                                            background: 'linear-gradient(135deg, #0d9488, #0f766e)',
+                                            color: '#ffffff',
+                                            cursor: 'pointer',
+                                            boxShadow: '0 2px 8px rgba(13, 148, 136, 0.3)'
                                         }}
                                         onClick={() => navigate('/referrals', { state: { selectedHospital: facility } })}
                                     >
@@ -1271,12 +1357,10 @@ const FacilityFinder = () => {
                 </div>
             )}
 
-            {/* OpenStreetMap Attribution Footer */}
-            <div style={{ marginTop: '30px', padding: '12px', textAlign: 'center', fontSize: '11px', color: '#94a3b8', borderTop: '1px solid var(--border-color)' }}>
-                Map & Healthcare Geographic Data &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer" style={{ color: '#0d9488', textDecoration: 'underline' }}>OpenStreetMap</a> contributors. 
-                Rendered with <a href="https://maplibre.org/" target="_blank" rel="noopener noreferrer" style={{ color: '#0d9488', textDecoration: 'underline' }}>MapLibre GL</a>. Real-time GPS distance calculation.
+            {/* Attribution */}
+            <div style={{ marginTop: '24px', textAlign: 'center', fontSize: '10.5px', color: '#94a3b8' }}>
+                OpenStreetMap &copy; contributors • MapLibre GL Native Rendering
             </div>
-
             {/* Download Local Map Modal */}
             <AnimatePresence>
                 {showDownloadModal && (
