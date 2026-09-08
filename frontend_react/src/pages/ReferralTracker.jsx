@@ -82,44 +82,21 @@ const ReferralTracker = () => {
                     const resGen = await axios.get('/api/referrals', authHeader);
                     loadedReferrals = resGen.data?.data || (Array.isArray(resGen.data) ? resGen.data : []);
                 } catch (e) {
-                    console.warn("Referrals fallback triggered:", e.message);
+                    console.warn("Referrals fallback check:", e.message);
                 }
             }
 
-            // Fallback default demo referral if empty
-            if (!loadedReferrals || loadedReferrals.length === 0) {
-                loadedReferrals = [
-                    {
-                        id: 'ref-demo-001',
-                        status: 'APPOINTMENT_BOOKED',
-                        urgency: 'ROUTINE',
-                        specialty_required: 'General Medicine & Specialist OPD',
-                        primary_complaint: 'Routine Health Checkup & Vitals Follow-up',
-                        slot_token: 'OPD-B14',
-                        appointment_slot_time: 'Tomorrow at 10:30 AM',
-                        created_at: new Date(Date.now() - 3600000 * 4).toISOString(),
-                        facilities: {
-                            id: 'fac-101',
-                            name: 'District Civil Hospital Nashik',
-                            tier: 'DISTRICT_HOSPITAL',
-                            district: 'Nashik',
-                            address: 'Old Agra Rd, Shalimar Chowk, Nashik, Maharashtra 422001',
-                            phone: '+91 253 257 2038'
-                        },
-                        doctors: {
-                            name: 'Dr. Anand Deshmukh, MD',
-                            specialty_name: 'Cardiologist / Internal Medicine'
-                        }
-                    }
-                ];
-            }
-
-            setReferrals(loadedReferrals);
-            if (loadedReferrals.length > 0) {
+            setReferrals(loadedReferrals || []);
+            if (loadedReferrals && loadedReferrals.length > 0) {
                 loadReferralDetails(loadedReferrals[0].id, loadedReferrals);
+            } else {
+                setSelectedReferral(null);
+                setTimeline([]);
             }
         } catch (err) {
             console.error("Fetch referrals failed:", err);
+            setReferrals([]);
+            setSelectedReferral(null);
         } finally {
             setLoading(false);
         }
@@ -160,7 +137,15 @@ const ReferralTracker = () => {
      */
     const handleConfirmBooking = async (e) => {
         if (e) e.preventDefault();
-        if (!incomingHospital) return;
+        if (!incomingHospital || !incomingHospital.name?.trim()) {
+            showToast("Hospital selection is missing. Please select a hospital from HealthCentres Nearby.", "error");
+            return;
+        }
+
+        if (!bookingDate || !bookingTime) {
+            showToast("Please select both a valid appointment date and time slot.", "error");
+            return;
+        }
 
         setIsSubmittingBooking(true);
         try {
@@ -174,53 +159,28 @@ const ReferralTracker = () => {
             const referralPayload = {
                 patient_id: patientId,
                 receiving_facility_id: incomingHospital.id || null,
-                facility_name: incomingHospital.name,
+                facility_name: incomingHospital.name.trim(),
                 facility_address: incomingHospital.address || 'Local Healthcare Centre',
                 specialty_required: incomingHospital.typeLabel || 'Specialist Consultation',
                 status: 'APPOINTMENT_BOOKED',
                 risk_level: bookingUrgency === 'EMERGENCY' ? 'CRITICAL' : 'MODERATE',
                 urgency: bookingUrgency,
                 primary_complaint: bookingComplaint.trim() || 'General Specialist Consultation',
-                clinical_summary: `Direct referral booking at ${incomingHospital.name}. Distance: ${incomingHospital.distanceFormatted || 'Nearby'}.`,
+                clinical_summary: `Direct referral booking at ${incomingHospital.name.trim()}. Distance: ${incomingHospital.distanceFormatted || 'Nearby'}.`,
                 reason_for_referral: `Scheduled appointment on ${slotDateTimeString}`,
                 appointment_slot_time: slotDateTimeString,
                 slot_token: newSlotToken
             };
 
-            let createdReferralObj = null;
-
-            try {
-                const res = await axios.post('/api/referrals', referralPayload, authHeader);
-                if (res.data?.data || res.data?.referral) {
-                    createdReferralObj = res.data.data || res.data.referral;
-                }
-            } catch (apiErr) {
-                console.warn("Backend referral save notice, building resilient local referral:", apiErr.message);
-            }
-
+            const res = await axios.post('/api/referrals', referralPayload, authHeader);
+            
+            const createdReferralObj = res.data?.data || res.data?.referral;
             if (!createdReferralObj) {
-                createdReferralObj = {
-                    id: 'ref-' + Date.now(),
-                    ...referralPayload,
-                    created_at: new Date().toISOString(),
-                    facilities: {
-                        id: incomingHospital.id,
-                        name: incomingHospital.name,
-                        tier: incomingHospital.typeKey?.toUpperCase() || 'HOSPITAL',
-                        district: 'Local District',
-                        address: incomingHospital.address,
-                        phone: incomingHospital.phone
-                    },
-                    doctors: {
-                        name: 'Assigned on Arrival (OPD)',
-                        specialty_name: incomingHospital.typeLabel || 'General OPD'
-                    }
-                };
+                throw new Error("Invalid response received from database");
             }
 
-            // Prepend new referral
-            const updated = [createdReferralObj, ...referrals.filter(r => r.id !== createdReferralObj.id)];
-            setReferrals(updated);
+            // Sync state with newly created persisted referral
+            setReferrals(prev => [createdReferralObj, ...prev.filter(r => r.id !== createdReferralObj.id)]);
             setSelectedReferral(createdReferralObj);
             setTimeline([
                 { id: 'ev-init', to_status: 'TRIAGED', actor_role: 'SYSTEM', reason: 'Triage assessment verified', created_at: new Date().toISOString() },
@@ -228,13 +188,15 @@ const ReferralTracker = () => {
                 { id: 'ev-book', to_status: 'APPOINTMENT_BOOKED', actor_role: 'PATIENT', reason: `Confirmed slot on ${slotDateTimeString}`, created_at: new Date().toISOString() }
             ]);
 
-            // Clear incoming hospital state
+            // Clear incoming hospital state only upon successful persistence
+            const savedHospitalName = incomingHospital.name;
             setIncomingHospital(null);
             setBookingStep(null);
-            showToast(`Appointment confirmed at ${incomingHospital.name}! Token: ${newSlotToken}`);
+            showToast(`Appointment confirmed at ${savedHospitalName}! Token: ${createdReferralObj.slot_token || newSlotToken}`);
         } catch (err) {
             console.error("Booking submission error:", err);
-            showToast("Failed to book appointment. Please try again.", "error");
+            const errMsg = err.response?.data?.message || err.message || "Your appointment could not be saved. Please try again.";
+            showToast(errMsg, "error");
         } finally {
             setIsSubmittingBooking(false);
         }

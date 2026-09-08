@@ -92,55 +92,13 @@ const MedicalHistory = () => {
     const fetchUserDocuments = async () => {
         try {
             const token = localStorage.getItem('accessToken');
-            const res = await axios.get(`/api/documents/patient/${targetUserId}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            if (res.data && Array.isArray(res.data)) {
-                setMedicalRecords(res.data);
-            }
+            const authHeader = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+            const res = await axios.get(`/api/documents/patient/${targetUserId}`, authHeader);
+            const docs = res.data?.data || (Array.isArray(res.data) ? res.data : []);
+            setMedicalRecords(docs);
         } catch (err) {
-            // Fallback default sample records if database table is fresh
-            const defaultRecords = [
-                {
-                    id: 'rec_101',
-                    name: 'Complete Blood Count (CBC) Panel',
-                    type: 'lab_report',
-                    facility: 'Primary Health Centre Shirwal',
-                    doctor: 'Dr. Ramesh Patil, MBBS',
-                    created_at: new Date(Date.now() - 3 * 86400000).toISOString(),
-                    extracted_data: {
-                        test_name: 'CBC Hemogram with Platelets',
-                        key_findings: 'Hemoglobin: 13.8 g/dL (Normal), WBC: 7,200 /mcL, Platelets: 2.4 Lakhs',
-                        status: 'Normal / Healthy'
-                    }
-                },
-                {
-                    id: 'rec_102',
-                    name: 'Hypertension Follow-up & Prescription',
-                    type: 'prescription',
-                    facility: 'District Hospital Nashik',
-                    doctor: 'Dr. Rajesh Sharma, MD',
-                    created_at: new Date(Date.now() - 14 * 86400000).toISOString(),
-                    extracted_data: {
-                        medicines: ['Telmisartan 40mg (1 OD Morning)', 'Amlodipine 5mg (1 OD Night)'],
-                        advice: 'Reduce sodium intake. Measure blood pressure weekly.',
-                        status: 'Active'
-                    }
-                },
-                {
-                    id: 'rec_103',
-                    name: 'Digital Chest X-Ray (PA View)',
-                    type: 'imaging',
-                    facility: 'Civil Hospital Radiodiagnostics',
-                    doctor: 'Dr. Sunita Kulkarni, DMRD',
-                    created_at: new Date(Date.now() - 45 * 86400000).toISOString(),
-                    extracted_data: {
-                        key_findings: 'Bilateral lung fields clear. Normal cardiothoracic ratio. No focal lesion.',
-                        status: 'Clear'
-                    }
-                }
-            ];
-            setMedicalRecords(defaultRecords);
+            console.warn("Documents fetch notice:", err.message);
+            setMedicalRecords([]);
         }
     };
 
@@ -148,61 +106,38 @@ const MedicalHistory = () => {
     const fetchConfirmedAppointments = async () => {
         try {
             const token = localStorage.getItem('accessToken');
-            const res = await axios.get(`/api/referrals/patient/${targetUserId}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            if (res.data && Array.isArray(res.data)) {
-                const confirmed = res.data.filter(r => 
+            const authHeader = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+            const res = await axios.get(`/api/referrals/patient/${targetUserId}`, authHeader);
+            const list = res.data?.data || (Array.isArray(res.data) ? res.data : []);
+            if (list && Array.isArray(list)) {
+                const confirmed = list.filter(r => 
                     r.status === 'APPOINTMENT_BOOKED' || 
                     r.status === 'CONFIRMED' || 
                     r.status === 'PATIENT_IN_TRANSIT' ||
                     r.status === 'PATIENT_REACHED' ||
                     r.status === 'CONSULTATION_IN_PROGRESS' ||
+                    r.status === 'TREATMENT_COMPLETED' ||
                     r.status === 'COMPLETED'
                 );
-                if (confirmed.length > 0) {
-                    setConfirmedAppointments(confirmed);
-                    return;
-                }
+                
+                const hydrated = confirmed.map(r => ({
+                    ...r,
+                    facility_name: r.facilities?.name || r.facility_name || 'Healthcare Centre',
+                    doctor_name: r.doctors?.name || r.doctor_name || 'Specialist Doctor',
+                    department: r.specialty_required || r.department || 'Specialist OPD',
+                    slot_date: r.appointment_slot_time ? r.appointment_slot_time.split(' at ')[0] : (r.created_at ? r.created_at.split('T')[0] : ''),
+                    slot_time: r.appointment_slot_time ? (r.appointment_slot_time.split(' at ')[1] || r.appointment_slot_time) : '',
+                    queue_token: r.slot_token || 'Token'
+                }));
+
+                setConfirmedAppointments(hydrated);
+                return;
             }
         } catch (err) {
-            console.warn("Referral appointments fetch error:", err);
+            console.warn("Referral appointments fetch notice:", err.message);
         }
 
-        // Fallback default confirmed appointments for smooth user experience
-        const defaultAppointments = [
-            {
-                id: 'apt_201',
-                facility_name: 'District Hospital Nashik',
-                facility_type: 'DISTRICT_HOSPITAL',
-                department: 'General Medicine & Cardiology OPD',
-                doctor_name: 'Dr. Rajesh Sharma, MD Medicine',
-                slot_time: 'Tomorrow, 10:30 AM',
-                slot_date: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-                queue_token: 'OPD-B14',
-                status: 'APPOINTMENT_BOOKED',
-                urgency: 'ROUTINE',
-                reason: 'Follow-up Hypertension & Vitals Check',
-                address: 'Main Civil Lines, Nashik, Maharashtra 422001',
-                phone: '+91 253 257 8890'
-            },
-            {
-                id: 'apt_202',
-                facility_name: 'Primary Health Centre Shirwal',
-                facility_type: 'PRIMARY_HEALTH_CENTRE',
-                department: 'Community Health & Nutrition OPD',
-                doctor_name: 'Dr. Anita Deshmukh, BAMS',
-                slot_time: '18 Sep 2026, 11:15 AM',
-                slot_date: '2026-09-18',
-                queue_token: 'PHC-07',
-                status: 'CONFIRMED',
-                urgency: 'ROUTINE',
-                reason: 'Routine Preventive Health Screening & Hemoglobin Test',
-                address: 'Satara-Pune Highway, Shirwal, Maharashtra 412801',
-                phone: '+91 2169 244 100'
-            }
-        ];
-        setConfirmedAppointments(defaultAppointments);
+        setConfirmedAppointments([]);
     };
 
     // 3. Fetch Old Past Records from Supabase user.medical_history
@@ -226,43 +161,10 @@ const MedicalHistory = () => {
                 }
             }
 
-            if (pastRecords.length === 0) {
-                // Initial baseline historical records
-                pastRecords = [
-                    {
-                        id: 'old_301',
-                        title: 'Typhoid Treatment & Recovery Protocol',
-                        category: 'Doctor Consultation',
-                        record_date: '2023-08-14',
-                        facility_name: 'Apollo Clinic, Gomti Nagar',
-                        doctor_name: 'Dr. V. K. Mehrotra',
-                        diagnosis: 'Enteric Fever (Typhoid) - Resolved',
-                        notes: 'Completed 14-day course of Cefixime. Vitals normalized. Advised boiled water consumption.',
-                        medications: 'Cefixime 200mg BD, Paracetamol 650mg SOS',
-                        vitals_bp: '120/80',
-                        vitals_sugar: '94 mg/dL',
-                        vitals_weight: '67 kg',
-                        created_at: '2023-08-14T10:00:00.000Z'
-                    },
-                    {
-                        id: 'old_302',
-                        title: 'Covid-19 Booster Vaccination Certificate',
-                        category: 'Vaccination',
-                        record_date: '2022-07-20',
-                        facility_name: 'Govt. Civil Hospital CoWIN Centre',
-                        doctor_name: 'CoWIN Immunization Officer',
-                        diagnosis: 'Covishield Precaution Dose (3rd Dose)',
-                        notes: 'Vaccination administered via left deltoid. No adverse side effects reported.',
-                        medications: 'None',
-                        vitals_bp: '118/78',
-                        created_at: '2022-07-20T14:30:00.000Z'
-                    }
-                ];
-            }
-
-            setOldPastRecords(pastRecords);
+            setOldPastRecords(pastRecords || []);
         } catch (err) {
-            console.warn("Past records parse warning:", err);
+            console.warn("Past records parse warning:", err.message);
+            setOldPastRecords([]);
         }
     };
 
