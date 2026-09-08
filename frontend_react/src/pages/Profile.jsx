@@ -6,9 +6,11 @@ import { supabase } from '../config/supabase';
 import { 
     Edit2, Save, X, Moon, Sun, Shield, MapPin, Phone, Heart, Activity, 
     Stethoscope, Building2, Users, Award, Calendar, CheckCircle2, Lock, 
-    CreditCard, FileText, UserCheck, AlertCircle, HeartPulse
+    CreditCard, FileText, UserCheck, AlertCircle, HeartPulse, Globe, Languages
 } from 'lucide-react';
 import QRCode from 'react-qr-code';
+import { useLanguage } from '../context/LanguageContext';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const INDIAN_STATES = [
     "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", 
@@ -22,6 +24,7 @@ const INDIAN_STATES = [
 
 const Profile = () => {
     const { user, logout, deleteAccount, updateUser } = useContext(AuthContext);
+    const { t, language, setLanguage, supportedLanguages } = useLanguage();
     const role = (user?.role || 'patient').toLowerCase();
 
     const [tab, setTab] = useState('overview');
@@ -216,51 +219,51 @@ const Profile = () => {
     const getRoleMeta = () => {
         if (role === 'health_worker' || role === 'asha' || role === 'anm' || role === 'caregiver') {
             return {
-                title: 'ASHA / ANM / Caregiver Official',
+                title: t('roleAsha', 'ASHA / ANM / Caregiver Official'),
                 badge: 'Field Healthcare & Family Proxy Lead',
                 color: '#0d9488',
                 bg: '#ccfbf1',
                 icon: HeartPulse,
-                tabs: ['overview', 'rch_credentials', 'dependents_proxy', 'dbt_wallet']
+                tabs: ['overview', 'language', 'rch_credentials', 'dependents_proxy', 'dbt_wallet']
             };
         }
         if (role === 'doctor') {
             return {
-                title: 'Doctor / Medical Officer',
+                title: t('roleDoctor', 'Doctor / Medical Officer'),
                 badge: 'Clinical OPD & Hospital Roster',
                 color: '#0284c7',
                 bg: '#e0f2fe',
                 icon: Stethoscope,
-                tabs: ['overview', 'clinical_license', 'opd_schedule']
+                tabs: ['overview', 'language', 'clinical_license', 'opd_schedule']
             };
         }
         if (role === 'facility_staff' || role === 'facility_coordinator' || role === 'facility') {
             return {
-                title: 'Facility Operations Coordinator',
+                title: t('roleFacility', 'Facility Operations Coordinator'),
                 badge: 'Hospital & Inpatient Bed Desk',
                 color: '#0369a1',
                 bg: '#e0f2fe',
                 icon: Building2,
-                tabs: ['overview', 'facility_license', 'bed_capacity']
+                tabs: ['overview', 'language', 'facility_license', 'bed_capacity']
             };
         }
         if (role === 'admin') {
             return {
-                title: 'Health Authority Executive Admin',
+                title: t('roleAdmin', 'Health Authority Executive Admin'),
                 badge: 'State & District Governance Lead',
                 color: '#334155',
                 bg: '#f1f5f9',
                 icon: Shield,
-                tabs: ['overview', 'authority_scope', 'security_audit']
+                tabs: ['overview', 'language', 'authority_scope', 'security_audit']
             };
         }
         return {
-            title: 'Ayushman Bharat Citizen',
+            title: t('rolePatient', 'Ayushman Bharat Citizen'),
             badge: 'Verified ABHA Health ID',
             color: '#0f766e',
             bg: '#ccfbf1',
             icon: UserCheck,
-            tabs: ['overview', 'medical', 'lifestyle']
+            tabs: ['overview', 'language', 'medical', 'lifestyle']
         };
     };
 
@@ -320,24 +323,27 @@ const Profile = () => {
                         </div>
                     </div>
 
-                    <button
-                        onClick={() => editMode ? handleCancel() : setEditMode(true)}
-                        style={{
-                            background: editMode ? '#fee2e2' : 'var(--primary-color)',
-                            color: editMode ? '#dc2626' : 'white',
-                            border: 'none',
-                            padding: '8px 14px',
-                            borderRadius: '12px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            fontWeight: 700,
-                            fontSize: '12px',
-                            cursor: 'pointer',
-                            gap: '4px'
-                        }}
-                    >
-                        {editMode ? <><X size={15} /> Cancel</> : <><Edit2 size={15} /> Edit Profile</>}
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        <LanguageSwitcher mode="compact" />
+                        <button
+                            onClick={() => editMode ? handleCancel() : setEditMode(true)}
+                            style={{
+                                background: editMode ? '#fee2e2' : 'var(--primary-color)',
+                                color: editMode ? '#dc2626' : 'white',
+                                border: 'none',
+                                padding: '8px 14px',
+                                borderRadius: '12px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                fontWeight: 700,
+                                fontSize: '12px',
+                                cursor: 'pointer',
+                                gap: '4px'
+                            }}
+                        >
+                            {editMode ? <><X size={15} /> {t('cancel', 'Cancel')}</> : <><Edit2 size={15} /> {t('edit', 'Edit Profile')}</>}
+                        </button>
+                    </div>
                 </div>
             </header>
 
@@ -350,28 +356,33 @@ const Profile = () => {
                 overflowX: 'auto',
                 gap: '4px'
             }}>
-                {roleMeta.tabs.map(t => (
+                {roleMeta.tabs.map(tKey => (
                     <button
-                        key={t}
-                        onClick={() => setTab(t)}
+                        key={tKey}
+                        onClick={() => setTab(tKey)}
                         style={{
                             flex: 1,
                             minWidth: '100px',
                             border: 'none',
                             padding: '10px 12px',
                             borderRadius: '10px',
-                            background: tab === t ? 'var(--tab-active-bg, #ffffff)' : 'transparent',
-                            color: tab === t ? 'var(--primary-color)' : 'var(--text-secondary)',
+                            background: tab === tKey ? 'var(--tab-active-bg, #ffffff)' : 'transparent',
+                            color: tab === tKey ? 'var(--primary-color)' : 'var(--text-secondary)',
                             fontWeight: 700,
                             fontSize: '12px',
-                            boxShadow: tab === t ? '0 2px 8px rgba(0,0,0,0.08)' : 'none',
+                            boxShadow: tab === tKey ? '0 2px 8px rgba(0,0,0,0.08)' : 'none',
                             textTransform: 'capitalize',
                             cursor: 'pointer',
                             transition: 'all 0.2s',
-                            whiteSpace: 'nowrap'
+                            whiteSpace: 'nowrap',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '4px'
                         }}
                     >
-                        {t.replace(/_/g, ' ')}
+                        {tKey === 'language' && <Globe size={13} />}
+                        {tKey === 'language' ? t('tabLanguage', 'भाषा / Language') : tKey.replace(/_/g, ' ')}
                     </button>
                 ))}
             </div>
@@ -697,6 +708,12 @@ const Profile = () => {
                         </div>
                     )}
 
+                    {tab === 'language' && (
+                        <div style={{ marginBottom: '20px' }}>
+                            <LanguageSwitcher mode="card" />
+                        </div>
+                    )}
+
                     {tab === 'lifestyle' && (
                         <div className="card" style={{ padding: '20px', borderRadius: '16px', background: 'var(--card-bg)', border: '1px solid var(--border-color)', marginBottom: '20px' }}>
                             <h3 style={{ marginTop: 0, marginBottom: '16px', fontSize: '15px', fontWeight: 800 }}>Lifestyle & Habits</h3>
@@ -748,14 +765,14 @@ const Profile = () => {
                 style={{ width: '100%', marginBottom: '12px', padding: '12px', background: 'var(--card-bg)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', borderRadius: '12px', fontWeight: 700, fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', gap: '8px' }}
             >
                 {isDark ? <Sun size={18} /> : <Moon size={18} />}
-                {isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                {isDark ? t('themeLight', 'Switch to Light Mode') : t('themeDark', 'Switch to Dark Mode')}
             </button>
 
             <button
                 onClick={logout}
                 style={{ width: '100%', padding: '12px', background: 'var(--btn-cancel-bg, #dc2626)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}
             >
-                Log Out
+                {t('signOut', 'Log Out')}
             </button>
         </div>
     );

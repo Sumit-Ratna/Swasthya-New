@@ -13,10 +13,13 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import FeedbackModal from '../components/FeedbackModal';
 import OfflineHealthHelpBot from '../components/OfflineHealthHelpBot';
+import LanguageSwitcher from '../components/LanguageSwitcher';
+import { useLanguage } from '../context/LanguageContext';
 import axios from 'axios';
 
 const Home = () => {
     const { user } = useContext(AuthContext);
+    const { t } = useLanguage();
     const navigate = useNavigate();
 
     const [doctors, setDoctors] = useState([]);
@@ -143,52 +146,52 @@ const Home = () => {
 
     const coreFeatures = [
         {
-            title: 'Referral Tracker',
+            title: t('navReferrals', 'Referral Tracker'),
             tag: 'Closed-Loop',
-            desc: 'Milestone tracking & verified care closure',
+            desc: t('quickReferralDesc', 'Milestone tracking & verified care closure'),
             icon: <GitBranch size={22} color="#0d9488" />,
             bgColor: '#ccfbf1',
             badgeColor: '#0f766e',
             link: '/referrals'
         },
         {
-            title: 'HealthCentres Nearby',
+            title: t('quickFacilities', 'HealthCentres Nearby'),
             tag: 'Live Beds',
-            desc: 'Multi-tier directory & load meters',
+            desc: t('quickFacilitiesDesc', 'Multi-tier directory & load meters'),
             icon: <Building2 size={22} color="#2563eb" />,
             bgColor: '#dbeafe',
             badgeColor: '#1d4ed8',
             link: '/facilities'
         },
         {
-            title: 'Patient Risk Score',
+            title: t('quickTriage', 'Patient Risk Score'),
             tag: 'Triage AI',
-            desc: 'Vitals scoring & emergency risk alerts',
+            desc: t('quickTriageDesc', 'Vitals scoring & emergency risk alerts'),
             icon: <HeartPulse size={22} color="#e11d48" />,
             bgColor: '#ffe4e6',
             badgeColor: '#be123c',
             link: '/triage'
         },
         {
-            title: 'Lab Report OCR & Medicine Explainer',
+            title: t('quickRecords', 'Lab Report OCR & Explainer'),
             tag: 'MedGemma AI',
-            desc: 'Automated blood test & visual dosage guides',
+            desc: t('quickRecordsDesc', 'Automated blood test & visual dosage guides'),
             icon: <FileText size={22} color="#7c3aed" />,
             bgColor: '#ede9fe',
             badgeColor: '#6d28d9',
             link: '/records'
         },
         {
-            title: 'Family',
+            title: t('quickFamily', 'Family & Dependents'),
             tag: 'Family Proxy',
-            desc: 'Dependent monitoring & SOS panic',
+            desc: t('quickFamilyDesc', 'Dependent monitoring & SOS panic'),
             icon: <Users size={22} color="#db2777" />,
             bgColor: '#fce7f3',
             badgeColor: '#be185d',
             link: '/family'
         },
         {
-            title: 'Medical History',
+            title: t('navMedHistory', 'Medical History'),
             tag: 'EHR Records',
             desc: 'Past records, confirmed appointments & health archives',
             icon: <History size={22} color="#0284c7" />,
@@ -227,14 +230,16 @@ const Home = () => {
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    {/* Emergency 108 Quick Trigger */}
+                    <LanguageSwitcher mode="compact" />
+
+                    {/* SOS Emergency Call Button */}
                     <motion.a 
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.92 }}
                         href="tel:108"
                         onClick={callEmergency108}
                         aria-label="Call emergency services 108"
                         role="button"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
                         style={{
                             background: '#dc2626',
                             color: '#fff',

@@ -11,6 +11,8 @@ import {
     UserPlus, LogIn, HelpCircle
 } from 'lucide-react';
 import SwasthyaLogo from '../components/SwasthyaLogo';
+import LanguageSwitcher from '../components/LanguageSwitcher';
+import { useLanguage } from '../context/LanguageContext';
 
 const INDIAN_STATES = [
     "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", 
@@ -35,6 +37,7 @@ const Login = () => {
         updateUser, 
         user 
     } = useContext(AuthContext);
+    const { t } = useLanguage();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -432,12 +435,15 @@ const Login = () => {
             padding: '24px 16px 40px',
             background: 'linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%)'
         }}>
-            {/* Header Title */}
+            {/* Header Title & Language Toggle */}
             <motion.div
                 initial={{ opacity: 0, y: -15 }}
                 animate={{ opacity: 1, y: 0 }}
-                style={{ textAlign: 'center', marginBottom: '22px', maxWidth: '440px' }}
+                style={{ textAlign: 'center', marginBottom: '18px', maxWidth: '440px', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}
             >
+                <div style={{ width: '100%', display: 'flex', justifyContent: 'flex-end', paddingRight: '4px' }}>
+                    <LanguageSwitcher mode="compact" />
+                </div>
                 <SwasthyaLogo size="large" showTagline={true} />
             </motion.div>
 

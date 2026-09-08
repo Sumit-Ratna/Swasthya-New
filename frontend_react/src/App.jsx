@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 import { Routes, Route, useLocation, Navigate, useNavigate } from 'react-router-dom';
 import { App as CapApp } from '@capacitor/app';
 import { AuthProvider, AuthContext } from './context/AuthContext';
+import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import Navbar from './components/Navbar';
 import DoctorNavbar from './components/DoctorNavbar';
 
@@ -185,9 +186,11 @@ const MainApp = () => {
 
 function App() {
   return (
-    <AuthProvider>
-      <MainApp />
-    </AuthProvider>
+    <LanguageProvider>
+      <AuthProvider>
+        <MainApp />
+      </AuthProvider>
+    </LanguageProvider>
   );
 }
 

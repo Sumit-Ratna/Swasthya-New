@@ -3,13 +3,15 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { 
     Home, Activity, FileText, LayoutGrid, User, 
     HeartPulse, Stethoscope, Building2, Users, Shield, 
-    GitBranch, Pill, Layers, Lock
+    GitBranch, Pill, Layers, Lock, Sparkles
 } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import '../index.css';
 
 const Navbar = () => {
     const { user } = useContext(AuthContext);
+    const { t } = useLanguage();
     const location = useLocation();
     const role = (user?.role || 'patient').toLowerCase();
 
@@ -42,68 +44,68 @@ const Navbar = () => {
         minWidth: '54px'
     });
 
-    // Configure role-specific nav items
+    // Configure role-specific nav items with multilingual labels
     let navItems = [];
 
     if (role === 'health_worker' || role === 'asha' || role === 'anm' || role === 'caregiver') {
         navItems = [
-            { path: '/asha', label: 'ASHA Hub', icon: HeartPulse },
-            { path: '/triage', label: 'Field Vitals', icon: Activity },
+            { path: '/asha', label: t('navAshaHub', 'ASHA Hub'), icon: HeartPulse },
+            { path: '/triage', label: t('navFieldVitals', 'Field Vitals'), icon: Activity },
             { 
                 path: '/referrals', 
-                label: 'Referrals', 
+                label: t('navReferrals', 'Referrals'), 
                 icon: GitBranch,
                 highlight: true 
             },
-            { path: '/family', label: 'Dependents', icon: Users },
-            { path: '/profile', label: 'Profile', icon: User }
+            { path: '/family', label: t('navDependents', 'Dependents'), icon: Users },
+            { path: '/profile', label: t('navProfile', 'Profile'), icon: User }
         ];
     } else if (role === 'doctor') {
         navItems = [
-            { path: '/doctor/dashboard', label: 'Dashboard', icon: LayoutGrid },
-            { path: '/doctor/patients', label: 'Patients', icon: Users },
-            { path: '/doctor/scribe', label: 'AI Scribe', icon: Sparkles },
-            { path: '/profile', label: 'Profile', icon: User }
+            { path: '/doctor/dashboard', label: t('navDashboard', 'Dashboard'), icon: LayoutGrid },
+            { path: '/doctor/patients', label: t('navPatients', 'Patients'), icon: Users },
+            { path: '/doctor/scribe', label: t('navAIScribe', 'AI Scribe'), icon: Sparkles },
+            { path: '/profile', label: t('navProfile', 'Profile'), icon: User }
         ];
     } else if (role === 'facility_staff' || role === 'facility_coordinator' || role === 'facility') {
         navItems = [
-            { path: '/facility-dashboard', label: 'Bed Grid', icon: Building2 },
-            { path: '/referrals', label: 'Inbound #TK', icon: GitBranch },
+            { path: '/facility-dashboard', label: t('navBedGrid', 'Bed Grid'), icon: Building2 },
+            { path: '/referrals', label: t('navReferrals', 'Inbound'), icon: GitBranch },
             { 
                 path: '/facilities', 
-                label: 'Directory', 
+                label: t('navDirectory', 'Directory'), 
                 icon: Layers,
                 highlight: true 
             },
-            { path: '/care-team', label: 'Doc Roster', icon: Users },
-            { path: '/profile', label: 'Profile', icon: User }
+            { path: '/care-team', label: t('navDocRoster', 'Doc Roster'), icon: Users },
+            { path: '/profile', label: t('navProfile', 'Profile'), icon: User }
         ];
     } else if (role === 'admin') {
         navItems = [
-            { path: '/admin', label: 'Command Hub', icon: Shield },
-            { path: '/facilities', label: 'Beds Live', icon: Building2 },
+            { path: '/admin', label: t('navCommandHub', 'Command Hub'), icon: Shield },
+            { path: '/facilities', label: t('navBedsLive', 'Beds Live'), icon: Building2 },
             { 
                 path: '/referrals', 
-                label: 'Referral KPIs', 
+                label: t('navReferrals', 'Referrals'), 
                 icon: GitBranch,
                 highlight: true 
             },
-            { path: '/records', label: 'Med History', icon: Lock },
-            { path: '/profile', label: 'Profile', icon: User }
+            { path: '/records', label: t('navMedHistory', 'Med History'), icon: Lock },
+            { path: '/profile', label: t('navProfile', 'Profile'), icon: User }
         ];
     } else {
         // Default Citizen / Patient
         navItems = [
-            { path: '/home', label: 'Home', icon: Home },
-            { path: '/status', label: 'Status', icon: Activity },
+            { path: '/home', label: t('navHome', 'Home'), icon: Home },
+            { path: '/status', label: t('navStatus', 'Status'), icon: Activity },
             { 
                 path: '/records', 
-                label: 'Records', 
+                label: t('navRecords', 'Records'), 
                 icon: FileText,
                 highlight: true 
             },
-            { path: '/referrals', label: 'Referrals', icon: GitBranch },
-            { path: '/profile', label: 'Profile', icon: User }
+            { path: '/referrals', label: t('navReferrals', 'Referrals'), icon: GitBranch },
+            { path: '/profile', label: t('navProfile', 'Profile'), icon: User }
         ];
     }
 
