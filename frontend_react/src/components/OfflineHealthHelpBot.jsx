@@ -32,6 +32,42 @@ const DEFAULT_N8N_URL = 'https://saadkhan104.app.n8n.cloud/webhook/78c07e24-c57c
 const STORAGE_N8N_URL = 'swasthya_n8n_webhook_url';
 const STORAGE_AI_MODE = 'swasthya_ai_mode'; // 'online' | 'offline'
 
+// Formatted Markdown to React Elements Helper
+const renderFormattedMessageText = (text) => {
+    if (!text) return null;
+    const lines = text.split('\n');
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            {lines.map((line, idx) => {
+                if (!line.trim()) return <div key={idx} style={{ height: '3px' }} />;
+                const isBullet = line.trim().startsWith('•') || line.trim().startsWith('-');
+                const parts = line.split(/(\*\*.*?\*\*)/g);
+                return (
+                    <div
+                        key={idx}
+                        style={{
+                            paddingLeft: isBullet ? '6px' : '0',
+                            lineHeight: '1.45',
+                            fontSize: '12px'
+                        }}
+                    >
+                        {parts.map((part, pIdx) => {
+                            if (part.startsWith('**') && part.endsWith('**')) {
+                                return (
+                                    <strong key={pIdx} style={{ fontWeight: 800, color: '#0f172a' }}>
+                                        {part.slice(2, -2)}
+                                    </strong>
+                                );
+                            }
+                            return <span key={pIdx}>{part}</span>;
+                        })}
+                    </div>
+                );
+            })}
+        </div>
+    );
+};
+
 const OfflineHealthHelpBot = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([
@@ -902,7 +938,7 @@ const OfflineHealthHelpBot = () => {
                                             </div>
                                         ) : (
                                             <div>
-                                                {msg.text}
+                                                {renderFormattedMessageText(msg.text)}
                                             </div>
                                         )}
                                     </div>
@@ -921,7 +957,7 @@ const OfflineHealthHelpBot = () => {
                             {isSending && (
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b', fontSize: '11px', padding: '4px' }}>
                                     <RefreshCw size={12} className="spin" />
-                                    <span>{aiMode === 'online' ? 'Querying n8n AI Agent...' : 'Gemma 1.5 Lite On-Device Processing...'}</span>
+                                    <span>{aiMode === 'online' ? 'Querying n8n AI Agent...' : 'Gemma LiteRT On-Device Processing...'}</span>
                                 </div>
                             )}
                             <div ref={messagesEndRef} />
@@ -966,7 +1002,7 @@ const OfflineHealthHelpBot = () => {
                                 type="text"
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
-                                placeholder={isListening ? 'Listening to voice...' : (aiMode === 'online' ? 'Ask n8n AI Webhook agent...' : 'Ask offline Gemma 1.5 (CPR, bleeding, burns)...')}
+                                placeholder={isListening ? 'Listening to voice...' : (aiMode === 'online' ? 'Ask n8n AI Webhook agent...' : 'Ask offline Gemma LiteRT (HIV, BP, CPR, meds)...')}
                                 style={{
                                     flex: 1,
                                     padding: '9px 12px',
