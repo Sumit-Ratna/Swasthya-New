@@ -186,6 +186,14 @@ out center tags;
                 const address = formatOsmAddress(tags);
                 const isEmergency = tags.emergency === 'yes' || tags['emergency:service'] === 'yes' || typeInfo.key === 'hospital';
 
+                const isGov = 
+                    tags.operator_type === 'government' ||
+                    tags.operator_type === 'public' ||
+                    tags.ownership === 'government' ||
+                    tags.ownership === 'public' ||
+                    (tags.operator && /government|govt|ministry|zilla|municipal|dhs|esic|aiims|railway|state|public/i.test(tags.operator)) ||
+                    /government|govt|civil hospital|district hospital|phc|chc|primary health|community health|sub-centre|sub centre|general hospital|ayushman|rural hospital|aiims|safdarjung|esic|cantonment/i.test(name);
+
                 return {
                     id: `osm_${elem.type}_${elem.id}`,
                     osm_id: elem.id,
@@ -196,15 +204,16 @@ out center tags;
                     distanceMeters: distanceMeters,
                     distanceFormatted: formatDistance(distanceMeters),
                     typeKey: typeInfo.key,
-                    typeLabel: typeInfo.label,
-                    badgeBg: typeInfo.badgeBg,
-                    badgeColor: typeInfo.badgeColor,
-                    pinColor: typeInfo.pinColor,
+                    typeLabel: isGov && typeInfo.key === 'hospital' ? 'Govt. Hospital' : typeInfo.label,
+                    is_government: isGov,
+                    badgeBg: isGov ? '#e0f2fe' : typeInfo.badgeBg,
+                    badgeColor: isGov ? '#0369a1' : typeInfo.badgeColor,
+                    pinColor: isGov ? '#0284c7' : typeInfo.pinColor,
                     address: address,
                     emergency_capable: isEmergency,
                     phone: tags.phone || tags['contact:phone'] || tags['phone:emergency'] || null,
                     opening_hours: tags.opening_hours || null,
-                    operator: tags.operator || null,
+                    operator: tags.operator || (isGov ? 'Government / Public Health' : null),
                     website: tags.website || tags['contact:website'] || null,
                     wheelchair: tags.wheelchair || null,
                     rawTags: tags,

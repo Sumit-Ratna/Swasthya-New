@@ -303,12 +303,21 @@ const FacilityFinder = () => {
      */
     const filteredFacilities = facilities.filter(f => {
         const matchesSearch = 
+            !searchTerm.trim() ||
             f.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             f.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
             f.typeLabel.toLowerCase().includes(searchTerm.toLowerCase());
 
+        const isGovHospital = 
+            Boolean(f.is_government) || 
+            f.typeKey === 'government' ||
+            /government|govt|civil|district|sub-district|sdh|phc|chc|primary health|community health|sub-centre|sub centre|general hospital|ayushman|aiims|safdarjung|esic|railway|cantonment|municipal|urban health|uphc|mch|dhs|national health|zilla parishad|sadar|public/i.test(
+                `${f.name || ''} ${f.operator || ''} ${f.typeLabel || ''} ${f.rawTags?.operator_type || ''} ${f.rawTags?.ownership || ''} ${f.address || ''}`
+            );
+
         const matchesCategory = 
-            selectedCategory === 'ALL' || f.typeKey === selectedCategory;
+            selectedCategory === 'ALL' || 
+            (selectedCategory === 'government' ? isGovHospital : f.typeKey === selectedCategory);
 
         const matchesEmergency = 
             !emergencyOnly || f.emergency_capable;
@@ -792,6 +801,7 @@ const FacilityFinder = () => {
                     flexWrap: 'wrap',
                     alignItems: 'center'
                 }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}><span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#0284c7' }}></span> Govt. Hospital</span>
                     <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}><span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#dc2626' }}></span> Hospital</span>
                     <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}><span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#0d9488' }}></span> Clinic</span>
                     <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}><span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#7c3aed' }}></span> Doctors</span>
@@ -819,10 +829,8 @@ const FacilityFinder = () => {
                     style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--card-bg)', color: 'var(--text-primary)', fontSize: '13px', fontWeight: 600 }}
                 >
                     <option value="ALL">All Facility Types</option>
+                    <option value="government">Government Hospital</option>
                     <option value="hospital">Hospitals</option>
-                    <option value="clinic">Clinics & Health Centres</option>
-                    <option value="doctors">Doctors & Specialists</option>
-                    <option value="pharmacy">Pharmacies & Chemists</option>
                 </select>
 
                 {/* Search Radius Selector */}
@@ -955,7 +963,12 @@ const FacilityFinder = () => {
                                             {facility.typeLabel}
                                         </span>
 
-                                        <div style={{ display: 'flex', gap: '4px' }}>
+                                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                                            {facility.is_government && (
+                                                <span style={{ fontSize: '10.5px', fontWeight: '800', color: '#0369a1', backgroundColor: '#e0f2fe', padding: '2px 7px', borderRadius: '6px', border: '1px solid #bae6fd' }}>
+                                                    🏛️ Govt.
+                                                </span>
+                                            )}
                                             {facility.emergency_capable && (
                                                 <span style={{ fontSize: '10.5px', fontWeight: '800', color: '#DC2626', backgroundColor: '#FEE2E2', padding: '2px 7px', borderRadius: '6px' }}>
                                                     24x7 Emergency
