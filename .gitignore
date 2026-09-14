@@ -17,6 +17,8 @@ frontend_react/android/.gradle/
 .vercel
 .env*
 **/.env*
+!.env.example
+!**/.env.example
 service-account*.json
 **/service-account*.json
 uploads/

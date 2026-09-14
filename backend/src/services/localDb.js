@@ -270,14 +270,26 @@ class LocalDb {
         return updatedItem;
     }
 
-    find(collectionName, filterFn = () => true) {
+    find(collectionName, filterFn) {
         const list = this.getCollection(collectionName);
-        return list.filter(filterFn);
+        if (typeof filterFn === 'function') {
+            return list.filter(filterFn);
+        }
+        if (filterFn && typeof filterFn === 'object' && Object.keys(filterFn).length > 0) {
+            return list.filter(item => Object.entries(filterFn).every(([k, v]) => item[k] === v));
+        }
+        return [...list];
     }
 
     findOne(collectionName, filterFn) {
         const list = this.getCollection(collectionName);
-        return list.find(filterFn) || null;
+        if (typeof filterFn === 'function') {
+            return list.find(filterFn) || null;
+        }
+        if (filterFn && typeof filterFn === 'object' && Object.keys(filterFn).length > 0) {
+            return list.find(item => Object.entries(filterFn).every(([k, v]) => item[k] === v)) || null;
+        }
+        return list[0] || null;
     }
 
     findById(collectionName, id) {
@@ -286,7 +298,14 @@ class LocalDb {
 
     delete(collectionName, filterFn) {
         const list = this.getCollection(collectionName);
-        const nextList = list.filter(item => !filterFn(item));
+        let nextList;
+        if (typeof filterFn === 'function') {
+            nextList = list.filter(item => !filterFn(item));
+        } else if (filterFn && typeof filterFn === 'object' && Object.keys(filterFn).length > 0) {
+            nextList = list.filter(item => !Object.entries(filterFn).every(([k, v]) => item[k] === v));
+        } else {
+            nextList = [];
+        }
         this.data[collectionName] = nextList;
         this.save();
         return true;

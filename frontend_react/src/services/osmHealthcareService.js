@@ -314,10 +314,10 @@ export const DEFAULT_DANKAUR_OFFLINE_FACILITIES = [
         pinColor: '#dc2626',
         address: 'Bilaspur-Dankaur Marg, Near Yamuna Expressway, Dankaur, UP - 203201',
         emergency_capable: true,
-        phone: '+91 9811234567',
+        phone: null,
         opening_hours: '24/7 Emergency & ICU',
         operator: 'Drona Healthcare',
-        source: 'Pre-Installed Local Health Directory (Dankaur)'
+        source: 'OpenStreetMap Cache'
     },
     {
         id: 'osm-navin-hosp-1',
@@ -334,10 +334,10 @@ export const DEFAULT_DANKAUR_OFFLINE_FACILITIES = [
         pinColor: '#dc2626',
         address: 'Main Dankaur Chauraha, Gautam Buddha Nagar, UP - 203201',
         emergency_capable: true,
-        phone: '+91 120 2890123',
+        phone: null,
         opening_hours: '24/7 Emergency & General OPD',
         operator: 'Navin Hospitals Group',
-        source: 'Pre-Installed Local Health Directory (Dankaur)'
+        source: 'OpenStreetMap Cache'
     },
     {
         id: 'osm-dankaur-chc-3',
@@ -354,10 +354,10 @@ export const DEFAULT_DANKAUR_OFFLINE_FACILITIES = [
         pinColor: '#0284c7',
         address: 'Dankaur Block, Gautam Buddha Nagar, UP - 203201',
         emergency_capable: true,
-        phone: '+91 120 2400112',
+        phone: null,
         opening_hours: '24/7 Maternal & Child Health (MCH), OPD',
         operator: 'Govt. of Uttar Pradesh - NHM',
-        source: 'Pre-Installed Local Health Directory (Dankaur)'
+        source: 'OpenStreetMap Cache'
     },
     {
         id: 'osm-dankaur-phc-1',
@@ -374,10 +374,10 @@ export const DEFAULT_DANKAUR_OFFLINE_FACILITIES = [
         pinColor: '#0284c7',
         address: 'Main Market Road, Near Bus Stand, Dankaur, Gautam Buddha Nagar, UP - 203201',
         emergency_capable: true,
-        phone: '+91 120 2400108',
+        phone: null,
         opening_hours: '24/7 OPD & Emergency',
         operator: 'Govt. of Uttar Pradesh - Health Department',
-        source: 'Pre-Installed Local Health Directory (Dankaur)'
+        source: 'OpenStreetMap Cache'
     },
     {
         id: 'osm-dankaur-subcentre-7',
@@ -394,10 +394,10 @@ export const DEFAULT_DANKAUR_OFFLINE_FACILITIES = [
         pinColor: '#0284c7',
         address: 'Ward 4, Kasba Dankaur, Gautam Buddha Nagar, UP - 203201',
         emergency_capable: false,
-        phone: '+91 9811200108',
+        phone: null,
         opening_hours: '08:00 AM - 04:00 PM',
         operator: 'Govt. of Uttar Pradesh - NHM',
-        source: 'Pre-Installed Local Health Directory (Dankaur)'
+        source: 'OpenStreetMap Cache'
     },
     {
         id: 'osm-gims-kasna-2',
@@ -414,10 +414,10 @@ export const DEFAULT_DANKAUR_OFFLINE_FACILITIES = [
         pinColor: '#0284c7',
         address: 'Kasna, Greater Noida (Near Yamuna Expressway), Gautam Buddha Nagar, UP - 201310',
         emergency_capable: true,
-        phone: '+91 120 2341738',
+        phone: null,
         opening_hours: '24/7 Trauma, ICU & Multi-Speciality OPD',
         operator: 'Govt. of Uttar Pradesh (Autonomous Medical Institute)',
-        source: 'Pre-Installed Local Health Directory (Dankaur / Greater Noida)'
+        source: 'OpenStreetMap Cache'
     },
     {
         id: 'osm-sharda-hosp-4',
@@ -434,10 +434,10 @@ export const DEFAULT_DANKAUR_OFFLINE_FACILITIES = [
         pinColor: '#dc2626',
         address: 'Plot No. 32-34, Knowledge Park III, Greater Noida, UP - 201306',
         emergency_capable: true,
-        phone: '+91 120 2329700',
+        phone: null,
         opening_hours: '24/7 Multi-Speciality Emergency & OPD',
         operator: 'Sharda University',
-        source: 'Pre-Installed Local Health Directory (Greater Noida)'
+        source: 'OpenStreetMap Cache'
     },
     {
         id: 'osm-kailash-hosp-5',
@@ -454,10 +454,10 @@ export const DEFAULT_DANKAUR_OFFLINE_FACILITIES = [
         pinColor: '#dc2626',
         address: 'Plot No. 23, Knowledge Park I, Greater Noida, UP - 201308',
         emergency_capable: true,
-        phone: '+91 120 2327000',
+        phone: null,
         opening_hours: '24/7 Emergency & Cardiology / Neurology',
         operator: 'Kailash Healthcare Ltd.',
-        source: 'Pre-Installed Local Health Directory (Greater Noida)'
+        source: 'OpenStreetMap Cache'
     },
     {
         id: 'osm-yatharth-hosp-6',
@@ -474,30 +474,10 @@ export const DEFAULT_DANKAUR_OFFLINE_FACILITIES = [
         pinColor: '#dc2626',
         address: 'Plot No. 1, Sector Omega 1, Greater Noida, UP - 201308',
         emergency_capable: true,
-        phone: '+91 120 4500000',
+        phone: null,
         opening_hours: '24/7 Multi-Speciality Emergency & ICU',
         operator: 'Yatharth Hospitals Group',
-        source: 'Pre-Installed Local Health Directory (Greater Noida)'
-    },
-    {
-        id: 'osm-dankaur-subcentre-7',
-        osm_id: 'node_dankaur_subcentre',
-        osm_type: 'node',
-        name: 'Dankaur Sub-Centre & Maternity Clinic',
-        lat: 28.3512,
-        lon: 77.5510,
-        typeKey: 'clinic',
-        typeLabel: 'Govt. Maternal & Child Health Clinic',
-        is_government: true,
-        badgeBg: '#e0f2fe',
-        badgeColor: '#0369a1',
-        pinColor: '#0284c7',
-        address: 'Ward 4, Kasba Dankaur, Gautam Buddha Nagar, UP - 203201',
-        emergency_capable: false,
-        phone: '+91 9811200108',
-        opening_hours: '08:00 AM - 04:00 PM',
-        operator: 'Govt. of Uttar Pradesh - NHM',
-        source: 'Pre-Installed Local Health Directory (Dankaur)'
+        source: 'OpenStreetMap Cache'
     }
 ];
 

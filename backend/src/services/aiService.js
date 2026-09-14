@@ -4,8 +4,8 @@ const { evaluateDeterministicTriage } = require('../domain/clinicalTriageEngine'
 require('dotenv').config();
 
 const MEDGEMMA_URL = process.env.MEDGEMMA_URL || "http://localhost:5000";
-const AI_TIMEOUT_MS = parseInt(process.env.AI_TIMEOUT_MS, 10) || 2500;
-const FAILURE_THRESHOLD = 3;
+const AI_TIMEOUT_MS = parseInt(process.env.AI_TIMEOUT_MS, 10) || 30000;
+const FAILURE_THRESHOLD = 5;
 const RECOVERY_COOLDOWN_MS = 10000;
 
 // Standard Clinical Safety Disclaimer
@@ -218,7 +218,7 @@ exports.triageAssessmentWithAI = async (vitals) => {
         }
 
         const model = genAI.getGenerativeModel({
-            model: "gemini-3-flash-preview",
+            model: "gemini-3.6-flash",
             generationConfig: { responseMimeType: "application/json" }
         });
 
@@ -290,15 +290,13 @@ exports.summarizeLabReport = async (reportText, metadata = {}) => {
     if (reportText.length > 10000) {
         throw new Error("Lab report text exceeds maximum allowed length of 10,000 characters");
     }
+    // 1. Try local MedGemma python microservice if running (fast 1000ms probe)
+    try {
+        const response = await axios.post(`${MEDGEMMA_URL}/analyze-report`, {
+            report_text: reportText
+        }, { timeout: 1200 });
 
-    // Try MedGemma python service first if circuit breaker allows
-    if (circuitBreaker.canExecute()) {
-        try {
-            const response = await axios.post(`${MEDGEMMA_URL}/analyze-report`, {
-                report_text: reportText
-            }, { timeout: AI_TIMEOUT_MS });
-
-            circuitBreaker.recordSuccess();
+        if (response.data && response.data.analysis) {
             return {
                 summary_text: response.data.analysis,
                 structured_data: response.data.structured_data || {},
@@ -307,26 +305,50 @@ exports.summarizeLabReport = async (reportText, metadata = {}) => {
                 prescribing_authority: "NONE",
                 source: "MEDGEMMA"
             };
-        } catch (err) {
-            circuitBreaker.recordFailure();
-            console.warn("[MEDGEMMA_FALLBACK] Python microservice failed, falling back to Gemini / rule extractor:", err.message);
         }
+    } catch (err) {
+        // Local Python service offline, proceed immediately to Gemini
     }
 
-    // Try NVIDIA Nemotron API if configured
-    try {
-        const nemotronResult = await callNemotronAI(
-            `Interpret the following medical lab report. 
-Do not prescribe medications. Highlight key abnormal indicators and state that clinical evaluation by a medical doctor is required.
+    // 2. High-Performance Primary Clinical Engine: Gemini 3.6 Flash
+    const genAI = getGeminiClient();
+    if (genAI) {
+        try {
+            const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
+            const prompt = `Interpret the following medical lab report / prescription data accurately.
+Do not prescribe uncertified medications. Provide a structured clinical assessment for decision support:
+- **Key Diagnostic Findings**: Plain-language overview of normal and abnormal values.
+- **Out-of-Range Indicators**: Tabular or bullet breakdown of flagged markers with normal reference ranges.
+- **Clinical Significance & Observations**: What these results suggest.
+- **Physician Discussion Points**: Key questions and follow-ups for the doctor.
 
 REPORT CONTENT:
 ${reportText}
 
-Provide a structured summary:
-- Key Findings
-- Out-of-Range Indicators
-- Suggested Clinical Discussion Points`,
-            "You are a clinical decision support AI assistant. Provide structured, accurate analysis of medical lab reports with zero prescription directives."
+End with this exact note: "${CLINICAL_SAFETY_DISCLAIMER}"`;
+
+            const result = await model.generateContent(prompt);
+            const response = await result.response;
+            const textResult = response.text();
+
+            return {
+                summary_text: textResult,
+                structured_data: {},
+                patient_name: metadata.patient_name || "Patient",
+                disclaimer: CLINICAL_SAFETY_DISCLAIMER,
+                prescribing_authority: "NONE",
+                source: "MEDGEMMA_GEMINI_AI"
+            };
+        } catch (geminiErr) {
+            console.warn("[GEMINI_REPORT_NOTICE] Gemini summarization error:", geminiErr.message);
+        }
+    }
+
+    // 3. Try NVIDIA Nemotron API if configured
+    try {
+        const nemotronResult = await callNemotronAI(
+            `Interpret the following medical lab report accurately: ${reportText}`,
+            "You are a clinical decision support AI assistant. Provide structured analysis."
         );
 
         if (nemotronResult) {
@@ -340,53 +362,7 @@ Provide a structured summary:
             };
         }
     } catch (nemoErr) {
-        console.warn("[NEMOTRON_REPORT_NOTICE] Nemotron call failed, checking next fallback:", nemoErr.message);
-    }
-
-    // Fallback to Gemini if configured
-    const genAI = getGeminiClient();
-    if (genAI && circuitBreaker.canExecute()) {
-        try {
-            const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
-            const prompt = `Interpret the following medical lab report. 
-Do not prescribe medications. Highlight key abnormal indicators and state that clinical evaluation by a medical doctor is required.
-
-REPORT CONTENT:
-${reportText}
-
-Provide a structured summary:
-- Key Findings
-- Out-of-Range Indicators
-- Suggested Clinical Discussion Points`;
-
-            let timer;
-            const timeoutPromise = new Promise((_, reject) => {
-                timer = setTimeout(() => reject(new Error("Gemini report summarization timed out")), AI_TIMEOUT_MS);
-                if (timer && timer.unref) timer.unref();
-            });
-
-            const aiPromise = (async () => {
-                const result = await model.generateContent(prompt);
-                const response = await result.response;
-                return response.text();
-            })();
-
-            const textResult = await Promise.race([aiPromise, timeoutPromise]);
-            if (timer) clearTimeout(timer);
-            circuitBreaker.recordSuccess();
-
-            return {
-                summary_text: textResult,
-                structured_data: {},
-                patient_name: metadata.patient_name || "Patient",
-                disclaimer: CLINICAL_SAFETY_DISCLAIMER,
-                prescribing_authority: "NONE",
-                source: "GEMINI_FALLBACK"
-            };
-        } catch (geminiErr) {
-            circuitBreaker.recordFailure();
-            console.warn("[GEMINI_REPORT_FALLBACK] Gemini summarization failed:", geminiErr.message);
-        }
+        console.warn("[NEMOTRON_REPORT_NOTICE] Nemotron fallback notice:", nemoErr.message);
     }
 
     // Basic heuristic extraction fallback
@@ -417,7 +393,7 @@ exports.analyzeLabReport = async (imageBuffer, mimeType) => {
     }
 
     try {
-        const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
+        const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
 
         const extractionPrompt = `You are a medical data extraction assistant. 
 Extract all text from this medical report and organize it into a structured summary for analysis. 
@@ -501,7 +477,7 @@ Be specific, cite the exact interaction, and be concise.`;
     }
 
     try {
-        const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
+        const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
         const result = await model.generateContent(prompt);
         const response = await result.response;
         return response.text();
@@ -557,7 +533,7 @@ Keep it professional, concise, and medically accurate.`;
     }
 
     try {
-        const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
+        const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
         const result = await model.generateContent(prompt);
         const response = await result.response;
         return response.text();
@@ -696,7 +672,7 @@ Return ONLY A VALID JSON ARRAY of scene objects (no markdown, no other text):
     if (genAI) {
         try {
             const model = genAI.getGenerativeModel({
-                model: "gemini-3-flash-preview",
+                model: "gemini-3.6-flash",
                 generationConfig: { responseMimeType: "application/json" }
             });
 

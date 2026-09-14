@@ -1,1414 +1,1724 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    WifiOff, UserPlus, Search, ShieldAlert, History, ArrowLeftRight,
-    GitFork, Bell, RefreshCw, LogOut, ChevronRight, Asterisk,
-    X, Check, AlertTriangle, Activity, MapPin, Phone, Building2,
-    Calendar, FileText, CheckCircle2, ChevronDown, Plus, Sparkles,
-    Shield, Clock, HeartPulse, User, Send, Navigation, Stethoscope
+    MapPin, Phone, Building2, Calendar, Clock, UserPlus,
+    Search, Shield, Activity, RefreshCw, CheckCircle2,
+    AlertTriangle, ChevronRight, Navigation, Sparkles, X,
+    Check, Users, ExternalLink, Share2, QrCode, PhoneCall,
+    Sliders, ArrowUpRight, Wifi, WifiOff, Stethoscope, HeartPulse,
+    Send, Info, Compass, AlertCircle, FileText
 } from 'lucide-react';
 import axios from '../config/api';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import {
+    fetchNearbyOsmHealthcare,
+    calculateHaversineDistance,
+    formatDistance,
+    getFacilitiesFromLocalCache,
+    saveFacilitiesToLocalCache
+} from '../services/osmHealthcareService';
+
+const OFFLINE_APPOINTMENTS_KEY = 'swasthya_asha_offline_appointments';
 
 const AshaDashboard = () => {
     const { user, logout } = useContext(AuthContext);
     const { t } = useLanguage();
     const navigate = useNavigate();
 
-    // Active Modal States for the 6 Cards + Sync Banner + Emergency Card + Notifications
-    const [activeModal, setActiveModal] = useState(null); // 'sync' | 'register' | 'find' | 'vitals' | 'history' | 'closedLoop' | 'facilityMatcher' | 'emergencyAlert' | 'notifications'
-    const [isSyncing, setIsSyncing] = useState(false);
+    // Active Dashboard Tabs: 'locator' (Hospital Finder & Calling) | 'book' (Assisted Booking) | 'passes' (Visit Schedule & Passes) | 'emergency' (108 Ambulance & ICU)
+    const [activeTab, setActiveTab] = useState('locator');
+
+    // Network & GPS State
+    const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
+    const [userGps, setUserGps] = useState({ lat: 28.3588, lon: 77.5516, accuracy: 15, name: 'Dankaur / Greater Noida Catchment' });
+    const [detectingGps, setDetectingGps] = useState(false);
+    const [searchRadius, setSearchRadius] = useState(15000); // 15 km default
+    const [facilityFilter, setFacilityFilter] = useState('all'); // 'all' | 'hospital' | 'clinic' | 'government' | 'emergency'
+
+    // Facilities & Hospitals State
+    const [facilities, setFacilities] = useState([]);
+    const [loadingFacilities, setLoadingFacilities] = useState(false);
+    const [selectedHospital, setSelectedHospital] = useState(null);
+    const [viewMode, setViewMode] = useState('list'); // 'list' | 'map'
+    const [searchQuery, setSearchQuery] = useState('');
+
+    // Assisted Appointment Booking Modal & Form State
+    const [showBookingModal, setShowBookingModal] = useState(false);
+    const [bookingForm, setBookingForm] = useState({
+        patientName: '',
+        patientPhone: '',
+        patientAge: '',
+        patientGender: 'Female',
+        patientAbha: '',
+        primaryComplaint: '',
+        urgency: 'ROUTINE', // 'ROUTINE' | 'PRIORITY' | 'EMERGENCY'
+        selectedFacilityId: '',
+        selectedFacilityName: '',
+        selectedFacilityPhone: '',
+        selectedFacilityAddress: '',
+        selectedFacilityLat: null,
+        selectedFacilityLon: null,
+        department: 'General Medicine',
+        appointmentDate: new Date(Date.now() + 86400000).toISOString().split('T')[0], // Tomorrow
+        timeSlot: '10:00 AM - 12:00 PM',
+        ashaNotes: 'Patient assisted by ASHA worker. No personal smartphone available.'
+    });
+    const [bookingSubmitting, setBookingSubmitting] = useState(false);
+    const [bookingSuccessModal, setBookingSuccessModal] = useState(null);
+
+    // Booked Assisted Appointments List (Supabase + Offline SQLite/LocalStorage)
+    const [appointments, setAppointments] = useState([]);
+    const [loadingAppointments, setLoadingAppointments] = useState(false);
+    const [offlineQueueCount, setOfflineQueueCount] = useState(0);
+    const [syncingOffline, setSyncingOffline] = useState(false);
     const [syncSuccessToast, setSyncSuccessToast] = useState(false);
 
-    // Initial mock/real state
-    const [searchTerm, setSearchTerm] = useState('');
-    const [patientList, setPatientList] = useState([
-        { id: 'PT-01', name: 'Meena Sharma', age: 27, gender: 'Female', status: '34 Wk Antenatal', bp: '165/110', risk: 'HIGH RISK', husband: 'Rajesh', ward: 'Ward 4', phone: '+91 98234 11204', abha: '91-4829-1092-4411' },
-        { id: 'PT-02', name: 'Sunita Patil', age: 24, gender: 'Female', status: '22 Wk Antenatal', bp: '118/78', risk: 'NORMAL', husband: 'Sachin', ward: 'Ward 2', phone: '+91 98450 33219', abha: '91-1029-4481-9921' },
-        { id: 'PT-03', name: 'Ramesh Jadhav', age: 54, gender: 'Male', status: 'NCD Hypertensive', bp: '150/95', risk: 'MODERATE', husband: '-', ward: 'Ward 3', phone: '+91 97123 44556', abha: '91-3829-9912-7734' },
-        { id: 'PT-04', name: 'Pooja Gaikwad', age: 29, gender: 'Female', status: 'Postnatal (Day 12)', bp: '120/80', risk: 'NORMAL', husband: 'Vikas', ward: 'Ward 1', phone: '+91 96234 88712', abha: '91-7712-4491-0023' }
-    ]);
+    // Hospital Bed & Facility Verification Checklist Tracker
+    const [hospitalReadiness, setHospitalReadiness] = useState({});
 
-    // Registration Form State
-    const [regForm, setRegForm] = useState({
-        fullName: '',
-        age: '',
-        gender: 'Female',
-        husbandName: '',
-        phone: '',
-        ward: 'Ward 4 (Shirwal)',
-        isPregnant: true,
-        gestationalWeeks: '',
-        generateAbha: true,
-        consentGiven: true
-    });
-    const [regSuccess, setRegSuccess] = useState(false);
-
-    // Clinical Vitals Form State
-    const [vitalsForm, setVitalsForm] = useState({
-        patientName: 'Meena Sharma (Age 27)',
-        systolic_bp: 165,
-        diastolic_bp: 110,
-        blood_sugar_fbs: 104,
-        spo2: 97,
-        pulse_rate: 88,
-        temperature: 98.6,
-        gestationalWeeks: 34,
-        dangerSigns: ['Severe Headache', 'Blurred Vision', 'High BP (>140/90)']
-    });
-    const [vitalsSubmitted, setVitalsSubmitted] = useState(false);
-
-    // Closed-Loop Referrals Active State
-    const [activeReferrals, setActiveReferrals] = useState([
-        {
-            token: '#TK-8921',
-            patient: 'Meena Sharma',
-            urgency: 'HIGH PRIORITY',
-            condition: 'Preeclampsia (BP 165/110)',
-            facility: 'Nashik District Hospital',
-            doctor: 'Dr. Anita Joshi (OB-GYN)',
-            bedStatus: 'Reserved - Emergency Bed #04',
-            transport: '108 Ambulance En Route (ETA 8 min)',
-            stage: 'Transport Dispatched',
-            timestamp: '10 mins ago'
-        },
-        {
-            token: '#TK-7741',
-            patient: 'Ramesh Jadhav',
-            urgency: 'MODERATE',
-            condition: 'Uncontrolled Hypertension',
-            facility: 'Shirwal Community Health Centre (CHC)',
-            doctor: 'Dr. Vivek Rane (General Medicine)',
-            bedStatus: 'OPD Token Assigned #14',
-            transport: 'Self-Transit',
-            stage: 'Doctor Consulted',
-            timestamp: '2 hours ago'
-        }
-    ]);
-
-    // Facilities Matching List
-    const facilities = [
-        { name: 'Nashik District Hospital', type: 'Tertiary Care / FRU', dist: '18 km', eta: '25 min', icuBeds: 6, normalBeds: 24, specialists: ['OB-GYN', 'Pediatrics', 'Cardiology'], status: 'Available' },
-        { name: 'Shirwal Community Health Centre (CHC)', type: 'Secondary Care', dist: '4.2 km', eta: '8 min', icuBeds: 0, normalBeds: 12, specialists: ['General Medicine', 'MBBS MO'], status: 'Available' },
-        { name: 'Khandala Sub-District Hospital', type: 'Sub-District', dist: '12 km', eta: '18 min', icuBeds: 2, normalBeds: 15, specialists: ['OB-GYN', 'Surgery'], status: 'Available' }
-    ];
-
-    // Notification items
-    const notifications = [
-        { id: 1, title: 'Referral Token #TK-8921 Accepted', desc: 'Nashik District Hospital confirmed Bed #04 for Meena Sharma.', time: '5m ago', read: false },
-        { id: 2, title: 'Vaccination Camp Scheduled', desc: 'Shirwal Sub-Centre session on Wednesday 10:00 AM.', time: '1h ago', read: false }
-    ];
-
-    // Trigger Sync action
-    const handleTriggerSync = () => {
-        setIsSyncing(true);
-        setTimeout(() => {
-            setIsSyncing(false);
-            setSyncSuccessToast(true);
-            setTimeout(() => setSyncSuccessToast(false), 3500);
-        }, 1600);
-    };
-
-    // Handle Register Patient Submit
-    const handleRegisterSubmit = (e) => {
-        e.preventDefault();
-        const newPt = {
-            id: `PT-0${patientList.length + 1}`,
-            name: regForm.fullName,
-            age: parseInt(regForm.age) || 25,
-            gender: regForm.gender,
-            status: regForm.isPregnant ? `${regForm.gestationalWeeks || 12} Wk Antenatal` : 'General Household',
-            bp: '120/80',
-            risk: 'NORMAL',
-            husband: regForm.husbandName || '-',
-            ward: regForm.ward,
-            phone: regForm.phone,
-            abha: regForm.generateAbha ? `91-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}` : 'Pending'
+    // Network status listener
+    useEffect(() => {
+        const handleOnline = () => {
+            setIsOnline(true);
+            syncOfflineAppointments();
         };
-        setPatientList([newPt, ...patientList]);
-        setRegSuccess(true);
-        setTimeout(() => {
-            setRegSuccess(false);
-            setActiveModal(null);
-            setRegForm({
-                fullName: '',
-                age: '',
-                gender: 'Female',
-                husbandName: '',
-                phone: '',
-                ward: 'Ward 4 (Shirwal)',
-                isPregnant: true,
-                gestationalWeeks: '',
-                generateAbha: true,
-                consentGiven: true
-            });
-        }, 1500);
+        const handleOffline = () => setIsOnline(false);
+
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
+    }, []);
+
+    // Initial GPS Location Detection & Data Loading
+    useEffect(() => {
+        detectCurrentGpsLocation();
+        loadAppointments();
+    }, []);
+
+    // Re-fetch facilities whenever GPS or radius changes
+    useEffect(() => {
+        if (userGps.lat && userGps.lon) {
+            loadNearbyHospitals(userGps.lat, userGps.lon, searchRadius);
+        }
+    }, [userGps.lat, userGps.lon, searchRadius]);
+
+    // Update offline queue count
+    const updateOfflineCount = () => {
+        try {
+            const raw = localStorage.getItem(OFFLINE_APPOINTMENTS_KEY);
+            const list = raw ? JSON.parse(raw) : [];
+            setOfflineQueueCount(list.length);
+        } catch (e) {
+            setOfflineQueueCount(0);
+        }
     };
 
-    const handleVitalsSubmit = (e) => {
-        e.preventDefault();
-        setVitalsSubmitted(true);
-        setTimeout(() => {
-            setVitalsSubmitted(false);
-            setActiveModal(null);
-        }, 1800);
+    // Detect GPS Coordinates via Capacitor Geolocation / HTML5
+    const detectCurrentGpsLocation = () => {
+        setDetectingGps(true);
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    const lat = pos.coords.latitude;
+                    const lon = pos.coords.longitude;
+                    const accuracy = Math.round(pos.coords.accuracy || 20);
+                    setUserGps({
+                        lat,
+                        lon,
+                        accuracy,
+                        name: `GPS: ${lat.toFixed(4)}°N, ${lon.toFixed(4)}°E (±${accuracy}m)`
+                    });
+                    setDetectingGps(false);
+                },
+                (err) => {
+                    console.warn('[GPS Detection Notice] Using village catchment coordinates:', err.message);
+                    setDetectingGps(false);
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
+            );
+        } else {
+            setDetectingGps(false);
+        }
     };
+
+    // Load Nearby Hospitals (Dual Engine: OpenStreetMap / Google API + Offline Cache)
+    const loadNearbyHospitals = async (lat, lon, radius) => {
+        setLoadingFacilities(true);
+        try {
+            const result = await fetchNearbyOsmHealthcare(lat, lon, radius);
+            if (result && result.facilities) {
+                setFacilities(result.facilities);
+            }
+        } catch (err) {
+            console.warn('[Hospital Locator Error] Using local cache fallback:', err);
+            const cached = getFacilitiesFromLocalCache(lat, lon);
+            if (cached && cached.facilities) {
+                setFacilities(cached.facilities);
+            }
+        } finally {
+            setLoadingFacilities(false);
+        }
+    };
+
+    // Load Appointments (Online from Supabase + Offline Queue)
+    const loadAppointments = async () => {
+        setLoadingAppointments(true);
+        updateOfflineCount();
+        let onlineList = [];
+        try {
+            const token = localStorage.getItem('accessToken');
+            const res = await axios.get('/api/appointments/asha/list', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (Array.isArray(res.data)) {
+                onlineList = res.data;
+            }
+        } catch (err) {
+            console.warn('[Appointments Fetch Notice] Server offline, loading local records:', err.message);
+        }
+
+        // Merge with local offline queue
+        try {
+            const rawOffline = localStorage.getItem(OFFLINE_APPOINTMENTS_KEY);
+            const offlineList = rawOffline ? JSON.parse(rawOffline) : [];
+            const map = new Map();
+
+            // Offline items take high visual priority with pending badge
+            offlineList.forEach(a => {
+                map.set(a.id || a.token, { ...a, is_offline_pending: true });
+            });
+            onlineList.forEach(a => {
+                if (!map.has(a.id) && !map.has(a.token)) {
+                    map.set(a.id, a);
+                }
+            });
+
+            const merged = Array.from(map.values()).sort((a, b) => {
+                return new Date(b.created_at || b.appointment_date) - new Date(a.created_at || a.appointment_date);
+            });
+
+            setAppointments(merged);
+        } catch (e) {
+            setAppointments(onlineList);
+        } finally {
+            setLoadingAppointments(false);
+        }
+    };
+
+    // Sync Offline Appointments to Supabase Backend
+    const syncOfflineAppointments = async () => {
+        const raw = localStorage.getItem(OFFLINE_APPOINTMENTS_KEY);
+        if (!raw) return;
+        let offlineList = [];
+        try {
+            offlineList = JSON.parse(raw);
+        } catch (e) {
+            return;
+        }
+
+        if (offlineList.length === 0) return;
+
+        setSyncingOffline(true);
+        try {
+            const token = localStorage.getItem('accessToken');
+            const res = await axios.post('/api/appointments/sync-batch', {
+                appointments: offlineList
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (res.data?.synced > 0) {
+                localStorage.removeItem(OFFLINE_APPOINTMENTS_KEY);
+                setOfflineQueueCount(0);
+                setSyncSuccessToast(true);
+                setTimeout(() => setSyncSuccessToast(false), 4000);
+                loadAppointments();
+            }
+        } catch (err) {
+            console.warn('[Offline Sync Warning] Sync failed, keeping local queue:', err.message);
+        } finally {
+            setSyncingOffline(false);
+        }
+    };
+
+    // Handle One-Tap Calling to Hospital Phone
+    const handleCallHospital = (phone, hospitalName) => {
+        if (!phone) {
+            alert(`Direct contact number for "${hospitalName}" is not listed. Please check district health emergency number 108.`);
+            return;
+        }
+        const cleanNumber = phone.replace(/[^0-9+]/g, '');
+        window.location.href = `tel:${cleanNumber}`;
+    };
+
+    // Open Native Google Maps Navigation
+    const handleOpenMapDirections = (hospital) => {
+        if (!hospital) return;
+        const lat = hospital.lat;
+        const lon = hospital.lon;
+        const name = encodeURIComponent(hospital.name);
+        const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}&destination_place_id=${name}`;
+        window.open(url, '_blank');
+    };
+
+    // Search hospital contact number and details on Google
+    const handleSearchHospitalOnGoogle = (hospital) => {
+        if (!hospital) return;
+        const query = encodeURIComponent(`${hospital.name} ${hospital.address || ''} hospital contact phone number`);
+        window.open(`https://www.google.com/search?q=${query}`, '_blank');
+    };
+
+    // Open Pre-filled Booking Modal for specific hospital
+    const handleInitiateBooking = (hospital) => {
+        setSelectedHospital(hospital);
+        setBookingForm(prev => ({
+            ...prev,
+            selectedFacilityId: hospital.id || '',
+            selectedFacilityName: hospital.name || '',
+            selectedFacilityPhone: hospital.phone || '',
+            selectedFacilityAddress: hospital.address || 'Address on record',
+            selectedFacilityLat: hospital.lat,
+            selectedFacilityLon: hospital.lon
+        }));
+        setShowBookingModal(true);
+    };
+
+    // Toggle hospital readiness notes (bed status check)
+    const toggleReadinessCheck = (hospitalId, key) => {
+        setHospitalReadiness(prev => {
+            const current = prev[hospitalId] || {};
+            return {
+                ...prev,
+                [hospitalId]: {
+                    ...current,
+                    [key]: !current[key]
+                }
+            };
+        });
+    };
+
+    // Submit Assisted Appointment Booking (Supabase + Local SQLite Queue)
+    const handleFormSubmit = async (e) => {
+        e.preventDefault();
+        if (!bookingForm.patientName.trim()) {
+            alert('Please enter patient name.');
+            return;
+        }
+
+        setBookingSubmitting(true);
+
+        const appointmentToken = `APT-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
+        const appointmentPayload = {
+            id: `apt_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+            patient_id: user?.id || 'guest-patient',
+            patient_name: bookingForm.patientName.trim(),
+            patient_phone: bookingForm.patientPhone.trim() || '+91 9800000000',
+            patient_age: bookingForm.patientAge || '32',
+            patient_gender: bookingForm.patientGender || 'Female',
+            patient_abha: bookingForm.patientAbha.trim() || `91-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`,
+            facility_id: bookingForm.selectedFacilityId,
+            facility_name: bookingForm.selectedFacilityName,
+            facility_phone: bookingForm.selectedFacilityPhone,
+            facility_address: bookingForm.selectedFacilityAddress,
+            facility_lat: bookingForm.selectedFacilityLat,
+            facility_lon: bookingForm.selectedFacilityLon,
+            appointment_date: bookingForm.appointmentDate,
+            time_slot: bookingForm.timeSlot,
+            department: bookingForm.department,
+            urgency: bookingForm.urgency,
+            reason: bookingForm.primaryComplaint.trim() || `${bookingForm.department} OPD Consultation`,
+            status: 'confirmed',
+            token: appointmentToken,
+            booked_by_asha: true,
+            asha_worker_id: user?.id || 'ASHA-OFFICIAL',
+            asha_worker_name: user?.name || 'ASHA Worker',
+            asha_notes: bookingForm.ashaNotes,
+            created_at: new Date().toISOString()
+        };
+
+        let savedOnline = false;
+
+        // 1. Try saving online to Supabase via backend API
+        let confirmedData = appointmentPayload;
+        try {
+            const token = localStorage.getItem('accessToken');
+            const res = await axios.post('/api/appointments/book', appointmentPayload, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.status === 200 || res.status === 201) {
+                savedOnline = true;
+                if (res.data?.appointment) {
+                    confirmedData = { ...appointmentPayload, ...res.data.appointment };
+                }
+            }
+        } catch (err) {
+            console.warn('[Booking Online Post Notice] Saving to local offline database queue:', err.message);
+        }
+
+        // 2. Always persist into local appointments array and queue for offline safety & immediate Record sync
+        try {
+            const raw = localStorage.getItem(OFFLINE_APPOINTMENTS_KEY);
+            const currentQueue = raw ? JSON.parse(raw) : [];
+            const filteredQueue = currentQueue.filter(item => item.id !== confirmedData.id && item.token !== confirmedData.token);
+            if (!savedOnline) {
+                filteredQueue.unshift(confirmedData);
+                localStorage.setItem(OFFLINE_APPOINTMENTS_KEY, JSON.stringify(filteredQueue));
+                updateOfflineCount();
+            }
+            
+            // Also dispatch global sync event so Record / MedicalHistory page updates automatically
+            window.dispatchEvent(new CustomEvent('swasthya_appointment_updated', { detail: confirmedData }));
+        } catch (e) {
+            console.error('Offline storage sync error:', e);
+        }
+
+        setBookingSubmitting(false);
+        setShowBookingModal(false);
+        setBookingSuccessModal(confirmedData);
+        loadAppointments();
+    };
+
+    // Filtered Facilities List
+    const filteredFacilities = facilities.filter(f => {
+        if (!f) return false;
+        const matchesQuery = searchQuery.trim() === '' || 
+            f.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+            f.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            f.typeLabel.toLowerCase().includes(searchQuery.toLowerCase());
+
+        if (!matchesQuery) return false;
+
+        if (facilityFilter === 'all') return true;
+        if (facilityFilter === 'hospital') return f.typeKey === 'hospital';
+        if (facilityFilter === 'clinic') return f.typeKey === 'clinic';
+        if (facilityFilter === 'government') return f.is_government;
+        if (facilityFilter === 'emergency') return f.emergency_capable;
+        return true;
+    });
 
     return (
-        <div style={{
-            minHeight: '100vh',
-            backgroundColor: '#f8fafc',
-            fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-            color: '#0f172a',
-            paddingBottom: '85px'
-        }}>
-            {/* Top Container Max-Width for Mobile Fidelity */}
-            <div style={{ maxWidth: '480px', margin: '0 auto', minHeight: '100vh', backgroundColor: '#ffffff', boxShadow: '0 0 20px rgba(0,0,0,0.03)' }}>
-
-                {/* 1. TOP STATUS HEADER (BLUE) */}
-                <div style={{
-                    backgroundColor: '#0b57d0',
-                    color: '#ffffff',
-                    padding: '16px 20px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    position: 'sticky',
-                    top: 0,
-                    zIndex: 100,
-                    boxShadow: '0 2px 8px rgba(11, 87, 208, 0.25)'
-                }}>
-                    <h1 style={{
-                        margin: 0,
-                        fontSize: '1.25rem',
-                        fontWeight: '700',
-                        letterSpacing: '-0.02em',
-                        color: '#ffffff'
-                    }}>
-                        ASHA / ANM / Caregiver Portal
-                    </h1>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                        {/* Notification Bell with Badge */}
-                        <div 
-                            onClick={() => setActiveModal('notifications')}
-                            style={{ position: 'relative', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                            title="Notifications"
-                        >
-                            <Bell size={22} color="#ffffff" />
+        <div style={{ padding: '16px 14px 120px 14px', maxWidth: '1000px', margin: '0 auto', fontFamily: 'Inter, system-ui, sans-serif' }}>
+            
+            {/* 1. COMPACT ASHA FIELD WORKER HEADER */}
+            <header style={{
+                background: 'linear-gradient(135deg, #0f766e 0%, #115e59 60%, #134e4a 100%)',
+                borderRadius: '16px',
+                padding: '12px 16px',
+                color: 'white',
+                marginBottom: '14px',
+                boxShadow: '0 4px 15px rgba(15, 118, 110, 0.2)',
+                position: 'relative'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <h1 style={{ margin: 0, fontSize: '16px', fontWeight: 800, letterSpacing: '-0.2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {user?.name || 'Sunita Sharma'} (ASHA Official)
+                            </h1>
                             <span style={{
-                                position: 'absolute',
-                                top: '-6px',
-                                right: '-6px',
-                                backgroundColor: '#dc2626',
-                                color: '#ffffff',
-                                fontSize: '10px',
-                                fontWeight: '800',
-                                width: '16px',
-                                height: '16px',
+                                width: '8px',
+                                height: '8px',
                                 borderRadius: '50%',
+                                background: isOnline ? '#4ade80' : '#f87171',
+                                flexShrink: 0
+                            }} title={isOnline ? 'Online' : 'Offline'} />
+                        </div>
+                        <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#ccfbf1', opacity: 0.9, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            ABDM ID: <strong style={{ color: 'white', fontFamily: 'monospace' }}>ASHA-UP-GBN-084</strong> • Shirwal & Dankaur
+                        </p>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                        <button
+                            onClick={detectCurrentGpsLocation}
+                            disabled={detectingGps}
+                            style={{
+                                background: 'rgba(255, 255, 255, 0.18)',
+                                border: 'none',
+                                borderRadius: '8px',
+                                padding: '6px 9px',
+                                color: 'white',
+                                fontSize: '11px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                            }}
+                            title="Refresh GPS"
+                        >
+                            <RefreshCw size={12} className={detectingGps ? 'animate-spin' : ''} />
+                            <span>{detectingGps ? 'Locating...' : 'GPS'}</span>
+                        </button>
+
+                        <button
+                            onClick={() => navigate('/profile')}
+                            style={{
+                                background: 'rgba(255, 255, 255, 0.18)',
+                                border: 'none',
+                                borderRadius: '8px',
+                                width: '32px',
+                                height: '32px',
+                                color: 'white',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                border: '1.5px solid #0b57d0'
-                            }}>
-                                2
-                            </span>
-                        </div>
-
-                        {/* Sync Circular Arrow */}
-                        <div 
-                            onClick={handleTriggerSync}
-                            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                            title="Sync Data"
-                        >
-                            <RefreshCw 
-                                size={22} 
-                                color="#ffffff" 
-                                style={{
-                                    animation: isSyncing ? 'spin 0.8s linear infinite' : 'none'
-                                }} 
-                            />
-                        </div>
-
-                        {/* Logout / Exit Door Icon */}
-                        <div 
-                            onClick={() => {
-                                if (window.confirm("Do you want to logout from ASHA / Caregiver Portal?")) {
-                                    logout();
-                                    navigate('/login');
-                                }
+                                cursor: 'pointer'
                             }}
-                            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                            title="Exit / Logout"
+                            title="View Profile"
                         >
-                            <LogOut size={22} color="#ffffff" />
-                        </div>
-                    </div>
-                </div>
-
-                {/* SYNC SUCCESS TOAST */}
-                <AnimatePresence>
-                    {syncSuccessToast && (
-                        <motion.div
-                            initial={{ opacity: 0, y: -20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
-                            style={{
-                                margin: '12px 16px 0 16px',
-                                backgroundColor: '#ecfdf5',
-                                border: '1px solid #6ee7b7',
-                                color: '#065f46',
-                                padding: '10px 14px',
-                                borderRadius: '12px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                fontSize: '0.85rem',
-                                fontWeight: '600'
-                            }}
-                        >
-                            <CheckCircle2 size={18} color="#059669" />
-                            <span>Ayushman Bharat Cloud Synced Successfully! (14 Records Pushed)</span>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                {/* 2. TOP BANNER: OFFLINE MODE ACTIVE (TAP TO OPEN SYNC CENTER) */}
-                <div 
-                    onClick={() => setActiveModal('sync')}
-                    style={{
-                        margin: '16px 16px 18px 16px',
-                        backgroundColor: '#e8f3fe',
-                        borderRadius: '18px',
-                        border: '1px solid #c8e1fd',
-                        padding: '14px 16px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        cursor: 'pointer',
-                        transition: 'transform 0.15s ease, box-shadow 0.15s ease',
-                        boxShadow: '0 2px 6px rgba(11, 87, 208, 0.04)'
-                    }}
-                >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                        <div style={{
-                            width: '42px',
-                            height: '42px',
-                            borderRadius: '50%',
-                            backgroundColor: '#d3e7fd',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: '#0b57d0',
-                            flexShrink: 0
-                        }}>
-                            <WifiOff size={22} />
-                        </div>
-                        <div>
-                            <div style={{
-                                fontSize: '0.95rem',
-                                fontWeight: '700',
-                                color: '#0b57d0',
-                                lineHeight: '1.3'
-                            }}>
-                                Offline Mode Active (Tap to Open Sync Center)
-                            </div>
-                            <div style={{
-                                fontSize: '0.8rem',
-                                color: '#64748b',
-                                marginTop: '3px',
-                                fontWeight: '500'
-                            }}>
-                                Sunita (ASHA / Caregiver) - Shirwal Sub-Centre & Family Circle
-                            </div>
-                        </div>
-                    </div>
-                    <ChevronRight size={22} color="#0b57d0" style={{ flexShrink: 0 }} />
-                </div>
-
-                {/* 3. SIX ACTION CARDS (2 COLUMNS x 3 ROWS) */}
-                <div style={{
-                    padding: '0 16px',
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: '14px',
-                    marginBottom: '24px'
-                }}>
-                    {/* CARD 1: REGISTER PATIENT */}
-                    <div 
-                        onClick={() => setActiveModal('register')}
-                        style={{
-                            backgroundColor: '#ffffff',
-                            borderRadius: '20px',
-                            padding: '20px 16px',
-                            border: '1px solid #eef2f6',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            justifyContent: 'space-between',
-                            transition: 'all 0.2s ease'
-                        }}
-                    >
-                        <div style={{
-                            width: '46px',
-                            height: '46px',
-                            borderRadius: '14px',
-                            backgroundColor: '#e0f2fe',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: '#0284c7',
-                            marginBottom: '14px'
-                        }}>
-                            <UserPlus size={24} />
-                        </div>
-                        <div>
-                            <div style={{ fontSize: '1.05rem', fontWeight: '700', color: '#0f172a', marginBottom: '4px' }}>
-                                Register Patient
-                            </div>
-                            <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: '500' }}>
-                                New Profile & Consent
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* CARD 2: FIND PATIENT */}
-                    <div 
-                        onClick={() => setActiveModal('find')}
-                        style={{
-                            backgroundColor: '#ffffff',
-                            borderRadius: '20px',
-                            padding: '20px 16px',
-                            border: '1px solid #eef2f6',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            justifyContent: 'space-between',
-                            transition: 'all 0.2s ease'
-                        }}
-                    >
-                        <div style={{
-                            width: '46px',
-                            height: '46px',
-                            borderRadius: '14px',
-                            backgroundColor: '#e6fcf5',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: '#0ca678',
-                            marginBottom: '14px'
-                        }}>
-                            <Search size={24} />
-                        </div>
-                        <div>
-                            <div style={{ fontSize: '1.05rem', fontWeight: '700', color: '#0f172a', marginBottom: '4px' }}>
-                                Find Patient
-                            </div>
-                            <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: '500' }}>
-                                Directory & History
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* CARD 3: CLINICAL VITALS */}
-                    <div 
-                        onClick={() => setActiveModal('vitals')}
-                        style={{
-                            backgroundColor: '#ffffff',
-                            borderRadius: '20px',
-                            padding: '20px 16px',
-                            border: '1px solid #eef2f6',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            justifyContent: 'space-between',
-                            transition: 'all 0.2s ease'
-                        }}
-                    >
-                        <div style={{
-                            width: '46px',
-                            height: '46px',
-                            borderRadius: '14px',
-                            backgroundColor: '#ffedd5',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: '#f97316',
-                            marginBottom: '14px'
-                        }}>
-                            <ShieldAlert size={24} />
-                        </div>
-                        <div>
-                            <div style={{ fontSize: '1.05rem', fontWeight: '700', color: '#0f172a', marginBottom: '4px' }}>
-                                Clinical Vitals
-                            </div>
-                            <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: '500' }}>
-                                Assess & Red-Flags
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* CARD 4: MEDICAL HISTORY */}
-                    <div 
-                        onClick={() => setActiveModal('history')}
-                        style={{
-                            backgroundColor: '#ffffff',
-                            borderRadius: '20px',
-                            padding: '20px 16px',
-                            border: '1px solid #eef2f6',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            justifyContent: 'space-between',
-                            transition: 'all 0.2s ease'
-                        }}
-                    >
-                        <div style={{
-                            width: '46px',
-                            height: '46px',
-                            borderRadius: '14px',
-                            backgroundColor: '#e0e7ff',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: '#6366f1',
-                            marginBottom: '14px'
-                        }}>
-                            <History size={24} />
-                        </div>
-                        <div>
-                            <div style={{ fontSize: '1.05rem', fontWeight: '700', color: '#0f172a', marginBottom: '4px' }}>
-                                Medical History
-                            </div>
-                            <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: '500' }}>
-                                Longitudinal Encounters
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* CARD 5: CLOSED-LOOP TRACK */}
-                    <div 
-                        onClick={() => setActiveModal('closedLoop')}
-                        style={{
-                            backgroundColor: '#ffffff',
-                            borderRadius: '20px',
-                            padding: '20px 16px',
-                            border: '1px solid #eef2f6',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            justifyContent: 'space-between',
-                            transition: 'all 0.2s ease'
-                        }}
-                    >
-                        <div style={{
-                            width: '46px',
-                            height: '46px',
-                            borderRadius: '14px',
-                            backgroundColor: '#ccfbf1',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: '#0d9488',
-                            marginBottom: '14px'
-                        }}>
-                            <ArrowLeftRight size={24} />
-                        </div>
-                        <div>
-                            <div style={{ fontSize: '1.05rem', fontWeight: '700', color: '#0f172a', marginBottom: '4px' }}>
-                                Closed-Loop Track
-                            </div>
-                            <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: '500' }}>
-                                Track Active Referrals
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* CARD 6: FACILITY MATCHER */}
-                    <div 
-                        onClick={() => setActiveModal('facilityMatcher')}
-                        style={{
-                            backgroundColor: '#ffffff',
-                            borderRadius: '20px',
-                            padding: '20px 16px',
-                            border: '1px solid #eef2f6',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            justifyContent: 'space-between',
-                            transition: 'all 0.2s ease'
-                        }}
-                    >
-                        <div style={{
-                            width: '46px',
-                            height: '46px',
-                            borderRadius: '14px',
-                            backgroundColor: '#e0e7ff',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: '#3b82f6',
-                            marginBottom: '14px'
-                        }}>
-                            <GitFork size={24} />
-                        </div>
-                        <div>
-                            <div style={{ fontSize: '1.05rem', fontWeight: '700', color: '#0f172a', marginBottom: '4px' }}>
-                                Facility Matcher
-                            </div>
-                            <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: '500' }}>
-                                Smart Routing
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* 4. BOTTOM SECTION: HIGH-PRIORITY / EMERGENCY ESCALATIONS */}
-                <div style={{ padding: '0 16px 24px 16px' }}>
-                    <h2 style={{
-                        fontSize: '1.1rem',
-                        fontWeight: '700',
-                        color: '#1e293b',
-                        marginBottom: '12px'
-                    }}>
-                        High-Priority / Emergency Escalations
-                    </h2>
-
-                    {/* RED BORDER ALERT CARD */}
-                    <div 
-                        onClick={() => setActiveModal('emergencyAlert')}
-                        style={{
-                            backgroundColor: '#ffffff',
-                            border: '1.5px solid #ef4444',
-                            borderRadius: '18px',
-                            padding: '16px 14px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            gap: '12px',
-                            boxShadow: '0 4px 12px rgba(239, 68, 68, 0.08)',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        {/* Red Star of Life Badge */}
-                        <div style={{
-                            width: '42px',
-                            height: '42px',
-                            borderRadius: '50%',
-                            backgroundColor: '#dc2626',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: '#ffffff',
-                            flexShrink: 0
-                        }}>
-                            <Asterisk size={26} strokeWidth={3} />
-                        </div>
-
-                        {/* Middle Text Description */}
-                        <div style={{ flex: 1 }}>
-                            <div style={{
-                                fontSize: '0.95rem',
-                                fontWeight: '700',
-                                color: '#0f172a',
-                                lineHeight: '1.3'
-                            }}>
-                                Meena (Age 27) - 34 Wk Antenatal
-                            </div>
-                            <div style={{
-                                fontSize: '0.82rem',
-                                color: '#334155',
-                                fontWeight: '500',
-                                margin: '3px 0'
-                            }}>
-                                BP: 165/110 mmHg • High Risk Preeclampsia
-                            </div>
-                            <div style={{
-                                fontSize: '0.78rem',
-                                color: '#64748b',
-                                fontWeight: '400'
-                            }}>
-                                Referred to: Nashik District Hospital
-                            </div>
-                        </div>
-
-                        {/* Right Solid Red ALERTED Button */}
-                        <button style={{
-                            backgroundColor: '#dc2626',
-                            color: '#ffffff',
-                            fontWeight: '800',
-                            fontSize: '0.75rem',
-                            padding: '8px 14px',
-                            borderRadius: '8px',
-                            letterSpacing: '0.04em',
-                            border: 'none',
-                            cursor: 'pointer',
-                            flexShrink: 0
-                        }}>
-                            ALERTED
+                            <Shield size={16} />
                         </button>
                     </div>
                 </div>
 
+                {offlineQueueCount > 0 && (
+                    <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.15)', display: 'flex', justifyContent: 'flex-end' }}>
+                        <button
+                            onClick={syncOfflineAppointments}
+                            disabled={syncingOffline || !isOnline}
+                            style={{
+                                background: '#f59e0b',
+                                color: '#78350f',
+                                border: 'none',
+                                borderRadius: '6px',
+                                padding: '3px 8px',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                cursor: isOnline ? 'pointer' : 'not-allowed',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                            }}
+                        >
+                            <RefreshCw size={11} className={syncingOffline ? 'animate-spin' : ''} />
+                            Sync {offlineQueueCount} Offline Passes
+                        </button>
+                    </div>
+                )}
+            </header>
+
+            {/* Sync Success Toast */}
+            {syncSuccessToast && (
+                <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    style={{
+                        background: '#dcfce7',
+                        border: '1px solid #86efac',
+                        color: '#166534',
+                        padding: '10px 14px',
+                        borderRadius: '12px',
+                        marginBottom: '14px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        fontSize: '13px',
+                        fontWeight: 600
+                    }}
+                >
+                    <CheckCircle2 size={16} />
+                    <span>All offline appointments successfully synchronized with Supabase cloud database!</span>
+                </motion.div>
+            )}
+
+            {/* 2. DEDICATED ASHA NAVIGATION TABS */}
+            <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: '8px',
+                background: '#e2e8f0',
+                padding: '4px',
+                borderRadius: '14px',
+                marginBottom: '18px'
+            }}>
+                <button
+                    onClick={() => setActiveTab('locator')}
+                    style={{
+                        padding: '10px 8px',
+                        border: 'none',
+                        borderRadius: '10px',
+                        background: activeTab === 'locator' ? '#ffffff' : 'transparent',
+                        color: activeTab === 'locator' ? '#0f766e' : '#64748b',
+                        fontWeight: 700,
+                        fontSize: '12.5px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        cursor: 'pointer',
+                        boxShadow: activeTab === 'locator' ? '0 2px 8px rgba(0,0,0,0.08)' : 'none',
+                        transition: 'all 0.2s ease'
+                    }}
+                >
+                    <Building2 size={16} />
+                    <span>Hospital Locator & Phone</span>
+                </button>
+
+                <button
+                    onClick={() => {
+                        setActiveTab('book');
+                        setShowBookingModal(true);
+                    }}
+                    style={{
+                        padding: '10px 8px',
+                        border: 'none',
+                        borderRadius: '10px',
+                        background: activeTab === 'book' ? '#ffffff' : 'transparent',
+                        color: activeTab === 'book' ? '#0f766e' : '#64748b',
+                        fontWeight: 700,
+                        fontSize: '12.5px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        cursor: 'pointer',
+                        boxShadow: activeTab === 'book' ? '0 2px 8px rgba(0,0,0,0.08)' : 'none',
+                        transition: 'all 0.2s ease'
+                    }}
+                >
+                    <UserPlus size={16} />
+                    <span>Book For Patient</span>
+                </button>
+
+                <button
+                    onClick={() => setActiveTab('passes')}
+                    style={{
+                        padding: '10px 8px',
+                        border: 'none',
+                        borderRadius: '10px',
+                        background: activeTab === 'passes' ? '#ffffff' : 'transparent',
+                        color: activeTab === 'passes' ? '#0f766e' : '#64748b',
+                        fontWeight: 700,
+                        fontSize: '12.5px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        cursor: 'pointer',
+                        boxShadow: activeTab === 'passes' ? '0 2px 8px rgba(0,0,0,0.08)' : 'none',
+                        transition: 'all 0.2s ease'
+                    }}
+                >
+                    <Calendar size={16} />
+                    <span>Visit Passes ({appointments.length})</span>
+                </button>
             </div>
 
-            {/* ========================================================================= */}
-            {/* INTERACTIVE MODALS FOR THE 6 CARDS + SYNC BANNER + EMERGENCY + NOTIFICATIONS */}
-            {/* ========================================================================= */}
-
-            {/* MODAL 1: SYNC CENTER */}
-            <AnimatePresence>
-                {activeModal === 'sync' && (
-                    <div style={modalBackdropStyle}>
-                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} style={modalContainerStyle}>
-                            <div style={modalHeaderStyle}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <WifiOff size={22} color="#0b57d0" />
-                                    <h3 style={modalTitleStyle}>Field Sync & Offline Center</h3>
-                                </div>
-                                <button onClick={() => setActiveModal(null)} style={closeBtnStyle}><X size={20} /></button>
+            {/* TAB 1: HOSPITAL LOCATOR, GOOGLE MAPS & DIRECT CALLING RADAR */}
+            {activeTab === 'locator' && (
+                <div>
+                    {/* Filter & Search Bar */}
+                    <div style={{
+                        background: '#ffffff',
+                        padding: '14px',
+                        borderRadius: '16px',
+                        border: '1px solid #e2e8f0',
+                        marginBottom: '16px',
+                        boxShadow: '0 2px 10px rgba(0,0,0,0.03)'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                            <div style={{ position: 'relative', flex: 1 }}>
+                                <Search size={18} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '11px' }} />
+                                <input
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    placeholder="Search hospital name, CHC, PHC, or specialty..."
+                                    style={{
+                                        width: '100%',
+                                        padding: '9px 12px 9px 38px',
+                                        borderRadius: '10px',
+                                        border: '1px solid #cbd5e1',
+                                        fontSize: '13px',
+                                        outline: 'none'
+                                    }}
+                                />
                             </div>
 
-                            <div style={{ padding: '16px', backgroundColor: '#f0f9ff', borderRadius: '14px', border: '1px solid #bae6fd', marginBottom: '16px' }}>
-                                <div style={{ fontWeight: '700', color: '#0369a1', fontSize: '0.9rem' }}>Local SQLite Queue: 14 Changes Pending</div>
-                                <div style={{ fontSize: '0.8rem', color: '#475569', marginTop: '4px' }}>4 New Beneficiaries, 8 ANC Vital Checks, 2 Referral Escalate tokens recorded offline.</div>
+                            {/* View Toggle */}
+                            <div style={{ display: 'flex', background: '#f1f5f9', borderRadius: '10px', padding: '3px' }}>
+                                <button
+                                    onClick={() => setViewMode('list')}
+                                    style={{
+                                        padding: '6px 12px',
+                                        border: 'none',
+                                        borderRadius: '8px',
+                                        background: viewMode === 'list' ? '#ffffff' : 'transparent',
+                                        color: viewMode === 'list' ? '#0f766e' : '#64748b',
+                                        fontWeight: 700,
+                                        fontSize: '12px',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    List
+                                </button>
+                                <button
+                                    onClick={() => setViewMode('map')}
+                                    style={{
+                                        padding: '6px 12px',
+                                        border: 'none',
+                                        borderRadius: '8px',
+                                        background: viewMode === 'map' ? '#ffffff' : 'transparent',
+                                        color: viewMode === 'map' ? '#0f766e' : '#64748b',
+                                        fontWeight: 700,
+                                        fontSize: '12px',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    Map
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Search Radius & Category Filters */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
+                            <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap' }}>Filter:</span>
+                            {[
+                                { key: 'all', label: 'All Facilities' },
+                                { key: 'hospital', label: 'Hospitals (FRU/CHC)' },
+                                { key: 'clinic', label: 'PHC / Clinics' },
+                                { key: 'government', label: '🏛️ Govt / Ayushman' },
+                                { key: 'emergency', label: '🚨 24/7 Emergency' }
+                            ].map(filter => (
+                                <button
+                                    key={filter.key}
+                                    onClick={() => setFacilityFilter(filter.key)}
+                                    style={{
+                                        padding: '5px 11px',
+                                        borderRadius: '20px',
+                                        border: '1px solid',
+                                        borderColor: facilityFilter === filter.key ? '#0d9488' : '#e2e8f0',
+                                        background: facilityFilter === filter.key ? '#ccfbf1' : '#f8fafc',
+                                        color: facilityFilter === filter.key ? '#0f766e' : '#475569',
+                                        fontSize: '11.5px',
+                                        fontWeight: facilityFilter === filter.key ? 700 : 500,
+                                        cursor: 'pointer',
+                                        whiteSpace: 'nowrap'
+                                    }}
+                                >
+                                    {filter.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Interactive Map Canvas View */}
+                    {viewMode === 'map' && (
+                        <div style={{
+                            background: '#1e293b',
+                            borderRadius: '16px',
+                            overflow: 'hidden',
+                            marginBottom: '18px',
+                            height: '350px',
+                            position: 'relative',
+                            border: '1px solid #cbd5e1'
+                        }}>
+                            {/* Google Map / OSM Embed */}
+                            <iframe
+                                title="Healthcare Map"
+                                width="100%"
+                                height="100%"
+                                frameBorder="0"
+                                scrolling="no"
+                                src={`https://www.openstreetmap.org/export/embed.html?bbox=${userGps.lon - 0.08}%2C${userGps.lat - 0.06}%2C${userGps.lon + 0.08}%2C${userGps.lat + 0.06}&layer=mapnik&marker=${userGps.lat}%2C${userGps.lon}`}
+                                style={{ filter: 'contrast(1.05)' }}
+                            />
+                            <div style={{
+                                position: 'absolute',
+                                bottom: '12px',
+                                left: '12px',
+                                background: 'rgba(15, 23, 42, 0.85)',
+                                color: 'white',
+                                padding: '8px 12px',
+                                borderRadius: '10px',
+                                fontSize: '11px',
+                                backdropFilter: 'blur(8px)'
+                            }}>
+                                📍 Showing {filteredFacilities.length} nearest verified health centres
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Hospital Facility Cards */}
+                    {loadingFacilities ? (
+                        <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+                            <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 10px' }} />
+                            <p style={{ margin: 0, fontSize: '13px' }}>Scanning nearest hospitals & primary health centres...</p>
+                        </div>
+                    ) : filteredFacilities.length === 0 ? (
+                        <div style={{
+                            textAlign: 'center',
+                            padding: '30px',
+                            background: '#ffffff',
+                            borderRadius: '16px',
+                            border: '1px solid #e2e8f0'
+                        }}>
+                            <Building2 size={32} color="#94a3b8" style={{ margin: '0 auto 8px' }} />
+                            <h4 style={{ margin: '0 0 4px', color: '#334155' }}>No facilities found in this filter range</h4>
+                            <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>Try expanding your search radius or clearing query filter.</p>
+                        </div>
+                    ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                            {filteredFacilities.map((hospital, idx) => {
+                                const readiness = hospitalReadiness[hospital.id] || {};
+                                return (
+                                    <div
+                                        key={hospital.id || idx}
+                                        style={{
+                                            background: '#ffffff',
+                                            borderRadius: '16px',
+                                            border: '1px solid #e2e8f0',
+                                            padding: '16px',
+                                            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                                            transition: 'all 0.2s ease'
+                                        }}
+                                    >
+                                        {/* Card Header: Name, Distance & Badges */}
+                                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '10px', marginBottom: '8px' }}>
+                                            <div style={{ flex: 1 }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                                                    <span style={{
+                                                        background: hospital.badgeBg || '#fee2e2',
+                                                        color: hospital.badgeColor || '#dc2626',
+                                                        fontSize: '11px',
+                                                        fontWeight: 700,
+                                                        padding: '2px 8px',
+                                                        borderRadius: '6px'
+                                                    }}>
+                                                        {hospital.typeLabel || 'Hospital'}
+                                                    </span>
+
+                                                    {hospital.is_government && (
+                                                        <span style={{
+                                                            background: '#e0f2fe',
+                                                            color: '#0369a1',
+                                                            fontSize: '11px',
+                                                            fontWeight: 700,
+                                                            padding: '2px 8px',
+                                                            borderRadius: '6px'
+                                                        }}>
+                                                            🏛️ Govt. Health Facility
+                                                        </span>
+                                                    )}
+
+                                                    {hospital.emergency_capable && (
+                                                        <span style={{
+                                                            background: '#fef2f2',
+                                                            color: '#b91c1c',
+                                                            fontSize: '11px',
+                                                            fontWeight: 700,
+                                                            padding: '2px 8px',
+                                                            borderRadius: '6px'
+                                                        }}>
+                                                            🚨 24/7 Emergency
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                <h3 style={{ margin: '0 0 3px', fontSize: '16px', fontWeight: 800, color: '#1e293b' }}>
+                                                    {hospital.name}
+                                                </h3>
+
+                                                <p style={{ margin: 0, fontSize: '12.5px', color: '#64748b' }}>
+                                                    {hospital.address}
+                                                </p>
+                                            </div>
+
+                                            {/* Distance Badge */}
+                                            <div style={{
+                                                background: '#f8fafc',
+                                                border: '1px solid #e2e8f0',
+                                                borderRadius: '10px',
+                                                padding: '6px 10px',
+                                                textAlign: 'right',
+                                                flexShrink: 0
+                                            }}>
+                                                <div style={{ fontSize: '14px', fontWeight: 800, color: '#0f766e' }}>
+                                                    {hospital.distanceFormatted}
+                                                </div>
+                                                <div style={{ fontSize: '10px', color: '#94a3b8' }}>from village GPS</div>
+                                            </div>
+                                        </div>
+
+                                        {/* Contact Phone & Readiness Checklist */}
+                                        <div style={{
+                                            background: '#f8fafc',
+                                            borderRadius: '12px',
+                                            padding: '10px 12px',
+                                            marginTop: '10px',
+                                            marginBottom: '12px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            flexWrap: 'wrap',
+                                            gap: '10px'
+                                        }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <Phone size={15} color={hospital.phone ? "#0d9488" : "#94a3b8"} />
+                                                <span style={{ fontSize: '13px', color: '#334155', fontWeight: 600 }}>
+                                                    {hospital.phone ? (
+                                                        <strong style={{ fontFamily: 'monospace' }}>{hospital.phone}</strong>
+                                                    ) : (
+                                                        <span style={{ color: '#64748b', fontSize: '12px' }}>Phone not listed on map</span>
+                                                    )}
+                                                </span>
+                                            </div>
+
+                                            {/* Quick Call Verification Notes */}
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                <button
+                                                    onClick={() => toggleReadinessCheck(hospital.id, 'beds_available')}
+                                                    style={{
+                                                        background: readiness.beds_available ? '#dcfce7' : '#f1f5f9',
+                                                        color: readiness.beds_available ? '#166534' : '#64748b',
+                                                        border: '1px solid',
+                                                        borderColor: readiness.beds_available ? '#86efac' : '#cbd5e1',
+                                                        borderRadius: '6px',
+                                                        padding: '3px 7px',
+                                                        fontSize: '11px',
+                                                        fontWeight: 600,
+                                                        cursor: 'pointer'
+                                                    }}
+                                                >
+                                                    {readiness.beds_available ? '✓ Beds Confirmed' : '+ Check Beds'}
+                                                </button>
+
+                                                <button
+                                                    onClick={() => toggleReadinessCheck(hospital.id, 'doctor_on_duty')}
+                                                    style={{
+                                                        background: readiness.doctor_on_duty ? '#dbeafe' : '#f1f5f9',
+                                                        color: readiness.doctor_on_duty ? '#1e40af' : '#64748b',
+                                                        border: '1px solid',
+                                                        borderColor: readiness.doctor_on_duty ? '#93c5fd' : '#cbd5e1',
+                                                        borderRadius: '6px',
+                                                        padding: '3px 7px',
+                                                        fontSize: '11px',
+                                                        fontWeight: 600,
+                                                        cursor: 'pointer'
+                                                    }}
+                                                >
+                                                    {readiness.doctor_on_duty ? '✓ Doctor on Duty' : '+ Check Doctor'}
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Action Buttons: Call Now OR Search Google, Map Directions, Book Patient */}
+                                        <div style={{
+                                            display: 'grid',
+                                            gridTemplateColumns: '1.2fr 1fr 1.2fr',
+                                            gap: '8px'
+                                        }}>
+                                            {/* 1. Direct Phone Call OR Google Search Button */}
+                                            {hospital.phone ? (
+                                                <button
+                                                    onClick={() => handleCallHospital(hospital.phone, hospital.name)}
+                                                    style={{
+                                                        background: 'linear-gradient(135deg, #0d9488, #0f766e)',
+                                                        color: 'white',
+                                                        border: 'none',
+                                                        borderRadius: '10px',
+                                                        padding: '10px 8px',
+                                                        fontSize: '12.5px',
+                                                        fontWeight: 700,
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        gap: '6px',
+                                                        cursor: 'pointer',
+                                                        boxShadow: '0 2px 8px rgba(13, 148, 136, 0.3)'
+                                                    }}
+                                                >
+                                                    <PhoneCall size={15} />
+                                                    <span>Call Facility</span>
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    onClick={() => handleSearchHospitalOnGoogle(hospital)}
+                                                    style={{
+                                                        background: '#f8fafc',
+                                                        color: '#2563eb',
+                                                        border: '1px solid #bfdbfe',
+                                                        borderRadius: '10px',
+                                                        padding: '10px 8px',
+                                                        fontSize: '11.5px',
+                                                        fontWeight: 700,
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        gap: '5px',
+                                                        cursor: 'pointer',
+                                                        boxShadow: '0 1px 4px rgba(37, 99, 235, 0.08)'
+                                                    }}
+                                                    title="Search hospital phone number on Google"
+                                                >
+                                                    <Search size={14} color="#2563eb" />
+                                                    <span>Google Search</span>
+                                                </button>
+                                            )}
+
+                                            {/* 2. Google Maps Navigation Link */}
+                                            <button
+                                                onClick={() => handleOpenMapDirections(hospital)}
+                                                style={{
+                                                    background: '#f1f5f9',
+                                                    color: '#334155',
+                                                    border: '1px solid #cbd5e1',
+                                                    borderRadius: '10px',
+                                                    padding: '10px 8px',
+                                                    fontSize: '12.5px',
+                                                    fontWeight: 600,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    gap: '6px',
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                <Navigation size={15} color="#0284c7" />
+                                                <span>Map Route</span>
+                                            </button>
+
+                                            {/* 3. Book Patient Appointment */}
+                                            <button
+                                                onClick={() => handleInitiateBooking(hospital)}
+                                                style={{
+                                                    background: '#0284c7',
+                                                    color: 'white',
+                                                    border: 'none',
+                                                    borderRadius: '10px',
+                                                    padding: '10px 8px',
+                                                    fontSize: '12.5px',
+                                                    fontWeight: 700,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    gap: '6px',
+                                                    cursor: 'pointer',
+                                                    boxShadow: '0 2px 8px rgba(2, 132, 199, 0.3)'
+                                                }}
+                                            >
+                                                <UserPlus size={15} />
+                                                <span>Book Patient</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* TAB 2 & MODAL: ASSISTED PATIENT APPOINTMENT BOOKING FORM */}
+            {(showBookingModal || activeTab === 'book') && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'rgba(15, 23, 42, 0.75)',
+                    backdropFilter: 'blur(8px)',
+                    zIndex: 9999,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '14px'
+                }}>
+                    <div style={{
+                        background: '#ffffff',
+                        borderRadius: '20px',
+                        width: '100%',
+                        maxWidth: '560px',
+                        maxHeight: '90vh',
+                        overflowY: 'auto',
+                        boxShadow: '0 25px 50px rgba(0,0,0,0.25)',
+                        position: 'relative'
+                    }}>
+                        {/* Form Header */}
+                        <div style={{
+                            padding: '18px 20px',
+                            background: 'linear-gradient(135deg, #0f766e, #115e59)',
+                            color: 'white',
+                            borderTopLeftRadius: '20px',
+                            borderTopRightRadius: '20px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between'
+                        }}>
+                            <div>
+                                <h3 style={{ margin: '0 0 2px', fontSize: '18px', fontWeight: 800 }}>
+                                    Assisted Citizen Appointment Booking
+                                </h3>
+                                <p style={{ margin: 0, fontSize: '12px', color: '#ccfbf1' }}>
+                                    Book on behalf of rural patient • Supabase & Offline SQLite Storage
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setShowBookingModal(false);
+                                    if (activeTab === 'book') setActiveTab('locator');
+                                }}
+                                style={{
+                                    background: 'rgba(255, 255, 255, 0.2)',
+                                    border: 'none',
+                                    borderRadius: '50%',
+                                    width: '32px',
+                                    height: '32px',
+                                    color: 'white',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        {/* Form Body */}
+                        <form onSubmit={handleFormSubmit} style={{ padding: '20px' }}>
+                            {/* Selected Facility Card */}
+                            <div style={{
+                                background: '#f0fdfa',
+                                border: '1px solid #99f6e4',
+                                borderRadius: '12px',
+                                padding: '12px 14px',
+                                marginBottom: '16px'
+                            }}>
+                                <div style={{ fontSize: '11px', color: '#0f766e', fontWeight: 700, textTransform: 'uppercase' }}>
+                                    Target Healthcare Facility
+                                </div>
+                                <div style={{ fontSize: '15px', fontWeight: 800, color: '#134e4a', marginTop: '2px' }}>
+                                    {bookingForm.selectedFacilityName || 'Select Hospital Below'}
+                                </div>
+                                <div style={{ fontSize: '12px', color: '#0d9488', marginTop: '2px' }}>
+                                    {bookingForm.selectedFacilityPhone && `📞 ${bookingForm.selectedFacilityPhone} • `}
+                                    {bookingForm.selectedFacilityAddress}
+                                </div>
                             </div>
 
-                            <div style={{ fontSize: '0.85rem', color: '#334155', marginBottom: '16px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f1f5f9' }}>
-                                    <span>Last Cloud Sync:</span>
-                                    <strong>Today, 08:30 AM</strong>
+                            {/* Patient Info Fields */}
+                            <div style={{ marginBottom: '14px' }}>
+                                <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                                    Patient Full Name <span style={{ color: '#ef4444' }}>*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={bookingForm.patientName}
+                                    onChange={(e) => setBookingForm({ ...bookingForm, patientName: e.target.value })}
+                                    placeholder="e.g. Ramesh Jadhav / Meena Devi"
+                                    style={{
+                                        width: '100%',
+                                        padding: '10px 12px',
+                                        borderRadius: '10px',
+                                        border: '1px solid #cbd5e1',
+                                        fontSize: '13.5px'
+                                    }}
+                                />
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '10px', marginBottom: '14px' }}>
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                                        Mobile Number
+                                    </label>
+                                    <input
+                                        type="tel"
+                                        value={bookingForm.patientPhone}
+                                        onChange={(e) => setBookingForm({ ...bookingForm, patientPhone: e.target.value })}
+                                        placeholder="+91 98XXX XXXXX"
+                                        style={{ width: '100%', padding: '9px 10px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '13px' }}
+                                    />
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f1f5f9' }}>
-                                    <span>Network Telemetry:</span>
-                                    <strong style={{ color: '#d97706' }}>Sub-Centre 2G Mesh (Weak)</strong>
+
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                                        Age
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={bookingForm.patientAge}
+                                        onChange={(e) => setBookingForm({ ...bookingForm, patientAge: e.target.value })}
+                                        placeholder="e.g. 34"
+                                        style={{ width: '100%', padding: '9px 10px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '13px' }}
+                                    />
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
-                                    <span>Sync Protocol:</span>
-                                    <strong>NHA ABHA M3 Gateway</strong>
+
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                                        Gender
+                                    </label>
+                                    <select
+                                        value={bookingForm.patientGender}
+                                        onChange={(e) => setBookingForm({ ...bookingForm, patientGender: e.target.value })}
+                                        style={{ width: '100%', padding: '9px 8px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '13px', background: 'white' }}
+                                    >
+                                        <option value="Female">Female</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Other">Other</option>
+                                    </select>
                                 </div>
                             </div>
 
-                            <button 
-                                onClick={handleTriggerSync}
-                                disabled={isSyncing}
+                            {/* Symptoms & Urgency */}
+                            <div style={{ marginBottom: '14px' }}>
+                                <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                                    Primary Complaint / Symptoms
+                                </label>
+                                <input
+                                    type="text"
+                                    value={bookingForm.primaryComplaint}
+                                    onChange={(e) => setBookingForm({ ...bookingForm, primaryComplaint: e.target.value })}
+                                    placeholder="e.g. Persistent high fever, acute chest pain, 32 wk pregnancy checkup"
+                                    style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '13px' }}
+                                />
+                            </div>
+
+                            {/* Department, Date & Time Slot */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '10px', marginBottom: '14px' }}>
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                                        Department / Specialty
+                                    </label>
+                                    <select
+                                        value={bookingForm.department}
+                                        onChange={(e) => setBookingForm({ ...bookingForm, department: e.target.value })}
+                                        style={{ width: '100%', padding: '9px 10px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '13px', background: 'white' }}
+                                    >
+                                        <option value="General Medicine">General Medicine (OPD)</option>
+                                        <option value="Obstetrics & Gynecology">Maternity & OB-GYN</option>
+                                        <option value="Pediatrics">Pediatrics (Child Health)</option>
+                                        <option value="Cardiology">Cardiology</option>
+                                        <option value="Orthopedics">Orthopedics</option>
+                                        <option value="Emergency Care">Emergency Care</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                                        Visit Date
+                                    </label>
+                                    <input
+                                        type="date"
+                                        value={bookingForm.appointmentDate}
+                                        onChange={(e) => setBookingForm({ ...bookingForm, appointmentDate: e.target.value })}
+                                        style={{ width: '100%', padding: '9px 10px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '13px' }}
+                                    />
+                                </div>
+                            </div>
+
+                            <div style={{ marginBottom: '16px' }}>
+                                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                                    Visit Time Window
+                                </label>
+                                <select
+                                    value={bookingForm.timeSlot}
+                                    onChange={(e) => setBookingForm({ ...bookingForm, timeSlot: e.target.value })}
+                                    style={{ width: '100%', padding: '9px 10px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '13px', background: 'white' }}
+                                >
+                                    <option value="09:00 AM - 11:00 AM">Morning Slot: 09:00 AM - 11:00 AM</option>
+                                    <option value="11:00 AM - 01:00 PM">Morning Slot: 11:00 AM - 01:00 PM</option>
+                                    <option value="02:00 PM - 04:00 PM">Afternoon Slot: 02:00 PM - 04:00 PM</option>
+                                    <option value="04:00 PM - 06:00 PM">Evening Slot: 04:00 PM - 06:00 PM</option>
+                                    <option value="Emergency Walk-in">Emergency / Urgent Walk-in</option>
+                                </select>
+                            </div>
+
+                            {/* Submit Button */}
+                            <button
+                                type="submit"
+                                disabled={bookingSubmitting}
                                 style={{
                                     width: '100%',
-                                    backgroundColor: '#0b57d0',
-                                    color: '#fff',
-                                    border: 'none',
-                                    padding: '12px',
+                                    padding: '13px',
                                     borderRadius: '12px',
-                                    fontWeight: '700',
-                                    fontSize: '0.95rem',
-                                    cursor: 'pointer',
+                                    border: 'none',
+                                    background: 'linear-gradient(135deg, #0f766e, #0d9488)',
+                                    color: 'white',
+                                    fontSize: '15px',
+                                    fontWeight: 800,
+                                    cursor: bookingSubmitting ? 'not-allowed' : 'pointer',
+                                    boxShadow: '0 4px 15px rgba(15, 118, 110, 0.35)',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     gap: '8px'
                                 }}
                             >
-                                <RefreshCw size={18} className={isSyncing ? 'animate-spin' : ''} />
-                                {isSyncing ? 'Synchronizing with NHA...' : 'Force Sync to Ayushman Bharat Cloud'}
+                                {bookingSubmitting ? (
+                                    <>
+                                        <RefreshCw size={17} className="animate-spin" />
+                                        <span>Confirming Appointment Pass...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <CheckCircle2 size={18} />
+                                        <span>Confirm & Generate Patient Visit Pass</span>
+                                    </>
+                                )}
                             </button>
-                        </motion.div>
+                        </form>
                     </div>
-                )}
-            </AnimatePresence>
+                </div>
+            )}
 
-            {/* MODAL 2: REGISTER PATIENT */}
-            <AnimatePresence>
-                {activeModal === 'register' && (
-                    <div style={modalBackdropStyle}>
-                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} style={modalContainerStyle}>
-                            <div style={modalHeaderStyle}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <UserPlus size={22} color="#0284c7" />
-                                    <h3 style={modalTitleStyle}>Register New Village Patient</h3>
-                                </div>
-                                <button onClick={() => setActiveModal(null)} style={closeBtnStyle}><X size={20} /></button>
+            {/* CONFIRMED BOOKING SUCCESS PASS MODAL */}
+            {bookingSuccessModal && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'rgba(15, 23, 42, 0.85)',
+                    backdropFilter: 'blur(10px)',
+                    zIndex: 10000,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '16px'
+                }}>
+                    <motion.div
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        style={{
+                            background: '#ffffff',
+                            borderRadius: '24px',
+                            width: '100%',
+                            maxWidth: '520px',
+                            maxHeight: '92vh',
+                            overflowY: 'auto',
+                            padding: '24px',
+                            boxShadow: '0 25px 60px rgba(0,0,0,0.3)',
+                            textAlign: 'center'
+                        }}
+                    >
+                        <div style={{
+                            width: '56px',
+                            height: '56px',
+                            borderRadius: '50%',
+                            background: '#dcfce7',
+                            color: '#16a34a',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            margin: '0 auto 14px'
+                        }}>
+                            <CheckCircle2 size={32} />
+                        </div>
+
+                        <span style={{
+                            background: '#f0fdf4',
+                            color: '#166534',
+                            border: '1px solid #bbf7d0',
+                            padding: '4px 12px',
+                            borderRadius: '20px',
+                            fontSize: '11.5px',
+                            fontWeight: 800,
+                            letterSpacing: '0.5px'
+                        }}>
+                            APPOINTMENT PASS CONFIRMED
+                        </span>
+
+                        <h2 style={{ margin: '10px 0 4px', fontSize: '20px', fontWeight: 800, color: '#1e293b' }}>
+                            Patient Visit Pass: {bookingSuccessModal.patient_name}
+                        </h2>
+
+                        <div style={{
+                            fontFamily: 'monospace',
+                            fontSize: '18px',
+                            fontWeight: 800,
+                            color: '#0f766e',
+                            background: '#f0fdfa',
+                            padding: '8px 16px',
+                            borderRadius: '10px',
+                            display: 'inline-block',
+                            margin: '8px 0 16px',
+                            border: '1px dashed #0d9488'
+                        }}>
+                            TOKEN: {bookingSuccessModal.token}
+                        </div>
+
+                        {/* Visit Schedule Box */}
+                        <div style={{
+                            background: '#f8fafc',
+                            borderRadius: '16px',
+                            border: '1px solid #e2e8f0',
+                            padding: '16px',
+                            textAlign: 'left',
+                            marginBottom: '18px'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                                <Calendar size={16} color="#0f766e" />
+                                <span style={{ fontSize: '13px', color: '#334155' }}>
+                                    <strong>Visit Date:</strong> {bookingSuccessModal.appointment_date}
+                                </span>
                             </div>
 
-                            {regSuccess ? (
-                                <div style={{ textAlign: 'center', padding: '24px 0' }}>
-                                    <CheckCircle2 size={48} color="#059669" style={{ margin: '0 auto 12px' }} />
-                                    <h4 style={{ margin: 0, color: '#065f46', fontSize: '1.1rem' }}>Patient Registered Successfully!</h4>
-                                    <p style={{ color: '#64748b', fontSize: '0.85rem', marginTop: '6px' }}>ABHA ID generated & stored in offline field registry.</p>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                                <Clock size={16} color="#0f766e" />
+                                <span style={{ fontSize: '13px', color: '#334155' }}>
+                                    <strong>Time Window:</strong> {bookingSuccessModal.time_slot}
+                                </span>
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '8px' }}>
+                                <Building2 size={16} color="#0f766e" style={{ marginTop: '2px' }} />
+                                <span style={{ fontSize: '13px', color: '#334155' }}>
+                                    <strong>Hospital:</strong> {bookingSuccessModal.facility_name}
+                                </span>
+                            </div>
+
+                            {bookingSuccessModal.facility_phone && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <Phone size={16} color="#0f766e" />
+                                    <span style={{ fontSize: '13px', color: '#334155' }}>
+                                        <strong>Hospital Phone:</strong> <strong style={{ fontFamily: 'monospace' }}>{bookingSuccessModal.facility_phone}</strong>
+                                    </span>
                                 </div>
-                            ) : (
-                                <form onSubmit={handleRegisterSubmit}>
-                                    <div style={{ marginBottom: '12px' }}>
-                                        <label style={labelStyle}>Full Name *</label>
-                                        <input 
-                                            type="text" 
-                                            required
-                                            placeholder="e.g. Rekha Shinde" 
-                                            value={regForm.fullName}
-                                            onChange={e => setRegForm({...regForm, fullName: e.target.value})}
-                                            style={inputStyle}
-                                        />
-                                    </div>
-
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
-                                        <div>
-                                            <label style={labelStyle}>Age (Years) *</label>
-                                            <input 
-                                                type="number" 
-                                                required
-                                                placeholder="e.g. 26" 
-                                                value={regForm.age}
-                                                onChange={e => setRegForm({...regForm, age: e.target.value})}
-                                                style={inputStyle}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label style={labelStyle}>Gender *</label>
-                                            <select 
-                                                value={regForm.gender} 
-                                                onChange={e => setRegForm({...regForm, gender: e.target.value})}
-                                                style={inputStyle}
-                                            >
-                                                <option value="Female">Female</option>
-                                                <option value="Male">Male</option>
-                                                <option value="Other">Other</option>
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
-                                        <div>
-                                            <label style={labelStyle}>Husband / Father</label>
-                                            <input 
-                                                type="text" 
-                                                placeholder="e.g. Santosh" 
-                                                value={regForm.husbandName}
-                                                onChange={e => setRegForm({...regForm, husbandName: e.target.value})}
-                                                style={inputStyle}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label style={labelStyle}>Mobile Number *</label>
-                                            <input 
-                                                type="tel" 
-                                                required
-                                                placeholder="10-digit number" 
-                                                value={regForm.phone}
-                                                onChange={e => setRegForm({...regForm, phone: e.target.value})}
-                                                style={inputStyle}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div style={{ marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <input 
-                                            type="checkbox" 
-                                            id="pregCheck" 
-                                            checked={regForm.isPregnant}
-                                            onChange={e => setRegForm({...regForm, isPregnant: e.target.checked})}
-                                        />
-                                        <label htmlFor="pregCheck" style={{ fontSize: '0.85rem', fontWeight: '600', color: '#334155' }}>
-                                            Eligible for Maternal Health (ANC Tracking)
-                                        </label>
-                                    </div>
-
-                                    {regForm.isPregnant && (
-                                        <div style={{ marginBottom: '14px' }}>
-                                            <label style={labelStyle}>Gestational Age (Weeks)</label>
-                                            <input 
-                                                type="number" 
-                                                placeholder="e.g. 16" 
-                                                value={regForm.gestationalWeeks}
-                                                onChange={e => setRegForm({...regForm, gestationalWeeks: e.target.value})}
-                                                style={inputStyle}
-                                            />
-                                        </div>
-                                    )}
-
-                                    <div style={{ padding: '10px', backgroundColor: '#f8fafc', borderRadius: '10px', marginBottom: '16px', fontSize: '0.8rem', color: '#475569' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600', color: '#0f172a' }}>
-                                            <Shield size={14} color="#0b57d0" /> Digital Consent & ABHA Seeding
-                                        </div>
-                                        <div>Patient gave explicit consent to create Ayushman Bharat Health Record.</div>
-                                    </div>
-
-                                    <button 
-                                        type="submit"
-                                        style={{
-                                            width: '100%',
-                                            backgroundColor: '#0284c7',
-                                            color: '#fff',
-                                            border: 'none',
-                                            padding: '12px',
-                                            borderRadius: '12px',
-                                            fontWeight: '700',
-                                            fontSize: '0.95rem',
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        Save & Register Beneficiary
-                                    </button>
-                                </form>
                             )}
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
+                        </div>
 
-            {/* MODAL 3: FIND PATIENT DIRECTORY */}
-            <AnimatePresence>
-                {activeModal === 'find' && (
-                    <div style={modalBackdropStyle}>
-                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} style={modalContainerStyle}>
-                            <div style={modalHeaderStyle}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <Search size={22} color="#0ca678" />
-                                    <h3 style={modalTitleStyle}>Catchment Patient Directory</h3>
-                                </div>
-                                <button onClick={() => setActiveModal(null)} style={closeBtnStyle}><X size={20} /></button>
-                            </div>
-
-                            <div style={{ position: 'relative', marginBottom: '14px' }}>
-                                <Search size={18} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '10px' }} />
-                                <input 
-                                    type="text" 
-                                    placeholder="Search by name, husband, or ABHA..."
-                                    value={searchTerm}
-                                    onChange={e => setSearchTerm(e.target.value)}
-                                    style={{ ...inputStyle, paddingLeft: '38px' }}
-                                />
-                            </div>
-
-                            <div style={{ maxHeight: '350px', overflowY: 'auto' }}>
-                                {patientList
-                                    .filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.husband.toLowerCase().includes(searchTerm.toLowerCase()))
-                                    .map(p => (
-                                        <div 
-                                            key={p.id}
-                                            style={{
-                                                padding: '12px',
-                                                borderRadius: '12px',
-                                                border: '1px solid #e2e8f0',
-                                                marginBottom: '10px',
-                                                backgroundColor: p.risk === 'HIGH RISK' ? '#fff1f2' : '#ffffff'
-                                            }}
-                                        >
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                                <div>
-                                                    <div style={{ fontWeight: '700', color: '#0f172a', fontSize: '0.95rem' }}>
-                                                        {p.name} ({p.age}y, {p.gender})
-                                                    </div>
-                                                    <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
-                                                        {p.status} • {p.ward} • 📞 {p.phone}
-                                                    </div>
-                                                    <div style={{ fontSize: '0.75rem', color: '#0284c7', marginTop: '2px' }}>
-                                                        ABHA: {p.abha}
-                                                    </div>
-                                                </div>
-                                                <span style={{
-                                                    fontSize: '0.7rem',
-                                                    fontWeight: '800',
-                                                    padding: '3px 8px',
-                                                    borderRadius: '8px',
-                                                    backgroundColor: p.risk === 'HIGH RISK' ? '#fee2e2' : '#dcfce7',
-                                                    color: p.risk === 'HIGH RISK' ? '#dc2626' : '#15803d'
-                                                }}>
-                                                    {p.risk}
-                                                </span>
-                                            </div>
-
-                                            <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
-                                                <button 
-                                                    onClick={() => {
-                                                        setActiveModal('vitals');
-                                                        setVitalsForm({ ...vitalsForm, patientName: `${p.name} (Age ${p.age})` });
-                                                    }}
-                                                    style={{
-                                                        flex: 1,
-                                                        padding: '6px',
-                                                        borderRadius: '8px',
-                                                        border: '1px solid #cbd5e1',
-                                                        backgroundColor: '#ffffff',
-                                                        fontSize: '0.75rem',
-                                                        fontWeight: '600',
-                                                        cursor: 'pointer'
-                                                    }}
-                                                >
-                                                    ⚡ Record Vitals
-                                                </button>
-                                                <button 
-                                                    onClick={() => setActiveModal('history')}
-                                                    style={{
-                                                        flex: 1,
-                                                        padding: '6px',
-                                                        borderRadius: '8px',
-                                                        border: '1px solid #cbd5e1',
-                                                        backgroundColor: '#ffffff',
-                                                        fontSize: '0.75rem',
-                                                        fontWeight: '600',
-                                                        cursor: 'pointer'
-                                                    }}
-                                                >
-                                                    📜 View Encounters
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
-
-            {/* MODAL 4: CLINICAL VITALS & RED-FLAG ASSESSMENT */}
-            <AnimatePresence>
-                {activeModal === 'vitals' && (
-                    <div style={modalBackdropStyle}>
-                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} style={modalContainerStyle}>
-                            <div style={modalHeaderStyle}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <ShieldAlert size={22} color="#f97316" />
-                                    <h3 style={modalTitleStyle}>Field Clinical Vitals & Triage</h3>
-                                </div>
-                                <button onClick={() => setActiveModal(null)} style={closeBtnStyle}><X size={20} /></button>
-                            </div>
-
-                            {vitalsSubmitted ? (
-                                <div style={{ textAlign: 'center', padding: '24px 0' }}>
-                                    <AlertTriangle size={48} color="#dc2626" style={{ margin: '0 auto 12px' }} />
-                                    <h4 style={{ margin: 0, color: '#dc2626', fontSize: '1.1rem' }}>HIGH RISK RED-FLAG TRIGGERED!</h4>
-                                    <p style={{ color: '#475569', fontSize: '0.85rem', marginTop: '6px' }}>
-                                        Preeclampsia Risk detected (BP 165/110). Referral Token <strong>#TK-8921</strong> automatically dispatched to Nashik District Hospital.
-                                    </p>
-                                </div>
-                            ) : (
-                                <form onSubmit={handleVitalsSubmit}>
-                                    <div style={{ marginBottom: '12px' }}>
-                                        <label style={labelStyle}>Beneficiary</label>
-                                        <input type="text" readOnly value={vitalsForm.patientName} style={{ ...inputStyle, backgroundColor: '#f1f5f9' }} />
-                                    </div>
-
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
-                                        <div>
-                                            <label style={labelStyle}>Systolic BP (mmHg)</label>
-                                            <input 
-                                                type="number" 
-                                                value={vitalsForm.systolic_bp}
-                                                onChange={e => setVitalsForm({...vitalsForm, systolic_bp: e.target.value})}
-                                                style={{ ...inputStyle, borderColor: vitalsForm.systolic_bp > 140 ? '#ef4444' : '#cbd5e1' }}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label style={labelStyle}>Diastolic BP (mmHg)</label>
-                                            <input 
-                                                type="number" 
-                                                value={vitalsForm.diastolic_bp}
-                                                onChange={e => setVitalsForm({...vitalsForm, diastolic_bp: e.target.value})}
-                                                style={{ ...inputStyle, borderColor: vitalsForm.diastolic_bp > 90 ? '#ef4444' : '#cbd5e1' }}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
-                                        <div>
-                                            <label style={labelStyle}>SpO2 (%)</label>
-                                            <input 
-                                                type="number" 
-                                                value={vitalsForm.spo2}
-                                                onChange={e => setVitalsForm({...vitalsForm, spo2: e.target.value})}
-                                                style={inputStyle}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label style={labelStyle}>Blood Sugar (mg/dL)</label>
-                                            <input 
-                                                type="number" 
-                                                value={vitalsForm.blood_sugar_fbs}
-                                                onChange={e => setVitalsForm({...vitalsForm, blood_sugar_fbs: e.target.value})}
-                                                style={inputStyle}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* AI Red-Flag Evaluation Callout */}
-                                    <div style={{
-                                        padding: '12px',
-                                        backgroundColor: '#fee2e2',
-                                        borderRadius: '12px',
-                                        border: '1px solid #fca5a5',
-                                        marginBottom: '16px'
-                                    }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '800', color: '#dc2626', fontSize: '0.85rem' }}>
-                                            <AlertTriangle size={16} /> RED-FLAG WARNING: Stage 2 Hypertensive Crisis
-                                        </div>
-                                        <div style={{ fontSize: '0.78rem', color: '#7f1d1d', marginTop: '4px' }}>
-                                            At 34 weeks pregnancy, BP 165/110 indicates severe preeclampsia. Urgent hospital referral mandatory.
-                                        </div>
-                                    </div>
-
-                                    <button 
-                                        type="submit"
-                                        style={{
-                                            width: '100%',
-                                            backgroundColor: '#dc2626',
-                                            color: '#fff',
-                                            border: 'none',
-                                            padding: '12px',
-                                            borderRadius: '12px',
-                                            fontWeight: '700',
-                                            fontSize: '0.95rem',
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        Save Vitals & Dispatch Emergency Alert
-                                    </button>
-                                </form>
-                            )}
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
-
-            {/* MODAL 5: MEDICAL HISTORY & LONGITUDINAL ENCOUNTERS */}
-            <AnimatePresence>
-                {activeModal === 'history' && (
-                    <div style={modalBackdropStyle}>
-                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} style={modalContainerStyle}>
-                            <div style={modalHeaderStyle}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <History size={22} color="#6366f1" />
-                                    <h3 style={modalTitleStyle}>Longitudinal Encounters</h3>
-                                </div>
-                                <button onClick={() => setActiveModal(null)} style={closeBtnStyle}><X size={20} /></button>
-                            </div>
-
-                            <div style={{ borderLeft: '2px solid #cbd5e1', marginLeft: '12px', paddingLeft: '16px' }}>
-                                <div style={{ marginBottom: '16px', position: 'relative' }}>
-                                    <div style={{ position: 'absolute', left: '-22px', top: '2px', width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#dc2626' }} />
-                                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Today, 09:15 AM (ANC Visit 4)</div>
-                                    <div style={{ fontWeight: '700', color: '#0f172a', fontSize: '0.9rem' }}>Preeclampsia Screening - High Risk</div>
-                                    <div style={{ fontSize: '0.8rem', color: '#334155' }}>BP 165/110 mmHg • 108 Emergency Ambulance Dispatched to Nashik FRU.</div>
-                                </div>
-
-                                <div style={{ marginBottom: '16px', position: 'relative' }}>
-                                    <div style={{ position: 'absolute', left: '-22px', top: '2px', width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#0284c7' }} />
-                                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>28 Aug 2026 (ANC Visit 3)</div>
-                                    <div style={{ fontWeight: '700', color: '#0f172a', fontSize: '0.9rem' }}>Hemoglobin & Iron Supplementation</div>
-                                    <div style={{ fontSize: '0.8rem', color: '#334155' }}>Hb 10.2 g/dL • IFA Tablets 100 Strip Given • Calcium 500mg.</div>
-                                </div>
-
-                                <div style={{ position: 'relative' }}>
-                                    <div style={{ position: 'absolute', left: '-22px', top: '2px', width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#10b981' }} />
-                                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>14 Jul 2026 (ANC Visit 2)</div>
-                                    <div style={{ fontWeight: '700', color: '#0f172a', fontSize: '0.9rem' }}>Tetanus Toxoid (TT-2) Dose Given</div>
-                                    <div style={{ fontSize: '0.8rem', color: '#334155' }}>Administered at Shirwal Sub-Centre by ANM Suman.</div>
-                                </div>
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
-
-            {/* MODAL 6: CLOSED-LOOP TRACK */}
-            <AnimatePresence>
-                {activeModal === 'closedLoop' && (
-                    <div style={modalBackdropStyle}>
-                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} style={modalContainerStyle}>
-                            <div style={modalHeaderStyle}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <ArrowLeftRight size={22} color="#0d9488" />
-                                    <h3 style={modalTitleStyle}>Closed-Loop Referral Tracker</h3>
-                                </div>
-                                <button onClick={() => setActiveModal(null)} style={closeBtnStyle}><X size={20} /></button>
-                            </div>
-
-                            <div style={{ maxHeight: '380px', overflowY: 'auto' }}>
-                                {activeReferrals.map((ref, idx) => (
-                                    <div 
-                                        key={idx}
-                                        style={{
-                                            padding: '14px',
-                                            borderRadius: '14px',
-                                            border: '1px solid #e2e8f0',
-                                            marginBottom: '12px',
-                                            backgroundColor: '#ffffff'
-                                        }}
-                                    >
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                                            <span style={{ fontWeight: '800', color: '#0b57d0', fontSize: '0.9rem' }}>{ref.token}</span>
-                                            <span style={{
-                                                fontSize: '0.7rem',
-                                                fontWeight: '800',
-                                                padding: '3px 8px',
-                                                borderRadius: '6px',
-                                                backgroundColor: ref.urgency === 'HIGH PRIORITY' ? '#fee2e2' : '#fef3c7',
-                                                color: ref.urgency === 'HIGH PRIORITY' ? '#dc2626' : '#d97706'
-                                            }}>
-                                                {ref.urgency}
-                                            </span>
-                                        </div>
-
-                                        <div style={{ fontWeight: '700', color: '#0f172a', fontSize: '0.95rem' }}>{ref.patient}</div>
-                                        <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Reason: {ref.condition}</div>
-
-                                        <div style={{ marginTop: '8px', padding: '10px', backgroundColor: '#f8fafc', borderRadius: '10px', fontSize: '0.8rem' }}>
-                                            <div>🏥 <strong>{ref.facility}</strong></div>
-                                            <div>👨‍⚕️ Assigned: {ref.doctor}</div>
-                                            <div>🛏️ Status: {ref.bedStatus}</div>
-                                            <div style={{ color: '#0284c7', fontWeight: '600', marginTop: '4px' }}>🚑 {ref.transport}</div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
-
-            {/* MODAL 7: FACILITY MATCHER */}
-            <AnimatePresence>
-                {activeModal === 'facilityMatcher' && (
-                    <div style={modalBackdropStyle}>
-                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} style={modalContainerStyle}>
-                            <div style={modalHeaderStyle}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <GitFork size={22} color="#3b82f6" />
-                                    <h3 style={modalTitleStyle}>Smart Facility Matcher</h3>
-                                </div>
-                                <button onClick={() => setActiveModal(null)} style={closeBtnStyle}><X size={20} /></button>
-                            </div>
-
-                            <p style={{ fontSize: '0.8rem', color: '#64748b', marginTop: 0, marginBottom: '14px' }}>
-                                Nearest facilities routed based on emergency level and live bed availability.
-                            </p>
-
-                            <div style={{ maxHeight: '380px', overflowY: 'auto' }}>
-                                {facilities.map((f, idx) => (
-                                    <div 
-                                        key={idx}
-                                        style={{
-                                            padding: '14px',
-                                            borderRadius: '14px',
-                                            border: '1px solid #e2e8f0',
-                                            marginBottom: '12px',
-                                            backgroundColor: '#ffffff'
-                                        }}
-                                    >
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                            <div>
-                                                <div style={{ fontWeight: '700', color: '#0f172a', fontSize: '0.95rem' }}>{f.name}</div>
-                                                <div style={{ fontSize: '0.78rem', color: '#64748b' }}>{f.type}</div>
-                                            </div>
-                                            <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#059669', backgroundColor: '#dcfce7', padding: '2px 8px', borderRadius: '6px' }}>
-                                                {f.status}
-                                            </span>
-                                        </div>
-
-                                        <div style={{ display: 'flex', gap: '14px', marginTop: '8px', fontSize: '0.8rem', color: '#334155' }}>
-                                            <span>📍 <strong>{f.dist}</strong> ({f.eta})</span>
-                                            <span>🛏️ <strong>{f.normalBeds}</strong> Beds</span>
-                                            <span>❤️ <strong>{f.icuBeds}</strong> ICU</span>
-                                        </div>
-
-                                        <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '6px' }}>
-                                            Specialists: {f.specialists.join(', ')}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
-
-            {/* MODAL 8: EMERGENCY ALERT ESCALATION DETAILS */}
-            <AnimatePresence>
-                {activeModal === 'emergencyAlert' && (
-                    <div style={modalBackdropStyle}>
-                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} style={modalContainerStyle}>
-                            <div style={modalHeaderStyle}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <Asterisk size={24} color="#dc2626" />
-                                    <h3 style={{ ...modalTitleStyle, color: '#dc2626' }}>Emergency Escalation Dispatch</h3>
-                                </div>
-                                <button onClick={() => setActiveModal(null)} style={closeBtnStyle}><X size={20} /></button>
-                            </div>
-
-                            <div style={{ padding: '14px', backgroundColor: '#fee2e2', borderRadius: '14px', border: '1px solid #fca5a5', marginBottom: '16px' }}>
-                                <div style={{ fontWeight: '800', color: '#dc2626', fontSize: '1rem' }}>Meena Sharma (Age 27) - 34 Wk Antenatal</div>
-                                <div style={{ fontSize: '0.85rem', color: '#7f1d1d', marginTop: '4px' }}>
-                                    BP: 165/110 mmHg • High Risk Preeclampsia • Severe Headaches
-                                </div>
-                            </div>
-
-                            <div style={{ fontSize: '0.85rem', color: '#334155', marginBottom: '16px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f1f5f9' }}>
-                                    <span>Escalation Status:</span>
-                                    <strong style={{ color: '#dc2626' }}>ALERTED / ACTIVE</strong>
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f1f5f9' }}>
-                                    <span>Target Hospital:</span>
-                                    <strong>Nashik District Hospital (FRU)</strong>
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f1f5f9' }}>
-                                    <span>108 Ambulance:</span>
-                                    <strong style={{ color: '#0284c7' }}>MH-15-EM-9902 (Driver: Dilip)</strong>
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
-                                    <span>Emergency Bed:</span>
-                                    <strong style={{ color: '#059669' }}>Reserved (ICU Bed #04)</strong>
-                                </div>
-                            </div>
-
-                            <div style={{ display: 'flex', gap: '10px' }}>
-                                <a 
-                                    href="tel:108"
+                        {/* Action buttons inside confirmation */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {bookingSuccessModal.facility_phone ? (
+                                <button
+                                    onClick={() => handleCallHospital(bookingSuccessModal.facility_phone, bookingSuccessModal.facility_name)}
                                     style={{
-                                        flex: 1,
-                                        backgroundColor: '#dc2626',
-                                        color: '#fff',
-                                        textDecoration: 'none',
-                                        padding: '12px',
+                                        background: '#0d9488',
+                                        color: 'white',
+                                        border: 'none',
                                         borderRadius: '12px',
-                                        fontWeight: '700',
-                                        fontSize: '0.9rem',
+                                        padding: '11px',
+                                        fontSize: '13.5px',
+                                        fontWeight: 700,
+                                        cursor: 'pointer',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         gap: '6px'
                                     }}
                                 >
-                                    <Phone size={16} /> Call 108 Dispatch
-                                </a>
-                                <button 
-                                    onClick={() => setActiveModal('closedLoop')}
+                                    <PhoneCall size={16} />
+                                    <span>Call Hospital Desk Now</span>
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => handleSearchHospitalOnGoogle({ name: bookingSuccessModal.facility_name, address: bookingSuccessModal.facility_address })}
                                     style={{
-                                        flex: 1,
-                                        backgroundColor: '#0f172a',
-                                        color: '#fff',
-                                        border: 'none',
-                                        padding: '12px',
+                                        background: '#f8fafc',
+                                        color: '#2563eb',
+                                        border: '1px solid #bfdbfe',
                                         borderRadius: '12px',
-                                        fontWeight: '700',
-                                        fontSize: '0.9rem',
-                                        cursor: 'pointer'
+                                        padding: '11px',
+                                        fontSize: '13px',
+                                        fontWeight: 700,
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '6px'
                                     }}
                                 >
-                                    Track Live Route
+                                    <Search size={15} color="#2563eb" />
+                                    <span>Search Hospital Phone on Google</span>
                                 </button>
-                            </div>
-                        </motion.div>
+                            )}
+
+                            <button
+                                onClick={() => handleOpenMapDirections({
+                                    lat: bookingSuccessModal.facility_lat || userGps.lat,
+                                    lon: bookingSuccessModal.facility_lon || userGps.lon,
+                                    name: bookingSuccessModal.facility_name
+                                })}
+                                style={{
+                                    background: '#f1f5f9',
+                                    color: '#1e293b',
+                                    border: '1px solid #cbd5e1',
+                                    borderRadius: '12px',
+                                    padding: '11px',
+                                    fontSize: '13.5px',
+                                    fontWeight: 600,
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '6px'
+                                }}
+                            >
+                                <Navigation size={16} color="#0284c7" />
+                                <span>Open Hospital on Google Maps</span>
+                            </button>
+
+                            <button
+                                onClick={() => {
+                                    setBookingSuccessModal(null);
+                                    setActiveTab('passes');
+                                }}
+                                style={{
+                                    background: 'transparent',
+                                    color: '#64748b',
+                                    border: 'none',
+                                    padding: '8px',
+                                    fontSize: '13px',
+                                    fontWeight: 600,
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                Close & View All Passes
+                            </button>
+                        </div>
+                    </motion.div>
+                </div>
+            )}
+
+            {/* TAB 3: ASSISTED APPOINTMENT PASSES & SCHEDULE TRACKER */}
+            {activeTab === 'passes' && (
+                <div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+                        <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: '#1e293b' }}>
+                            Assisted Citizen Appointments ({appointments.length})
+                        </h2>
+                        <button
+                            onClick={loadAppointments}
+                            style={{
+                                background: '#f1f5f9',
+                                border: '1px solid #cbd5e1',
+                                borderRadius: '8px',
+                                padding: '6px 10px',
+                                fontSize: '12px',
+                                fontWeight: 700,
+                                color: '#475569',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '5px',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            <RefreshCw size={13} className={loadingAppointments ? 'animate-spin' : ''} />
+                            Refresh
+                        </button>
                     </div>
-                )}
-            </AnimatePresence>
 
-            {/* MODAL 9: NOTIFICATIONS */}
-            <AnimatePresence>
-                {activeModal === 'notifications' && (
-                    <div style={modalBackdropStyle}>
-                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} style={modalContainerStyle}>
-                            <div style={modalHeaderStyle}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <Bell size={22} color="#0b57d0" />
-                                    <h3 style={modalTitleStyle}>ASHA Portal Alerts</h3>
-                                </div>
-                                <button onClick={() => setActiveModal(null)} style={closeBtnStyle}><X size={20} /></button>
-                            </div>
+                    {loadingAppointments ? (
+                        <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+                            <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 8px' }} />
+                            <p style={{ margin: 0, fontSize: '13px' }}>Loading appointment visit passes...</p>
+                        </div>
+                    ) : appointments.length === 0 ? (
+                        <div style={{
+                            background: '#ffffff',
+                            borderRadius: '16px',
+                            border: '1px solid #e2e8f0',
+                            padding: '36px 20px',
+                            textAlign: 'center'
+                        }}>
+                            <Calendar size={36} color="#94a3b8" style={{ margin: '0 auto 10px' }} />
+                            <h3 style={{ margin: '0 0 4px', fontSize: '16px', color: '#334155' }}>No Assisted Appointments Booked Yet</h3>
+                            <p style={{ margin: '0 0 16px', fontSize: '12.5px', color: '#64748b' }}>
+                                Locate nearby hospitals on the radar and book on behalf of any citizen.
+                            </p>
+                            <button
+                                onClick={() => setActiveTab('locator')}
+                                style={{
+                                    background: '#0d9488',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '10px',
+                                    padding: '10px 18px',
+                                    fontSize: '13px',
+                                    fontWeight: 700,
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                Open Hospital Locator
+                            </button>
+                        </div>
+                    ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                            {appointments.map((apt, idx) => (
+                                <div
+                                    key={apt.id || idx}
+                                    style={{
+                                        background: '#ffffff',
+                                        borderRadius: '16px',
+                                        border: '1px solid #e2e8f0',
+                                        padding: '16px',
+                                        boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+                                    }}
+                                >
+                                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '10px', marginBottom: '10px' }}>
+                                        <div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                                                <span style={{
+                                                    background: apt.is_offline_pending ? '#fef3c7' : '#dcfce7',
+                                                    color: apt.is_offline_pending ? '#92400e' : '#166534',
+                                                    fontSize: '11px',
+                                                    fontWeight: 700,
+                                                    padding: '2px 8px',
+                                                    borderRadius: '6px'
+                                                }}>
+                                                    {apt.is_offline_pending ? '⚡ Pending Cloud Sync' : '✓ Confirmed on Supabase'}
+                                                </span>
 
-                            {notifications.map(n => (
-                                <div key={n.id} style={{ padding: '12px', borderRadius: '12px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', marginBottom: '10px' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                        <strong style={{ fontSize: '0.9rem', color: '#0f172a' }}>{n.title}</strong>
-                                        <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{n.time}</span>
+                                                <span style={{
+                                                    background: '#ede9fe',
+                                                    color: '#6d28d9',
+                                                    fontSize: '11px',
+                                                    fontWeight: 700,
+                                                    padding: '2px 8px',
+                                                    borderRadius: '6px'
+                                                }}>
+                                                    {apt.department || 'General OPD'}
+                                                </span>
+                                            </div>
+
+                                            <h3 style={{ margin: '0 0 2px', fontSize: '16px', fontWeight: 800, color: '#1e293b' }}>
+                                                {apt.patient_name || 'Patient on Record'}
+                                            </h3>
+                                            <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>
+                                                Phone: <strong>{apt.patient_phone || '+91 9800000000'}</strong> • ABHA: <strong style={{ fontFamily: 'monospace' }}>{apt.patient_abha || '91-4829-1092'}</strong>
+                                            </p>
+                                        </div>
+
+                                        {/* Token */}
+                                        <div style={{
+                                            background: '#f0fdfa',
+                                            border: '1px solid #99f6e4',
+                                            borderRadius: '10px',
+                                            padding: '6px 10px',
+                                            textAlign: 'right'
+                                        }}>
+                                            <div style={{ fontSize: '12px', fontWeight: 800, color: '#0f766e', fontFamily: 'monospace' }}>
+                                                {apt.token || `APT-${idx + 100}`}
+                                            </div>
+                                            <div style={{ fontSize: '10px', color: '#94a3b8' }}>Token Pass</div>
+                                        </div>
                                     </div>
-                                    <p style={{ fontSize: '0.8rem', color: '#475569', margin: '4px 0 0 0' }}>{n.desc}</p>
+
+                                    {/* Hospital & Schedule Highlight Box */}
+                                    <div style={{
+                                        background: '#f8fafc',
+                                        borderRadius: '12px',
+                                        padding: '12px',
+                                        marginBottom: '12px',
+                                        border: '1px solid #e2e8f0'
+                                    }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                                            <Calendar size={15} color="#0f766e" />
+                                            <span style={{ fontSize: '13px', color: '#1e293b' }}>
+                                                <strong>Scheduled Visit Date:</strong> {apt.appointment_date}
+                                            </span>
+                                        </div>
+
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                                            <Clock size={15} color="#0f766e" />
+                                            <span style={{ fontSize: '13px', color: '#1e293b' }}>
+                                                <strong>Time Window:</strong> {apt.time_slot}
+                                            </span>
+                                        </div>
+
+                                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                                            <Building2 size={15} color="#0f766e" style={{ marginTop: '2px' }} />
+                                            <span style={{ fontSize: '13px', color: '#1e293b' }}>
+                                                <strong>Facility:</strong> {apt.facility_name || 'Designated Health Center'}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Actions */}
+                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                        {apt.facility_phone ? (
+                                            <button
+                                                onClick={() => handleCallHospital(apt.facility_phone, apt.facility_name)}
+                                                style={{
+                                                    flex: 1,
+                                                    background: '#0d9488',
+                                                    color: 'white',
+                                                    border: 'none',
+                                                    borderRadius: '8px',
+                                                    padding: '8px',
+                                                    fontSize: '12px',
+                                                    fontWeight: 700,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    gap: '5px',
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                <PhoneCall size={14} />
+                                                <span>Call Hospital</span>
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={() => handleSearchHospitalOnGoogle({ name: apt.facility_name, address: apt.facility_address })}
+                                                style={{
+                                                    flex: 1,
+                                                    background: '#f8fafc',
+                                                    color: '#2563eb',
+                                                    border: '1px solid #bfdbfe',
+                                                    borderRadius: '8px',
+                                                    padding: '8px',
+                                                    fontSize: '11.5px',
+                                                    fontWeight: 700,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    gap: '5px',
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                <Search size={13} color="#2563eb" />
+                                                <span>Search on Google</span>
+                                            </button>
+                                        )}
+
+                                        <button
+                                            onClick={() => handleOpenMapDirections({
+                                                lat: apt.facility_lat || userGps.lat,
+                                                lon: apt.facility_lon || userGps.lon,
+                                                name: apt.facility_name
+                                            })}
+                                            style={{
+                                                flex: 1,
+                                                background: '#f1f5f9',
+                                                color: '#334155',
+                                                border: '1px solid #cbd5e1',
+                                                borderRadius: '8px',
+                                                padding: '8px',
+                                                fontSize: '12px',
+                                                fontWeight: 600,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: '5px',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            <Navigation size={14} color="#0284c7" />
+                                            <span>Hospital Map</span>
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
+                        </div>
+                    )}
+                </div>
+            )}
 
         </div>
     );
-};
-
-// Modal and Form CSS in JS styles
-const modalBackdropStyle = {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.55)',
-    backdropFilter: 'blur(5px)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1000,
-    padding: '16px'
-};
-
-const modalContainerStyle = {
-    backgroundColor: '#ffffff',
-    borderRadius: '24px',
-    padding: '24px',
-    width: '100%',
-    maxWidth: '460px',
-    boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
-    maxHeight: '88vh',
-    overflowY: 'auto'
-};
-
-const modalHeaderStyle = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '18px',
-    paddingBottom: '12px',
-    borderBottom: '1px solid #f1f5f9'
-};
-
-const modalTitleStyle = {
-    fontSize: '1.15rem',
-    fontWeight: '700',
-    margin: 0,
-    color: '#0f172a'
-};
-
-const closeBtnStyle = {
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    color: '#94a3b8',
-    padding: '4px'
-};
-
-const labelStyle = {
-    display: 'block',
-    fontSize: '0.8rem',
-    fontWeight: '700',
-    color: '#334155',
-    marginBottom: '4px'
-};
-
-const inputStyle = {
-    width: '100%',
-    padding: '10px 12px',
-    borderRadius: '10px',
-    border: '1px solid #cbd5e1',
-    fontSize: '0.88rem',
-    outline: 'none',
-    boxSizing: 'border-box'
 };
 
 export default AshaDashboard;

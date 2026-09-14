@@ -53,12 +53,11 @@ const Navbar = () => {
             { path: '/asha', label: t('navAshaHub', 'ASHA Hub'), icon: HeartPulse },
             { path: '/triage', label: t('navFieldVitals', 'Field Vitals'), icon: Activity },
             { 
-                path: '/referrals', 
-                label: t('navReferrals', 'Referrals'), 
-                icon: GitBranch,
+                path: '/medical-history', 
+                label: t('navRecords', 'Record'), 
+                icon: FileText,
                 highlight: true 
             },
-            { path: '/family', label: t('navDependents', 'Dependents'), icon: Users },
             { path: '/profile', label: t('navProfile', 'Profile'), icon: User }
         ];
     } else if (role === 'doctor') {

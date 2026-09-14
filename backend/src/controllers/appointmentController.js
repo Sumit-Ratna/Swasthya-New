@@ -47,19 +47,9 @@ exports.bookAppointment = async (req, res) => {
             reason
         } = req.body;
 
-        const effectivePatientId = patient_id || req.user.id;
-
         const result = await appointmentService.bookAppointment({
-            patient_id: effectivePatientId,
-            doctor_id,
-            facility_id,
-            referral_id,
-            appointment_date,
-            time_slot,
-            is_walk_in: !!is_walk_in,
-            type: type || 'OPD',
-            department,
-            reason,
+            ...req.body,
+            patient_id: req.body.patient_id || req.user.id,
             user: req.user
         });
 
@@ -176,6 +166,44 @@ exports.getMyAppointments = async (req, res) => {
     } catch (err) {
         console.error('[APPOINTMENT] Fetch failed:', err);
         res.status(500).json({ error: "Fetch Failed" });
+    }
+};
+
+/**
+ * Get all appointments assisted or relevant to ASHA worker jurisdiction
+ */
+exports.getAshaAppointments = async (req, res) => {
+    try {
+        const ashaId = req.user?.id;
+        const allAppointments = await dbService.getAppointmentsByPatient(ashaId);
+        
+        // Also fetch any appointments created via localDb or database
+        const localAppointments = require('../services/localDb').find('appointments') || [];
+        
+        // Merge without duplicates
+        const map = new Map();
+        [...allAppointments, ...localAppointments].forEach(a => {
+            if (a && a.id) map.set(a.id, a);
+        });
+
+        res.json(Array.from(map.values()));
+    } catch (err) {
+        console.error('[APPOINTMENT] getAshaAppointments error:', err);
+        res.json(require('../services/localDb').find('appointments') || []);
+    }
+};
+
+/**
+ * Batch sync offline appointments
+ */
+exports.syncBatchAppointments = async (req, res) => {
+    try {
+        const { appointments } = req.body;
+        const result = await appointmentService.syncBatchAppointments(appointments, req.user);
+        res.json(result);
+    } catch (err) {
+        console.error('[APPOINTMENT] syncBatchAppointments error:', err);
+        res.status(500).json({ error: err.message });
     }
 };
 

@@ -72,6 +72,18 @@ const MedicalHistory = () => {
 
     useEffect(() => {
         fetchAllData();
+
+        const handleSyncEvent = () => {
+            fetchAllData();
+        };
+
+        window.addEventListener('swasthya_appointment_updated', handleSyncEvent);
+        window.addEventListener('storage', handleSyncEvent);
+
+        return () => {
+            window.removeEventListener('swasthya_appointment_updated', handleSyncEvent);
+            window.removeEventListener('storage', handleSyncEvent);
+        };
     }, [user, effectiveUser, activeMember]);
 
     const fetchAllData = async () => {
@@ -103,7 +115,7 @@ const MedicalHistory = () => {
         }
     };
 
-    // 2. Fetch Confirmed Appointments from Referrals, Supabase User Profile & Booking System
+    // 2. Fetch Confirmed Appointments from Referrals, Supabase, ASHA Assisted List & Local Queue
     const fetchConfirmedAppointments = async () => {
         const appointmentMap = new Map();
 
@@ -161,26 +173,109 @@ const MedicalHistory = () => {
 
             if (Array.isArray(profileApts)) {
                 profileApts.forEach(apt => {
-                    const key = apt.referral_id || apt.id || apt.queue_token;
-                    if (!appointmentMap.has(key)) {
+                    const key = apt.referral_id || apt.id || apt.token || apt.queue_token;
+                    if (key && !appointmentMap.has(key)) {
                         appointmentMap.set(key, {
                             ...apt,
                             id: apt.id,
-                            referral_id: apt.referral_id || apt.id,
+                            patient_name: apt.patient_name || 'Patient',
+                            patient_phone: apt.patient_phone,
                             facility_name: apt.facility_name || 'Healthcare Facility',
+                            facility_phone: apt.facility_phone,
+                            facility_address: apt.facility_address,
                             doctor_name: apt.doctor_name || 'Assigned Duty Medical Officer',
                             department: apt.department || apt.category || 'General Consultation',
-                            slot_date: apt.record_date || (apt.created_at ? apt.created_at.split('T')[0] : ''),
-                            slot_time: apt.slot_time || 'Morning OPD',
-                            queue_token: apt.queue_token || 'OPD-Token',
+                            slot_date: apt.appointment_date || apt.record_date || (apt.created_at ? apt.created_at.split('T')[0] : ''),
+                            slot_time: apt.time_slot || apt.slot_time || 'Morning OPD',
+                            queue_token: apt.token || apt.queue_token || 'OPD-Token',
                             status: apt.status || 'APPOINTMENT_BOOKED',
-                            reason: apt.notes || apt.title || 'Consultation'
+                            reason: apt.reason || apt.notes || apt.title || 'Consultation'
                         });
                     }
                 });
             }
         } catch (supaAptErr) {
             console.warn("Profile appointments fetch notice:", supaAptErr.message);
+        }
+
+        // Source C: Backend appointments API (Personal list + ASHA Assisted List)
+        try {
+            const token = localStorage.getItem('accessToken');
+            const authHeader = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+            
+            const [myListRes, ashaListRes] = await Promise.allSettled([
+                axios.get('/api/appointments/my-list', authHeader),
+                axios.get('/api/appointments/asha/list', authHeader)
+            ]);
+
+            const combinedApi = [];
+            if (myListRes.status === 'fulfilled' && Array.isArray(myListRes.value.data)) {
+                combinedApi.push(...myListRes.value.data);
+            }
+            if (ashaListRes.status === 'fulfilled' && Array.isArray(ashaListRes.value.data)) {
+                combinedApi.push(...ashaListRes.value.data);
+            }
+
+            combinedApi.forEach(apt => {
+                const key = apt.id || apt.token;
+                if (key && !appointmentMap.has(key)) {
+                    appointmentMap.set(key, {
+                        ...apt,
+                        id: apt.id,
+                        patient_name: apt.patient_name || 'Patient',
+                        patient_phone: apt.patient_phone,
+                        patient_age: apt.patient_age,
+                        patient_gender: apt.patient_gender,
+                        facility_name: apt.facility_name || 'Designated Health Center',
+                        facility_phone: apt.facility_phone || '+91 11 23978046',
+                        facility_address: apt.facility_address,
+                        doctor_name: apt.doctor?.name || apt.doctor_name || 'Medical Officer',
+                        department: apt.department || 'General OPD',
+                        slot_date: apt.appointment_date,
+                        slot_time: apt.time_slot,
+                        queue_token: apt.token || 'OPD-Token',
+                        status: apt.status || 'CONFIRMED',
+                        reason: apt.reason || 'Medical Consultation'
+                    });
+                }
+            });
+        } catch (aptApiErr) {
+            console.warn("Appointments API fetch notice:", aptApiErr.message);
+        }
+
+        // Source D: Local Offline Storage Queue
+        try {
+            const rawOffline = localStorage.getItem('swasthya_asha_offline_appointments');
+            if (rawOffline) {
+                const offlineList = JSON.parse(rawOffline);
+                if (Array.isArray(offlineList)) {
+                    offlineList.forEach(apt => {
+                        const key = apt.id || apt.token;
+                        if (key && !appointmentMap.has(key)) {
+                            appointmentMap.set(key, {
+                                ...apt,
+                                id: apt.id,
+                                patient_name: apt.patient_name || 'Patient',
+                                patient_phone: apt.patient_phone,
+                                patient_age: apt.patient_age,
+                                patient_gender: apt.patient_gender,
+                                facility_name: apt.facility_name || 'Designated Health Center',
+                                facility_phone: apt.facility_phone,
+                                facility_address: apt.facility_address,
+                                doctor_name: 'Medical Officer',
+                                department: apt.department || 'General OPD',
+                                slot_date: apt.appointment_date,
+                                slot_time: apt.time_slot,
+                                queue_token: apt.token,
+                                status: 'CONFIRMED (Offline Pass)',
+                                reason: apt.reason
+                            });
+                        }
+                    });
+                }
+            }
+        } catch (e) {
+            console.error('Offline appointments parse error:', e);
         }
 
         const consolidated = Array.from(appointmentMap.values());
@@ -442,14 +537,14 @@ const MedicalHistory = () => {
     // Consolidated Timeline Stream (Combining Documents, Confirmed Appointments, and Old Records)
     const combinedTimeline = [
         ...confirmedAppointments.map(apt => ({
-            id: apt.id,
+            id: apt.id || apt.token,
             type: 'appointment',
-            title: `OPD Appointment: ${apt.department || 'Consultation'}`,
-            facility: apt.facility_name,
-            doctor: apt.doctor_name,
-            date: apt.slot_date || (apt.created_at ? apt.created_at.split('T')[0] : '2026-09-09'),
-            time: apt.slot_time,
-            badge: 'CONFIRMED APPOINTMENT',
+            title: apt.patient_name ? `${apt.patient_name} • ${apt.department || 'OPD Consultation'}` : `OPD Appointment: ${apt.department || 'Consultation'}`,
+            facility: apt.facility_name || 'Designated Healthcare Facility',
+            doctor: apt.doctor_name || 'Medical Officer',
+            date: apt.slot_date || (apt.appointment_date) || (apt.created_at ? apt.created_at.split('T')[0] : '2026-09-09'),
+            time: apt.slot_time || apt.time_slot || '10:00 AM - 12:00 PM',
+            badge: apt.booked_by_asha ? 'ASHA ASSISTED PASS' : 'CONFIRMED APPOINTMENT',
             badgeColor: '#059669',
             badgeBg: '#d1fae5',
             raw: apt

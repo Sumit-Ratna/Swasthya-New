@@ -19,9 +19,11 @@ const getFallbackApiUrl = () => {
 };
 
 // Configurable API Base URL via environment or fallback
-export const API_BASE_URL = import.meta.env.VITE_API_URL !== undefined 
-    ? import.meta.env.VITE_API_URL 
-    : getFallbackApiUrl();
+export const API_BASE_URL = isNative
+    ? 'http://127.0.0.1:8000'
+    : (import.meta.env.VITE_API_URL !== undefined 
+        ? import.meta.env.VITE_API_URL 
+        : getFallbackApiUrl());
 
 // Configure Axios defaults
 axios.defaults.baseURL = API_BASE_URL;

@@ -55,6 +55,17 @@ app.use(cors({
         // Direct mobile native requests, Postman, curl have no Origin header
         if (!origin) return callback(null, true);
 
+        // Always allow localhost, 127.0.0.1, capacitor, ionic across all ports and schemes
+        if (
+            origin === 'capacitor://localhost' ||
+            origin === 'ionic://localhost' ||
+            origin === 'http://localhost' ||
+            origin === 'https://localhost' ||
+            /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)
+        ) {
+            return callback(null, true);
+        }
+
         // Check configured origins wildcard or specific match
         if (config.corsOrigins.includes('*') || config.corsOrigins.includes(origin)) {
             return callback(null, true);

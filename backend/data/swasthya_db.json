@@ -1708,6 +1708,25 @@
       "urgency": "ROUTINE",
       "status": "ACCEPTED",
       "created_at": "2026-09-08T18:15:05.777Z"
+    },
+    {
+      "id": "b5ae0bfa-3f3f-4f5e-9220-dbc07ec37bc3",
+      "patient_id": "user_1788928589324",
+      "assessment_id": null,
+      "referring_user_id": null,
+      "receiving_facility_id": "0db3626b-2dc9-4864-be59-cc0757b08f6a",
+      "assigned_doctor_id": null,
+      "status": "APPOINTMENT_BOOKED",
+      "risk_level": "MODERATE",
+      "urgency": "ROUTINE",
+      "specialty_required": "Hospital & Emergency Care",
+      "primary_complaint": "Doctor Consultation & Specialist Follow-up",
+      "clinical_summary": "Direct referral booking at Drona Hospital & Emergency Care. Doctor: Assigned OPD Specialist. Distance: 927 m.",
+      "reason_for_referral": "Scheduled appointment on 2026-09-09 at 10:30 AM",
+      "appointment_slot_time": "2026-09-09 at 10:30 AM",
+      "slot_token": "OPD-919",
+      "created_at": "2026-09-09T04:38:10.755Z",
+      "updated_at": "2026-09-09T04:38:10.755Z"
     }
   ],
   "referral_events": [
@@ -1806,6 +1825,36 @@
       "department": "Pediatrics",
       "appointment_date": "2026-09-08T18:15:05.772Z",
       "status": "CONFIRMED"
+    },
+    {
+      "id": "apt_1788927232782_vzpkdu",
+      "patient_id": "2be737eb-435e-4e56-82ab-0e0a3440c80e",
+      "patient_name": "Mohit",
+      "patient_phone": "6205658735",
+      "patient_age": "22",
+      "patient_gender": "Male",
+      "patient_abha": "91-6325-2313",
+      "doctor_id": "88888888-8888-8888-8888-888888888888",
+      "facility_id": "osm-drona-hosp-0",
+      "facility_name": "Drona Hospital & Emergency Care",
+      "facility_phone": "+91 9811234567",
+      "facility_address": "Bilaspur-Dankaur Marg, Near Yamuna Expressway, Dankaur, UP - 203201",
+      "facility_lat": 28.358,
+      "facility_lon": 77.545,
+      "appointment_date": "2026-09-10",
+      "time_slot": "10:00 AM - 12:00 PM",
+      "type": "opd",
+      "department": "Orthopedics",
+      "urgency": "ROUTINE",
+      "reason": "Severe pain in leg",
+      "status": "confirmed",
+      "token": "APT-232782-621",
+      "booked_by_asha": true,
+      "asha_worker_id": "2be737eb-435e-4e56-82ab-0e0a3440c80e",
+      "asha_worker_name": "Sunita",
+      "asha_notes": "Patient assisted by ASHA worker. No personal smartphone available.",
+      "created_at": "2026-09-09T04:13:52.782Z",
+      "updated_at": "2026-09-09T04:13:55.057Z"
     }
   ],
   "documents": [
@@ -27800,6 +27849,17 @@
         "actor_role": "FACILITY_STAFF"
       },
       "created_at": "2026-09-08T22:22:12.491Z"
+    },
+    {
+      "id": "73edf69a-f024-4d76-aa7f-13281c28a23a",
+      "user_id": "2be737eb-435e-4e56-82ab-0e0a3440c80e",
+      "title": "Appointment Confirmed",
+      "message": "Your OPD appointment on 2026-09-10 (10:00 AM - 12:00 PM) is confirmed.",
+      "type": "ALERT",
+      "is_read": false,
+      "read": false,
+      "metadata": {},
+      "created_at": "2026-09-09T04:13:56.253Z"
     }
   ],
   "family_invitations": [
