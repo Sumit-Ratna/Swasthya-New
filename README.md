@@ -1,4 +1,4 @@
-# 🏥 SwasthyaSetu (स्वास्थ्य सेतु) & HealthNexus Platform
+# 🏥 Swasthya (स्वास्थ्य सेतु) & HealthNexus Platform
 
 > **AI-Assisted Rural Healthcare Coordination, 21-State Closed-Loop Referral Engine & Longitudinal Patient EHR Platform**
 > **Problem Statement ID:** 26133 | **Theme:** MedTech / HealthTech | **Smart India Hackathon 2026**
